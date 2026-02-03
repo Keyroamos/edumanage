@@ -123,7 +123,7 @@ if os.environ.get('DB_NAME'):
             'PASSWORD': os.environ.get('DB_PASSWORD'),
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '3306'),
-            'CONN_MAX_AGE': 300, # Keep connections alive for 5 minutes
+            'CONN_MAX_AGE': 60, # Reduced from 300 to improve stability on shared hosting
         }
     }
 else:

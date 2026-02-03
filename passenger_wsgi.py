@@ -1,23 +1,31 @@
-import sys
 import os
+import sys
+import logging
 
-# Get the project root directory (where this file lives)
-project_root = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, project_root)
+# 1. SETUP PATHS
+# Get the absolute path of the directory containing this file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
 
-# If you have a virtual environment, the python path should be handled by cPanel's 
-# "Setup Python App", but you can also explicitly set it here if needed.
-# venv_path = os.path.join(project_root, 'venv/bin/python')
+# 2. CONFIGURE LOGGING
+# Log errors to a file specifically for Passenger startup issues
+logging.basicConfig(
+    filename=os.path.join(BASE_DIR, 'passenger_startup.log'),
+    level=logging.ERROR,
+    format='%(asctime)s %(levelname)s: %(message)s'
+)
 
-# Set the Django settings module
+# 3. SET SETTINGS MODULE
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school.settings')
 
-# Import the Django WSGI application
+# 4. INITIALIZE APPLICATION
 try:
     from django.core.wsgi import get_wsgi_application
     application = get_wsgi_application()
 except Exception as e:
-    # This helps diagnose 500 errors in the logs
-    import logging
-    logging.error(f"Failed to load Django application: {e}")
+    logging.error("CRITICAL: Failed to load Django WSGI application.")
+    logging.error(f"Error: {str(e)}")
+    import traceback
+    logging.error(traceback.format_exc())
+    # Re-raise to ensure Passenger sees the failure
     raise
