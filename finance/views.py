@@ -280,6 +280,110 @@ def api_create_fee_structure(request):
 
 @csrf_exempt
 @login_required
+def api_bulk_create_fee_structure(request):
+    """Create fee structure items for multiple grades at once"""
+    if request.method == 'POST':
+        try:
+            from config.models import SchoolConfig
+            from schools.models import Grade
+            from .models import FeeCategory
+            
+            school = SchoolConfig.get_config(user=request.user, request=request)
+            data = json.loads(request.body)
+            
+            grade_ids = data.get('grade_ids', []) # List of ids or "ALL"
+            term = data.get('term')
+            category_id = data.get('category_id')
+            amount = data.get('amount')
+            academic_year = data.get('academic_year', '2024-2025')
+            is_mandatory = data.get('is_mandatory', True)
+            
+            if grade_ids == 'ALL':
+                target_grades = Grade.objects.filter(school=school)
+            else:
+                target_grades = Grade.objects.filter(id__in=grade_ids, school=school)
+                
+            category = FeeCategory.objects.get(id=category_id, school=school)
+            
+            created_count = 0
+            skipped_count = 0
+            
+            for grade in target_grades:
+                fs, created = FeeStructure.objects.update_or_create(
+                    school=school,
+                    grade=grade,
+                    term=term,
+                    category=category,
+                    academic_year=academic_year,
+                    defaults={
+                        'amount': amount,
+                        'is_mandatory': is_mandatory
+                    }
+                )
+                if created: created_count += 1
+                else: skipped_count += 1
+            
+            return JsonResponse({
+                'success': True, 
+                'created': created_count, 
+                'updated': skipped_count
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+@csrf_exempt
+@login_required
+def api_clone_fee_structure(request):
+    """Clone all fee items from one grade to another"""
+    if request.method == 'POST':
+        try:
+            from config.models import SchoolConfig
+            from schools.models import Grade
+            
+            school = SchoolConfig.get_config(user=request.user, request=request)
+            data = json.loads(request.body)
+            
+            source_grade_id = data.get('source_grade_id')
+            target_grade_ids = data.get('target_grade_ids', [])
+            academic_year = data.get('academic_year', '2024-2025')
+            
+            source_items = FeeStructure.objects.filter(
+                grade_id=source_grade_id, 
+                school=school,
+                academic_year=academic_year
+            )
+            
+            if not source_items.exists():
+                return JsonResponse({'error': 'Source grade has no fees configured'}, status=400)
+            
+            cloned_count = 0
+            for target_id in target_grade_ids:
+                if target_id == source_grade_id: continue
+                target_grade = Grade.objects.get(id=target_id, school=school)
+                
+                for item in source_items:
+                    FeeStructure.objects.update_or_create(
+                        school=school,
+                        grade=target_grade,
+                        term=item.term,
+                        category=item.category,
+                        academic_year=academic_year,
+                        defaults={
+                            'amount': item.amount,
+                            'is_mandatory': item.is_mandatory,
+                            'description': item.description
+                        }
+                    )
+                    cloned_count += 1
+                    
+            return JsonResponse({'success': True, 'cloned_items': cloned_count})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid method'}, status=405)
+
+@csrf_exempt
+@login_required
 def api_delete_fee_structure(request, fee_id):
     """Delete a fee structure item"""
     if request.method == 'DELETE':
