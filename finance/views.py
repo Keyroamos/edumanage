@@ -357,6 +357,9 @@ def sync_student_fees(grade_id, term, year, school):
     from schools.models import Grade, Student
     from .models import Transaction, StudentFinanceAccount, FeeStructure
     
+    # Ensure term is an integer for comparisons
+    term = int(term)
+    
     # 1. Calculate mandatory total
     mandatory_total = FeeStructure.objects.filter(
         grade_id=grade_id, 
