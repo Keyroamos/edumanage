@@ -346,8 +346,12 @@ if DEBUG:
     WHITENOISE_USE_FINDERS = True
     WHITENOISE_AUTOREFRESH = True
 else:
-    # Production: Use non-manifest storage to avoid 404s on missing hash maps
+    # Production: Use compressed storage for better performance
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    # Ensure WhiteNoise doesn't try to be too clever with missing files
+    WHITENOISE_MANIFEST_STRICT = False
+    # Cache static files for a long time
+    WHITENOISE_MAX_AGE = 31536000
 
 # Paystack Configuration
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', 'sk_test_default_key_replace_in_prod')

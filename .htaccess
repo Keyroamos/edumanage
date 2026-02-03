@@ -1,21 +1,31 @@
-# --- STABLE CPANEL DJANGO + REACT CONFIG ---
+# --- EDU-MANAGE OPTIMIZED CPANEL CONFIG ---
 RewriteEngine On
 RewriteBase /
 
-# 1. FORWARD STATIC FILES TO PUBLIC_HTML
-# This maps uniqo.top/static/assets/foo.js -> public_html/assets/foo.js
-RewriteRule ^static/assets/(.*)$ public_html/assets/$1 [L]
-RewriteRule ^static/(.*)$ public_html/$1 [L]
-
-# 2. SERVE PHYSICAL FILES IF THEY EXIST (Favicons, etc)
+# 1. SERVE PHYSICAL FILES IMMEDIATELY IF THEY EXIST
+# This handles index.html, favicon.png, and anything in static/ or assets/
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
-# 3. ROUTE API/ADMIN TO DJANGO
+# 2. STATIC FILE MAPPING (FOR VITE /STATIC/ BASE)
+# Map /static/assets/foo.js -> assets/foo.js
+# Map /static/foo.js -> foo.js
+RewriteRule ^static/assets/(.*)$ assets/$1 [L,NC]
+RewriteRule ^static/(.*)$ $1 [L,NC]
+
+# 3. MIME TYPE SAFETY FOR STATIC ASSETS
+# If it's a JS or CSS file and wasn't found above, return 404 instead of index.html
+# This prevents the "Refused to apply style" MIME error
+RewriteCond %{REQUEST_URI} \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|json|webmanifest)$ [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ - [R=404,L]
+
+# 4. ROUTE API/ADMIN/MEDIA TO DJANGO (PASSENGER)
 RewriteCond %{REQUEST_URI} ^/(api|admin|media)
 RewriteRule ^(.*)$ passenger_wsgi.py/$1 [QSA,L]
 
-# 4. ROUTE EVERYTHING ELSE TO REACT (index.html)
+# 5. ROUTE EVERYTHING ELSE TO REACT (index.html)
+# Try mapping to index.html in current directory
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ /public_html/index.html [L]
+RewriteRule ^ index.html [L]
