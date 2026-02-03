@@ -1,0 +1,606 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+
+{% block title %}Vehicles{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stat-card.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-card.info { background: linear-gradient(135deg, #3494E6 0%, #EC6EAD 100%); }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    
+    .vehicle-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .vehicle-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+    }
+    
+    .vehicle-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .vehicle-card:hover::before {
+        width: 6px;
+    }
+    
+    .vehicle-card.active::before {
+        background: linear-gradient(180deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .vehicle-card.maintenance::before {
+        background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .vehicle-card.inactive::before {
+        background: linear-gradient(180deg, #6c757d 0%, #495057 100%);
+    }
+    
+    .vehicle-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .vehicle-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    
+    .vehicle-type-badge {
+        display: inline-block;
+        padding: 0.4rem 0.9rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-badge.active {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+    }
+    
+    .status-badge.maintenance {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+    }
+    
+    .status-badge.inactive {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        color: #383d41;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .status-dot.active {
+        background: #28a745;
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+    }
+    
+    .status-dot.maintenance {
+        background: #ffc107;
+        box-shadow: 0 0 8px rgba(255, 193, 7, 0.5);
+    }
+    
+    .status-dot.inactive {
+        background: #6c757d;
+    }
+    
+    .vehicle-info {
+        margin: 1rem 0;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .info-item i {
+        width: 20px;
+        margin-right: 0.75rem;
+        color: #667eea;
+    }
+    
+    .info-item strong {
+        color: #2c3e50;
+        margin-right: 0.5rem;
+    }
+    
+    .capacity-bar {
+        margin: 1rem 0;
+    }
+    
+    .capacity-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .capacity-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .capacity-value {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .progress {
+        height: 10px;
+        border-radius: 10px;
+        background: #e9ecef;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 0.6s ease;
+    }
+    
+    .progress-bar.low {
+        background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .progress-bar.medium {
+        background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    }
+    
+    .progress-bar.high {
+        background: linear-gradient(90deg, #fa709a 0%, #fee140 100%);
+    }
+    
+    .progress-bar.full {
+        background: linear-gradient(90deg, #f5576c 0%, #f093fb 100%);
+    }
+    
+    .vehicle-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .btn-action {
+        flex: 1;
+        padding: 0.6rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .search-filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .search-input-wrapper {
+        position: relative;
+    }
+    
+    .search-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-input-wrapper input {
+        padding-left: 2.5rem;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input-wrapper input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-btn {
+        border-radius: 12px;
+        padding: 0.6rem 1.2rem;
+        border: 2px solid #e9ecef;
+        background: white;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        background: #f8f9fa;
+        padding: 0.25rem;
+        border-radius: 12px;
+    }
+    
+    .view-toggle-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .view-toggle-btn.active {
+        background: white;
+        color: #667eea;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">Vehicle Fleet</h1>
+            <p class="text-muted mb-0">Manage and monitor your transportation vehicles</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" id="cardViewBtn" title="Card View">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+                <button class="view-toggle-btn" id="tableViewBtn" title="Table View">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+            </div>
+        <a href="{% url 'vehicle_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Add Vehicle
+        </a>
+    </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Total Vehicles</h6>
+                        <h2 class="mb-0">{{ total_vehicles }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Active Vehicles</h6>
+                        <h2 class="mb-0">{{ active_vehicles }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">In Maintenance</h6>
+                        <h2 class="mb-0">{{ maintenance_vehicles }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Capacity Usage</h6>
+                        <h2 class="mb-0">{{ avg_utilization }}%</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <div class="search-input-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="search" class="form-control" placeholder="Search vehicles..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select" style="border-radius: 12px; border: 2px solid #e9ecef;">
+                    <option value="">All Status</option>
+                    <option value="ACTIVE" {% if status_filter == 'ACTIVE' %}selected{% endif %}>Active</option>
+                    <option value="INACTIVE" {% if status_filter == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+                    <option value="MAINTENANCE" {% if status_filter == 'MAINTENANCE' %}selected{% endif %}>Maintenance</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="type" class="form-select" style="border-radius: 12px; border: 2px solid #e9ecef;">
+                    <option value="">All Types</option>
+                    <option value="BUS" {% if type_filter == 'BUS' %}selected{% endif %}>Bus</option>
+                    <option value="VAN" {% if type_filter == 'VAN' %}selected{% endif %}>Van</option>
+                    <option value="CAR" {% if type_filter == 'CAR' %}selected{% endif %}>Car</option>
+                    <option value="MINIBUS" {% if type_filter == 'MINIBUS' %}selected{% endif %}>Minibus</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100" style="border-radius: 12px;">
+                    <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Vehicle Cards/Table View -->
+    {% if vehicles %}
+        <!-- Card View -->
+        <div id="cardView" class="row g-4">
+            {% for vehicle in vehicles %}
+            <div class="col-lg-4 col-md-6">
+                <div class="vehicle-card {% if vehicle.status == 'ACTIVE' %}active{% elif vehicle.status == 'MAINTENANCE' %}maintenance{% else %}inactive{% endif %}">
+                    <div class="vehicle-header">
+                        <div>
+                            <h3 class="vehicle-number">{{ vehicle.vehicle_number }}</h3>
+                            <span class="vehicle-type-badge">{{ vehicle.get_vehicle_type_display }}</span>
+                        </div>
+                        <span class="status-badge {% if vehicle.status == 'ACTIVE' %}active{% elif vehicle.status == 'MAINTENANCE' %}maintenance{% else %}inactive{% endif %}">
+                            <span class="status-dot {% if vehicle.status == 'ACTIVE' %}active{% elif vehicle.status == 'MAINTENANCE' %}maintenance{% else %}inactive{% endif %}"></span>
+                            {{ vehicle.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="vehicle-info">
+                        <div class="info-item">
+                            <i class="bi bi-car-front"></i>
+                            <div>
+                                <strong>Make/Model:</strong> {{ vehicle.make }} {{ vehicle.model }}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-person-badge"></i>
+                            <div>
+                                <strong>Driver:</strong> {{ vehicle.driver.get_full_name|default:"Not Assigned" }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="capacity-bar">
+                        <div class="capacity-info">
+                            <span class="capacity-label">Capacity Utilization</span>
+                            <span class="capacity-value">{{ vehicle.get_current_students_count }}/{{ vehicle.capacity }}</span>
+                        </div>
+                        {% widthratio vehicle.get_current_students_count vehicle.capacity 100 as capacity_percent %}
+                        <div class="progress">
+                            {% if capacity_percent < 50 %}
+                                <div class="progress-bar low" role="progressbar" style="width: {{ capacity_percent }}%"></div>
+                            {% elif capacity_percent < 80 %}
+                                <div class="progress-bar medium" role="progressbar" style="width: {{ capacity_percent }}%"></div>
+                            {% elif capacity_percent < 100 %}
+                                <div class="progress-bar high" role="progressbar" style="width: {{ capacity_percent }}%"></div>
+                            {% else %}
+                                <div class="progress-bar full" role="progressbar" style="width: 100%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="vehicle-actions">
+                        <a href="{% url 'vehicle_detail' pk=vehicle.pk %}" class="btn btn-action btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                            <span>View</span>
+                        </a>
+                        <a href="{% url 'vehicle_edit' pk=vehicle.pk %}" class="btn btn-action btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                            <span>Edit</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Table View (Hidden by default) -->
+        <div id="tableView" class="d-none">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+                <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                            <tr>
+                                <th>Vehicle Number</th>
+                                <th>Type</th>
+                                <th>Make/Model</th>
+                                <th>Capacity</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                                <th>Students</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in vehicles %}
+                            <tr>
+                                <td><strong>{{ vehicle.vehicle_number }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ vehicle.get_vehicle_type_display }}</span>
+                                    </td>
+                                <td>{{ vehicle.make }} {{ vehicle.model }}</td>
+                                <td>{{ vehicle.capacity }}</td>
+                                <td>{{ vehicle.driver.get_full_name|default:"Not Assigned" }}</td>
+                                <td>
+                                        <span class="status-badge {% if vehicle.status == 'ACTIVE' %}active{% elif vehicle.status == 'MAINTENANCE' %}maintenance{% else %}inactive{% endif %}">
+                                            <span class="status-dot {% if vehicle.status == 'ACTIVE' %}active{% elif vehicle.status == 'MAINTENANCE' %}maintenance{% else %}inactive{% endif %}"></span>
+                                        {{ vehicle.get_status_display }}
+                                    </span>
+                                </td>
+                                    <td>
+                                        {% widthratio vehicle.get_current_students_count vehicle.capacity 100 as capacity_percent %}
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span>{{ vehicle.get_current_students_count }}/{{ vehicle.capacity }}</span>
+                                            <div class="progress" style="width: 60px; height: 6px;">
+                                                <div class="progress-bar {% if capacity_percent < 50 %}low{% elif capacity_percent < 80 %}medium{% else %}high{% endif %}" 
+                                                     style="width: {{ capacity_percent }}%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                    <a href="{% url 'vehicle_detail' pk=vehicle.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'vehicle_edit' pk=vehicle.pk %}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                        </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-truck"></i>
+            </div>
+            <h4 class="text-muted mb-2">No vehicles found</h4>
+            <p class="text-muted mb-4">Get started by adding your first vehicle to the fleet.</p>
+            <a href="{% url 'vehicle_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Add Vehicle
+            </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // View toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const cardViewBtn = document.getElementById('cardViewBtn');
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const cardView = document.getElementById('cardView');
+        const tableView = document.getElementById('tableView');
+        
+        if (cardViewBtn && tableViewBtn) {
+            cardViewBtn.addEventListener('click', function() {
+                cardView.classList.remove('d-none');
+                tableView.classList.add('d-none');
+                cardViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+            });
+            
+            tableViewBtn.addEventListener('click', function() {
+                cardView.classList.add('d-none');
+                tableView.classList.remove('d-none');
+                tableViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+            });
+        }
+    });
+</script>
+{% endblock %}

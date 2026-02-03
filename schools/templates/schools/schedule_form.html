@@ -1,0 +1,76 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-calendar-plus me-2"></i>
+                        Create Schedule for {{ teacher.get_full_name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Day</label>
+                                {{ form.day|add_class:"form-select" }}
+                                {% if form.day.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.day.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">Start Time</label>
+                                {{ form.start_time|add_class:"form-control" }}
+                                {% if form.start_time.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.start_time.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">End Time</label>
+                                {{ form.end_time|add_class:"form-control" }}
+                                {% if form.end_time.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.end_time.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Subject</label>
+                                {{ form.subject|add_class:"form-select" }}
+                                {% if form.subject.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.subject.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label class="form-label">Grade</label>
+                                {{ form.grade|add_class:"form-select" }}
+                                {% if form.grade.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.grade.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>Save Schedule
+                            </button>
+                            <a href="{% url 'teacher_detail' teacher.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

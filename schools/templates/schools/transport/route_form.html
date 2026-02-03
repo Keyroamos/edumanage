@@ -1,0 +1,244 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pb-0">
+                    <h4 class="mb-0">{{ page_title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label">Route Name *</label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small">{{ form.name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Location *</label>
+                                <div class="input-group">
+                                {{ form.start_location }}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="pickLocation('start')" title="Pick on map">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                    </button>
+                                </div>
+                                {{ form.start_latitude }}
+                                {{ form.start_longitude }}
+                                {% if form.start_location.errors %}
+                                    <div class="text-danger small">{{ form.start_location.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Click the map icon to pick location on map</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Location *</label>
+                                <div class="input-group">
+                                {{ form.end_location }}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="pickLocation('end')" title="Pick on map">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                    </button>
+                                </div>
+                                {{ form.end_latitude }}
+                                {{ form.end_longitude }}
+                                {% if form.end_location.errors %}
+                                    <div class="text-danger small">{{ form.end_location.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">Click the map icon to pick location on map</small>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">School Location (Pickup Starting Point)</label>
+                                <div class="input-group">
+                                    <input type="text" id="school-location-input" class="form-control" placeholder="Search for school location...">
+                                    <button type="button" class="btn btn-outline-primary" onclick="pickLocation('school')" title="Pick on map">
+                                        <i class="bi bi-geo-alt-fill"></i> Pick on Map
+                                    </button>
+                                </div>
+                                {{ form.school_latitude }}
+                                {{ form.school_longitude }}
+                                <small class="text-muted">This is the starting point for pickup routes</small>
+                            </div>
+                            <div class="col-12">
+                                <div id="location-picker-map-container">
+                                    <label class="form-label">Location Map</label>
+                                    <div id="location-picker-map" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid #dee2e6;"></div>
+                                    <small class="text-muted">Enter an address above and the map will update automatically. Use the map to verify locations.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Distance (km)</label>
+                                {{ form.distance }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Estimated Time</label>
+                                {{ form.estimated_time }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fee per Term (KES) *</label>
+                                {{ form.fee_per_term }}
+                                {% if form.fee_per_term.errors %}
+                                    <div class="text-danger small">{{ form.fee_per_term.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Location *</label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                    <div class="text-danger small">{{ form.location.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <div class="form-check form-switch mt-2">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Description</label>
+                                {{ form.description }}
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save</button>
+                            <a href="{% if route %}{% url 'route_detail' pk=route.pk %}{% else %}{% url 'route_list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentField = null;
+
+    // Initialize map with school location on page load
+    function initializeMap() {
+        const mapDiv = document.getElementById('location-picker-map');
+        if (!mapDiv) return;
+
+        // Default to school location or Bishop Dr. Mando International School
+        let defaultLocation = 'Bishop Dr. Mando International School, Jaipur, Rajasthan, India';
+        
+        // Check if school location is already set
+        const schoolLatField = document.getElementById('id_school_latitude');
+        const schoolLngField = document.getElementById('id_school_longitude');
+        const schoolAddressInput = document.getElementById('school-location-input');
+        
+        if (schoolAddressInput && schoolAddressInput.value) {
+            defaultLocation = schoolAddressInput.value;
+        } else if (schoolLatField && schoolLngField && schoolLatField.value && schoolLngField.value) {
+            defaultLocation = `${schoolLatField.value},${schoolLngField.value}`;
+        }
+
+        // Show default school location
+        const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(defaultLocation)}&output=embed`;
+        mapDiv.innerHTML = `<iframe width="100%" height="400" style="border:0; border-radius: 8px;" loading="lazy" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade" src="${embedUrl}"></iframe>`;
+    }
+
+    function pickLocation(field) {
+        currentField = field;
+        const mapContainer = document.getElementById('location-picker-map-container');
+        if (!mapContainer) {
+            alert('Map container not found. Please refresh the page.');
+            return;
+        }
+
+        // Get existing coordinates or default to school location
+        let lat = null;
+        let lng = null;
+        let address = '';
+
+        if (field === 'start') {
+            const latField = document.getElementById('id_start_latitude');
+            const lngField = document.getElementById('id_start_longitude');
+            const addressInput = document.getElementById('id_start_location');
+            if (latField && latField.value) lat = parseFloat(latField.value);
+            if (lngField && lngField.value) lng = parseFloat(lngField.value);
+            if (addressInput && addressInput.value) address = addressInput.value;
+        } else if (field === 'end') {
+            const latField = document.getElementById('id_end_latitude');
+            const lngField = document.getElementById('id_end_longitude');
+            const addressInput = document.getElementById('id_end_location');
+            if (latField && latField.value) lat = parseFloat(latField.value);
+            if (lngField && lngField.value) lng = parseFloat(lngField.value);
+            if (addressInput && addressInput.value) address = addressInput.value;
+        } else if (field === 'school') {
+            const latField = document.getElementById('id_school_latitude');
+            const lngField = document.getElementById('id_school_longitude');
+            const addressInput = document.getElementById('school-location-input');
+            if (latField && latField.value) lat = parseFloat(latField.value);
+            if (lngField && lngField.value) lng = parseFloat(lngField.value);
+            if (addressInput && addressInput.value) address = addressInput.value;
+        }
+
+        // Update embedded map
+        const mapDiv = document.getElementById('location-picker-map');
+        let query = '';
+        
+        if (address) {
+            query = address;
+        } else if (lat && lng) {
+            query = `${lat},${lng}`;
+        } else {
+            // Default to school location
+            query = 'Bishop Dr. Mando International School, Jaipur, Rajasthan, India';
+        }
+
+        const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+        mapDiv.innerHTML = `<iframe width="100%" height="400" style="border:0; border-radius: 8px;" loading="lazy" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade" src="${embedUrl}"></iframe>`;
+
+        // Scroll to map
+        mapContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Update map when address input changes
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map with school location after a short delay to ensure DOM is ready
+        setTimeout(function() {
+            initializeMap();
+        }, 100);
+
+        // Update map when any location input changes
+        const inputs = ['id_start_location', 'id_end_location', 'school-location-input'];
+        inputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                // Update on input (real-time)
+                input.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    if (query && query.length > 3) {
+                        const mapDiv = document.getElementById('location-picker-map');
+                        if (mapDiv) {
+                            const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+                            mapDiv.innerHTML = `<iframe width="100%" height="400" style="border:0; border-radius: 8px;" loading="lazy" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade" src="${embedUrl}"></iframe>`;
+                        }
+                    }
+                });
+                
+                // Also update on blur (when user finishes typing)
+                input.addEventListener('blur', function() {
+                    const query = this.value.trim();
+                    if (query) {
+                        const mapDiv = document.getElementById('location-picker-map');
+                        if (mapDiv) {
+                            const embedUrl = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+                            mapDiv.innerHTML = `<iframe width="100%" height="400" style="border:0; border-radius: 8px;" loading="lazy" allowfullscreen="" referrerpolicy="no-referrer-when-downgrade" src="${embedUrl}"></iframe>`;
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,283 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load school_filters %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Enhanced Header Section -->
+    <div class="header-section rounded-4 mb-4 position-relative overflow-hidden bg-gradient-primary">
+        <div class="header-backdrop position-absolute"></div>
+        <div class="position-relative py-4 px-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h3 text-white fw-bold mb-2">{{ grade.name }} Students</h1>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-white text-dark">
+                            <i class="bi bi-people-fill me-2"></i>Total Students: {{ students|length }}
+                        </span>
+                        {% if user.teacher %}
+                        <span class="badge bg-white text-dark">
+                            <i class="bi bi-person-workspace me-2"></i>Class Teacher: {{ user.teacher.get_full_name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'mark_attendance_grade' grade_id=grade.id %}" class="btn btn-light">
+                            <i class="bi bi-calendar-check me-2"></i>Mark Attendance
+                        </a>
+                        {% if user.teacher %}
+                            <a href="{% url 'teacher_detail' pk=user.teacher.pk %}" class="btn btn-light">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Profile
+                            </a>
+                        {% else %}
+                            <a href="{% url 'dashboard' %}" class="btn btn-light">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Total Students -->
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-primary-soft text-primary me-3">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Total Students</h6>
+                            <h4 class="mb-0">{{ students|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Male Students -->
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-info-soft text-info me-3">
+                            <i class="bi bi-gender-male"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Male Students</h6>
+                            <h4 class="mb-0">{{ students|filter_by_gender:'M'|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Female Students -->
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-danger-soft text-danger me-3">
+                            <i class="bi bi-gender-female"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Female Students</h6>
+                            <h4 class="mb-0">{{ students|filter_by_gender:'F'|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Average Age -->
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-box bg-success-soft text-success me-3">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">Average Age</h6>
+                            <h4 class="mb-0">{{ students|average_age|floatformat:1 }} yrs</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students List Card -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">Students List</h5>
+                </div>
+                <div class="col-auto">
+                    <div class="d-flex gap-2">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" id="studentSearch" class="form-control border-0 bg-light" 
+                                   placeholder="Search students...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="studentsTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">Student Name</th>
+                            <th>Admission Number</th>
+                            <th>Gender</th>
+                            <th>Parent Contact</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    {% if student.profile_picture %}
+                                        <img src="{{ student.profile_picture.url }}" 
+                                             class="rounded-circle me-3" 
+                                             width="40" height="40"
+                                             style="object-fit: cover;">
+                                    {% else %}
+                                        <div class="avatar-placeholder rounded-circle me-3 bg-primary-soft text-primary">
+                                            {{ student.get_initials }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <h6 class="mb-0">{{ student.get_full_name }}</h6>
+                                        <small class="text-muted">
+                                            {{ student.date_of_birth|date:"M d, Y" }} 
+                                            ({{ student.date_of_birth|timesince }} old)
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ student.admission_number }}</td>
+                            <td>
+                                <span class="badge bg-light text-dark">
+                                    {% if student.gender == 'M' %}
+                                        <i class="bi bi-gender-male me-1"></i>
+                                    {% else %}
+                                        <i class="bi bi-gender-female me-1"></i>
+                                    {% endif %}
+                                    {{ student.get_gender_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if student.parent_phone %}
+                                    <a href="tel:{{ student.parent_phone }}" class="text-decoration-none">
+                                        <i class="bi bi-telephone me-2"></i>{{ student.parent_phone }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{% url 'student_detail' student.pk %}" class="btn btn-sm btn-light">
+                                    <i class="bi bi-eye me-2"></i>View Details
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="bi bi-people display-4 text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">No students found in this class</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.header-section {
+    background: linear-gradient(45deg, #4e73df, #224abe);
+}
+
+.header-backdrop {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.1;
+    background: url("{% static 'images/pattern.svg' %}") center/cover;
+}
+
+.icon-box {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 24px;
+}
+
+.avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.bg-primary-soft { background-color: rgba(78, 115, 223, 0.1); }
+.bg-info-soft { background-color: rgba(54, 185, 204, 0.1); }
+.bg-danger-soft { background-color: rgba(231, 74, 59, 0.1); }
+.bg-success-soft { background-color: rgba(28, 200, 138, 0.1); }
+
+.text-primary { color: #4e73df !important; }
+.text-info { color: #36b9cc !important; }
+.text-danger { color: #e74a3b !important; }
+.text-success { color: #1cc88a !important; }
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearch');
+    const table = document.getElementById('studentsTable');
+    const rows = table.getElementsByTagName('tr');
+
+    searchInput.addEventListener('keyup', function(e) {
+        const searchText = e.target.value.toLowerCase();
+
+        // Start from index 1 to skip the header row
+        for(let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const text = row.textContent.toLowerCase();
+            
+            if(text.includes(searchText)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

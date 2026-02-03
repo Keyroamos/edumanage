@@ -1,0 +1,36 @@
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h6 class="card-title mb-3">Student Information</h6>
+        <div class="d-flex align-items-center mb-3">
+            <div class="flex-shrink-0">
+                {% if student.photo %}
+                    <img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}" 
+                         class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                {% else %}
+                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                         style="width: 48px; height: 48px;">
+                        <i class="bi bi-person text-secondary"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="ms-3">
+                <h6 class="mb-1">{{ student.get_full_name }}</h6>
+                <small class="text-muted">{{ student.admission_number }}</small>
+            </div>
+        </div>
+        <div class="list-group list-group-flush">
+            <div class="list-group-item px-0">
+                <small class="text-muted d-block">Grade</small>
+                <span>{{ student.grade.get_name_display }}</span>
+            </div>
+            <div class="list-group-item px-0">
+                <small class="text-muted d-block">Current Term</small>
+                <span>{{ student.get_current_term_display }}</span>
+            </div>
+            <div class="list-group-item px-0">
+                <small class="text-muted d-block">Parent/Guardian</small>
+                <span>{{ student.parent_name }}</span>
+            </div>
+        </div>
+    </div>
+</div> 

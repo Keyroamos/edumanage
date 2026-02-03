@@ -1,0 +1,241 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load school_filters %}
+
+{% block title %}Academic Progression{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --surface: #f8fafc;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --border-radius: 16px;
+        --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    body {
+        background: var(--surface);
+    }
+
+    .page-header {
+        background: var(--primary-gradient);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .status-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+    }
+
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .status-item:last-child {
+        border-bottom: none;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .command-output {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 1.5rem;
+        border-radius: 12px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="mb-2">
+            <i class="bi bi-arrow-up-circle me-2"></i>
+            Academic Progression Management
+        </h1>
+        <p class="mb-0 opacity-75">Automatically advance terms and promote students to next grade levels</p>
+    </div>
+
+    <!-- Current Status -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="status-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-info-circle me-2 text-primary"></i>
+                    Current Academic Status
+                </h5>
+                <div class="status-item">
+                    <span class="text-muted">Current Term</span>
+                    <strong>Term {{ current_term }} ({{ current_year }})</strong>
+                </div>
+                <div class="status-item">
+                    <span class="text-muted">Academic Year</span>
+                    <strong>{{ current_year|subtract:1 }}-{{ current_year }}</strong>
+                </div>
+                <div class="status-item">
+                    <span class="text-muted">End of Year</span>
+                    {% if is_end_of_year %}
+                        <span class="badge bg-warning text-dark">Yes - Promotion Ready</span>
+                    {% else %}
+                        <span class="badge bg-info text-white">No</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="status-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-people me-2 text-primary"></i>
+                    Students by Term
+                </h5>
+                {% for item in students_by_term %}
+                <div class="status-item">
+                    <span class="text-muted">Term {{ item.current_term }}</span>
+                    <strong>{{ item.count }} students</strong>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">No students found</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="action-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-arrow-right-circle me-2"></i>
+                    Advance Term
+                </h5>
+                <p class="text-muted small mb-3">
+                    Move all students from current term to next term. If Term 3, moves to Term 1 of next year.
+                </p>
+                <form method="POST" action="{% url 'academic_progression' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="advance_term">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="dry_run" id="dry_run_1">
+                        <label class="form-check-label" for="dry_run_1">
+                            Dry run (preview only)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-arrow-right me-2"></i>Advance Term
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="action-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-arrow-up-circle me-2"></i>
+                    Promote Students
+                </h5>
+                <p class="text-muted small mb-3">
+                    Promote all students to the next grade level. Only runs at end of academic year.
+                </p>
+                <form method="POST" action="{% url 'academic_progression' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="promote_students">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="dry_run" id="dry_run_2">
+                        <label class="form-check-label" for="dry_run_2">
+                            Dry run (preview only)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100" {% if not is_end_of_year %}disabled title="Only available at end of academic year"{% endif %}>
+                        <i class="bi bi-arrow-up me-2"></i>Promote Students
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="action-card">
+                <h5 class="mb-3">
+                    <i class="bi bi-lightning-charge me-2"></i>
+                    Auto Advance All
+                </h5>
+                <p class="text-muted small mb-3">
+                    Automatically advance terms and promote students (if end of year) in one action.
+                </p>
+                <form method="POST" action="{% url 'academic_progression' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="auto_advance">
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="dry_run" id="dry_run_3">
+                        <label class="form-check-label" for="dry_run_3">
+                            Dry run (preview only)
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">
+                        <i class="bi bi-lightning-charge me-2"></i>Auto Advance All
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Output -->
+    {% if command_output %}
+    <div class="status-card">
+        <h5 class="mb-3">
+            <i class="bi bi-terminal me-2 text-primary"></i>
+            Command Output
+        </h5>
+        <div class="command-output">{{ command_output }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Students by Grade -->
+    {% if students_by_grade %}
+    <div class="status-card">
+        <h5 class="mb-3">
+            <i class="bi bi-diagram-3 me-2 text-primary"></i>
+            Students by Grade
+        </h5>
+        <div class="row g-3">
+            {% for item in students_by_grade %}
+            <div class="col-md-3 col-sm-6">
+                <div class="p-3 bg-light rounded">
+                    <div class="text-muted small mb-1">{{ item.grade__name }}</div>
+                    <div class="h5 mb-0">{{ item.count }} students</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,193 @@
+{% extends 'schools/base.html' %}
+{% load humanize %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="header-section bg-gradient-primary text-white p-4 rounded-3 mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-6 fw-bold mb-2">Record Payment</h1>
+                <p class="mb-0 opacity-75">
+                    <i class="bi bi-person me-2"></i>{{ student.get_full_name }}
+                    <span class="mx-2">|</span>
+                    <i class="bi bi-mortarboard me-2"></i>{{ student.grade.name }}
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a href="{% url 'student_detail' pk=student.id %}" class="btn btn-light">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Student
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Payment Form -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Payment Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount (KES)</label>
+                            <input type="text" 
+                                   class="form-control form-control-lg" 
+                                   id="amount" 
+                                   name="amount" 
+                                   required 
+                                   pattern="[0-9,]*"
+                                   placeholder="Enter amount">
+                            <div class="invalid-feedback">
+                                Please enter a valid amount
+                            </div>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">Payment Method</label>
+                            <select class="form-select form-select-lg" id="payment_method" name="payment_method" required>
+                                <option value="">Select payment method</option>
+                                {% for value, label in payment_methods %}
+                                <option value="{{ value }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="invalid-feedback">
+                                Please select a payment method
+                            </div>
+                        </div>
+
+                        <!-- Reference Number -->
+                        <div class="mb-3" id="reference_number_group" style="display: none;">
+                            <label for="reference_number" class="form-label">Reference Number</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="reference_number" 
+                                   name="reference_number"
+                                   placeholder="Enter reference number">
+                            <div class="form-text">
+                                For M-PESA payments, enter the M-PESA transaction code
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="2"
+                                      placeholder="Enter payment description"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>Record Payment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Summary -->
+        <div class="col-lg-4">
+            <!-- Fee Summary Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Fee Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Total Billed</span>
+                        <span class="fw-bold">KES {{ total_billed|intcomma }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted">Total Paid</span>
+                        <span class="text-success fw-bold">KES {{ total_paid|intcomma }}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Balance</span>
+                        <span class="text-danger fw-bold">KES {{ balance|intcomma }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Recent Payments</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for payment in payment_history %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">KES {{ payment.amount|intcomma }}</h6>
+                                    <small class="text-muted">
+                                        {{ payment.get_payment_method_display }} | 
+                                        Term {{ payment.term }}
+                                    </small>
+                                </div>
+                                <small class="text-muted">{{ payment.date|date:"d M Y" }}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-cash text-muted display-6"></i>
+                            <p class="text-muted mt-2">No payment history</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+
+    // Handle payment method change
+    const paymentMethod = document.getElementById('payment_method');
+    const referenceGroup = document.getElementById('reference_number_group');
+    const referenceInput = document.getElementById('reference_number');
+
+    paymentMethod.addEventListener('change', function() {
+        if (this.value === 'MPESA') {
+            referenceGroup.style.display = 'block';
+            referenceInput.required = true;
+        } else {
+            referenceGroup.style.display = 'none';
+            referenceInput.required = false;
+        }
+    });
+
+    // Format amount with commas
+    const amountInput = document.getElementById('amount');
+    amountInput.addEventListener('input', function(e) {
+        let value = this.value.replace(/\D/g, '');
+        if (value) {
+            value = parseInt(value).toLocaleString();
+            this.value = value;
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

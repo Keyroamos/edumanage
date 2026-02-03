@@ -1,0 +1,392 @@
+{% extends 'schools/base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="card bg-primary-subtle border-0 mb-4">
+        <div class="card-body py-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h4 class="mb-1 text-primary">Record Assessment</h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'student_detail' student.id %}">{{ student.get_full_name }}</a></li>
+                            <li class="breadcrumb-item active">Record Assessment</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Assessment Form -->
+        <div class="col-lg-8">
+            <!-- Helpful Note -->
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Note:</strong> You don't need to fill in all subjects at once. You can save the assessment with the subjects you have and come back later to add the remaining ones.
+            </div>
+            
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Language and Communication -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-chat-quote me-2 text-primary"></i>Language and Communication
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- English Activities -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'ENG' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            <!-- Kiswahili Activities -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'KIS' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mathematics and Science -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-calculator me-2 text-success"></i>Mathematics and Science
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Mathematics -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'MATH' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            <!-- Science -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'SCI' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Studies and Religion -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-globe me-2 text-info"></i>Social Studies and Religion
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Social Studies -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'SST' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            <!-- CRE -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'CRE' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other Subjects -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-palette me-2 text-warning"></i>Other Learning Areas
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <!-- Agriculture -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'AGR' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            <!-- Creative Arts -->
+                            {% for subject in subjects %}
+                            {% if subject.code == 'ART' %}
+                            <div class="col-md-6">
+                                <div class="subject-card">
+                                    <h6>{{ subject.name }}</h6>
+                                    <select name="{{ subject.code }}" class="form-select mb-2">
+                                        <option value="">Select Performance</option>
+                                        <option value="4">Exceeding Expectations</option>
+                                        <option value="3">Meeting Expectations</option>
+                                        <option value="2">Approaching Expectations</option>
+                                        <option value="1">Below Expectations</option>
+                                    </select>
+                                    <textarea name="remarks_{{ subject.code }}" class="form-control" rows="2" placeholder="Subject remarks (optional)"></textarea>
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Assessment Details -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-info-circle me-2 text-primary"></i>Assessment Details
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Assessment Type *</label>
+                                <select name="assessment_type" class="form-select" required>
+                                    <option value="">Select Assessment Type</option>
+                                    <option value="weekly">Weekly Assessment</option>
+                                    <option value="opener">Opener Assessment</option>
+                                    <option value="mid-term">Mid-Term Assessment</option>
+                                    <option value="end-term">End-Term Assessment</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Term *</label>
+                                <select name="term" class="form-select" required>
+                                    <option value="">Select Term</option>
+                                    <option value="1">Term 1</option>
+                                    <option value="2">Term 2</option>
+                                    <option value="3">Term 3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date *</label>
+                                <input type="date" name="date" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Remarks</label>
+                                <textarea name="remarks" class="form-control" rows="3" placeholder="Add any additional comments or observations"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">* Required fields</small>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'student_detail' student.id %}" class="btn btn-light">Cancel</a>
+                                <button type="submit" class="btn btn-primary" onclick="return validateForm()">
+                                    <i class="bi bi-save me-2"></i>Save Assessment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Student Info Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title mb-3">Student Information</h6>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-shrink-0">
+                            {% if student.photo %}
+                                <img src="{{ student.photo.url }}" alt="{{ student.get_full_name }}" 
+                                     class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                                     style="width: 48px; height: 48px;">
+                                   <i class="bi bi-person text-secondary"></i>
+                               </div>
+                            {% endif %}
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="mb-1">{{ student.get_full_name }}</h6>
+                            <small class="text-muted">{{ student.admission_number }}</small>
+                        </div>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item px-0">
+                            <small class="text-muted d-block">Grade</small>
+                            <span>{{ student.grade.get_name_display }}</span>
+                        </div>
+                        <div class="list-group-item px-0">
+                            <small class="text-muted d-block">Current Term</small>
+                            <span>{{ student.get_current_term_display }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.subject-card {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.subject-card h6 {
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.subject-card .form-select {
+    margin-bottom: 0.75rem;
+}
+
+.subject-card .form-control {
+    flex-grow: 1;
+}
+</style>
+
+<script>
+function validateForm() {
+    const assessmentType = document.querySelector('select[name="assessment_type"]').value;
+    const term = document.querySelector('select[name="term"]').value;
+    const date = document.querySelector('input[name="date"]').value;
+    
+    if (!assessmentType) {
+        alert('Please select an assessment type.');
+        return false;
+    }
+    
+    if (!term) {
+        alert('Please select a term.');
+        return false;
+    }
+    
+    if (!date) {
+        alert('Please select a date.');
+        return false;
+    }
+    
+    // Check if at least one subject has performance data
+    const subjects = ['ENG', 'KIS', 'MATH', 'SCI', 'SST', 'CRE', 'AGR', 'ART'];
+    let hasData = false;
+    
+    for (const subjectCode of subjects) {
+        const subjectSelect = document.querySelector(`select[name="${subjectCode}"]`);
+        if (subjectSelect && subjectSelect.value) {
+            hasData = true;
+            break;
+        }
+    }
+    
+    if (!hasData) {
+        alert('Please provide performance data for at least one subject.');
+        return false;
+    }
+    
+    return true;
+}
+</script>
+{% endblock %} 

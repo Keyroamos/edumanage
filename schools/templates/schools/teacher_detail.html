@@ -1,0 +1,1465 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load school_filters %}
+
+{% block title %}{{ teacher.get_full_name }} - Teacher Details{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Mobile Native App Styles */
+:root {
+    --safe-area-top: env(safe-area-inset-top, 0px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-area-left: env(safe-area-inset-left, 0px);
+    --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Mobile wrapper for native app feel */
+.teacher-detail-mobile-wrapper {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #f5f6fa;
+}
+
+@media (max-width: 768px) {
+    .teacher-detail-mobile-wrapper {
+        padding-top: max(0px, var(--safe-area-top));
+        padding-bottom: max(0px, var(--safe-area-bottom));
+    }
+}
+
+/* Mobile-first container */
+@media (max-width: 768px) {
+    body {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+    
+    .container-fluid {
+        padding-left: max(1rem, var(--safe-area-left));
+        padding-right: max(1rem, var(--safe-area-right));
+        padding-top: max(0.5rem, var(--safe-area-top));
+        padding-bottom: max(1rem, var(--safe-area-bottom));
+    }
+}
+
+/* Core Styles */
+.profile-header {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Mobile native header styling */
+@media (max-width: 768px) {
+    .profile-header {
+        margin: 0 calc(-1 * max(1rem, var(--safe-area-left))) 1.5rem calc(-1 * max(1rem, var(--safe-area-right)));
+        border-radius: 0;
+        padding: max(1.5rem, calc(1.5rem + var(--safe-area-top))) 1rem 1.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: max(44px, calc(44px + var(--safe-area-top)));
+        background: rgba(0, 0, 0, 0.1);
+    }
+}
+
+.profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    object-fit: cover;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .profile-image {
+        width: 100px;
+        height: 100px;
+        border-width: 3px;
+    }
+}
+
+.profile-info h2 {
+    color: white;
+    margin-bottom: 0.5rem;
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .profile-info h2 {
+        font-size: 1.5rem;
+        margin-bottom: 0.75rem;
+    }
+}
+
+.profile-info p {
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .profile-info p {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+}
+
+.profile-info i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
+/* Card Styles */
+.info-card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.info-card-header {
+    background: #f8fafc;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.info-card-header i {
+    font-size: 1.25rem;
+    color: #4e73df;
+}
+
+.info-card-header h5 {
+    margin: 0;
+    color: #2c3e50;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.info-card-body {
+    padding: 1.5rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+}
+
+.info-item {
+    position: relative;
+}
+
+.info-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.info-value {
+    color: #2c3e50;
+    font-size: 1rem;
+    font-weight: 500;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+    transition: border-color 0.2s ease;
+}
+
+.info-item:hover .info-value {
+    border-color: #4e73df;
+}
+
+.badge-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.badge-status.active {
+    background: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.badge-status.inactive {
+    background: rgba(231, 74, 59, 0.1);
+    color: #e74a3b;
+}
+
+/* Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-icon.primary { background: rgba(78, 115, 223, 0.1); color: #4e73df; }
+.stat-icon.success { background: rgba(28, 200, 138, 0.1); color: #1cc88a; }
+.stat-icon.warning { background: rgba(246, 194, 62, 0.1); color: #f6c23e; }
+
+.stat-info h4 {
+    font-size: 0.875rem;
+    color: #6e6e6e;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.stat-info p {
+    font-size: 1.5rem;
+    color: #2c3e50;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Tabs Design */
+.nav-pills {
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 1rem;
+    gap: 0.5rem;
+}
+
+.nav-pills .nav-link {
+    color: #6e6e6e;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background: rgba(78, 115, 223, 0.05);
+}
+
+.nav-pills .nav-link.active {
+    background: #4e73df;
+    color: white;
+}
+
+/* Table Styles */
+.custom-table {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.custom-table th {
+    background: #f8fafc;
+    padding: 1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.custom-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    color: #6e6e6e;
+}
+
+/* Subject Tags */
+.subject-tag {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    background: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    margin: 0.25rem;
+}
+
+/* Timeline Design */
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+    border-left: 2px solid #e9ecef;
+    padding-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -0.5rem;
+    top: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #4e73df;
+    border: 2px solid white;
+}
+
+.timeline-date {
+    font-size: 0.875rem;
+    color: #6e6e6e;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-content {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-badge.approved { background: rgba(28, 200, 138, 0.1); color: #1cc88a; }
+.status-badge.pending { background: rgba(246, 194, 62, 0.1); color: #f6c23e; }
+.status-badge.rejected { background: rgba(231, 74, 59, 0.1); color: #e74a3b; }
+
+/* Add to your existing styles */
+.contact-link {
+    color: #2c3e50;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: color 0.2s ease;
+}
+
+.contact-link:hover {
+    color: #4e73df;
+    text-decoration: none;
+}
+
+.info-value i {
+    color: #6c757d;
+    font-size: 0.9rem;
+    width: 20px;
+    text-align: center;
+}
+
+.info-value .text-muted {
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+/* Responsive adjustments for contact info */
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .info-value {
+        word-break: break-word;
+        font-size: 0.95rem;
+    }
+    
+    .info-label {
+        font-size: 0.8rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    /* Mobile-native card styling */
+    .info-card {
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .info-card-header {
+        padding: 1rem 1.25rem;
+        font-size: 0.95rem;
+    }
+    
+    .info-card-body {
+        padding: 1.25rem;
+    }
+    
+    /* Touch-friendly buttons */
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Stats grid mobile */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-card {
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+    }
+    
+    .stat-icon {
+        width: 44px;
+        height: 44px;
+        font-size: 1.25rem;
+    }
+    
+    .stat-info h4 {
+        font-size: 0.8rem;
+    }
+    
+    .stat-info p {
+        font-size: 1.25rem;
+    }
+    
+    /* Tabs mobile styling */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0;
+    }
+    
+    .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        min-width: fit-content;
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        color: #6c757d;
+    }
+    
+    .nav-tabs .nav-link.active {
+        border-bottom-color: #4e73df;
+        color: #4e73df;
+        background: transparent;
+    }
+    
+    /* Table responsive */
+    .table-responsive {
+        border-radius: 0.75rem;
+        overflow: hidden;
+    }
+    
+    .schedule-table {
+        font-size: 0.875rem;
+    }
+    
+    .schedule-table th,
+    .schedule-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    /* Timeline mobile */
+    .timeline {
+        padding-left: 1.5rem;
+    }
+    
+    .timeline-item {
+        padding-left: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .timeline-content {
+        padding: 0.875rem;
+    }
+    
+    /* Modal mobile */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-content {
+        border-radius: 1rem;
+    }
+    
+    /* Professional grid mobile */
+    .professional-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    /* Subject badges mobile */
+    .subject-badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+    }
+    
+    /* Safe area padding for main content */
+    .container-fluid.py-4 {
+        padding-top: max(1rem, calc(1rem + var(--safe-area-top)));
+        padding-bottom: max(1rem, calc(1rem + var(--safe-area-bottom)));
+    }
+    
+    /* Row spacing mobile */
+    .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+    
+    .row > * {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    /* Column stacking */
+    .col-lg-4,
+    .col-lg-8 {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    /* Edit button mobile */
+    .profile-header .btn {
+        margin-top: 0.75rem;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Professional Information Styles */
+.professional-card {
+    margin-top: 2rem;
+}
+
+.qualification-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.subject-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.subject-badge:hover {
+    background: rgba(28, 200, 138, 0.2);
+    transform: translateY(-2px);
+}
+
+.experience-box {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.experience-number {
+    font-size: 2.5rem;
+    font-weight: 600;
+    color: #4e73df;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.experience-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.certificate-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4e73df;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.certificate-link:hover {
+    color: #2e59d9;
+}
+
+.professional-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Schedule Styles */
+.schedule-card {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.schedule-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.schedule-table th {
+    background: #f8fafc;
+    color: #2c3e50;
+    font-weight: 600;
+    padding: 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.schedule-table td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+
+.schedule-table tr:last-child td {
+    border-bottom: none;
+}
+
+.schedule-table tr:hover td {
+    background: #f8fafc;
+}
+
+.time-slot {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4e73df;
+    font-weight: 500;
+}
+
+.subject-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.subject-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(78, 115, 223, 0.1);
+    color: #4e73df;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.grade-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    background: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+    border-radius: 50px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.empty-schedule {
+    text-align: center;
+    padding: 3rem 1.5rem;
+}
+
+.empty-schedule i {
+    font-size: 3rem;
+    color: #d1d3e2;
+    margin-bottom: 1rem;
+}
+
+.empty-schedule p {
+    color: #858796;
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Salary Tab Styles */
+.salary-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.salary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.salary-item .label {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.salary-item .amount {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.salary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+.salary-total.red .amount {
+    color: #e74a3b;
+}
+
+.net-salary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.net-salary .label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.net-salary .amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+.badge.bg-paid-subtle {
+    background: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.badge.bg-pending-subtle {
+    background: rgba(246, 194, 62, 0.1);
+    color: #f6c23e;
+}
+
+/* Additional Mobile Native Enhancements */
+@media (max-width: 768px) {
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+    }
+    
+    /* Prevent text selection on UI elements */
+    .btn, .nav-link, .info-card-header {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    
+    /* Native-like touch feedback */
+    .info-card:active,
+    .stat-card:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+    
+    /* Better spacing for mobile */
+    .container-fluid.py-4 > .row {
+        margin-bottom: 0;
+    }
+    
+    /* Profile header mobile layout */
+    .profile-header .row {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .profile-header .col-auto {
+        margin-bottom: 1rem;
+    }
+    
+    .profile-header .col {
+        width: 100%;
+    }
+    
+    /* Empty states mobile */
+    .empty-schedule {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-schedule i {
+        font-size: 2.5rem;
+    }
+    
+    /* Tab content padding */
+    .tab-content {
+        padding-top: 1rem;
+    }
+    
+    /* Contact links mobile */
+    .contact-link {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+    }
+    
+    /* Status badges mobile */
+    .badge-status {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+    }
+    
+    /* Qualification badge mobile */
+    .qualification-badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.875rem;
+    }
+    
+    /* Experience box mobile */
+    .experience-box {
+        padding: 1.25rem;
+    }
+    
+    .experience-number {
+        font-size: 2rem;
+    }
+    
+    /* Certificate link mobile */
+    .certificate-link {
+        font-size: 0.9rem;
+    }
+    
+    /* Grade badge mobile */
+    .grade-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.65rem;
+    }
+    
+    /* Time slot mobile */
+    .time-slot {
+        font-size: 0.85rem;
+    }
+    
+    /* Subject icon mobile */
+    .subject-icon {
+        width: 28px;
+        height: 28px;
+        font-size: 0.875rem;
+    }
+    
+    /* Salary items mobile */
+    .salary-item {
+        padding: 0.625rem 0;
+    }
+    
+    .salary-item .label {
+        font-size: 0.9rem;
+    }
+    
+    .salary-item .amount {
+        font-size: 0.95rem;
+    }
+    
+    .net-salary {
+        padding: 0.875rem;
+    }
+    
+    .net-salary .amount {
+        font-size: 1.1rem;
+    }
+    
+    /* Form controls mobile */
+    .form-control,
+    .form-select {
+        min-height: 44px;
+        font-size: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    /* Modal body mobile */
+    .modal-body {
+        padding: 1.25rem;
+    }
+    
+    /* Prevent horizontal scroll */
+    body {
+        overflow-x: hidden;
+        width: 100%;
+    }
+    
+    /* Better focus states for accessibility */
+    .btn:focus,
+    .nav-link:focus,
+    .form-control:focus,
+    .form-select:focus {
+        outline: 2px solid #4e73df;
+        outline-offset: 2px;
+    }
+}
+
+/* Tablet optimizations */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* PWA Standalone Mode Enhancements */
+@media all and (display-mode: standalone) {
+    .profile-header {
+        padding-top: max(2rem, calc(2rem + var(--safe-area-top)));
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding-top: max(0.5rem, calc(0.5rem + var(--safe-area-top)));
+        }
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="teacher-detail-mobile-wrapper">
+<div class="container-fluid py-4">
+    <!-- Profile Header -->
+    <div class="profile-header mb-4">
+    <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    {% if teacher.profile_picture %}
+                        <img src="{{ teacher.profile_picture.url }}" alt="Profile" class="profile-image">
+                    {% else %}
+                        <img src="{% static 'images/default-profile.png' %}" alt="Default Profile" class="profile-image">
+                    {% endif %}
+                </div>
+                <div class="col profile-info">
+                    <h2>{{ teacher.get_full_name }}</h2>
+                    <p><i class="bi bi-envelope"></i>{{ teacher.email }}</p>
+                    <p><i class="bi bi-telephone"></i>{{ teacher.phone }}</p>
+                </div>
+                <div class="col-auto">
+                    {% if user.is_superuser %}
+                    <a href="{% url 'teacher_edit' teacher.pk %}" class="btn btn-light">
+                        <i class="bi bi-pencil me-2"></i>Edit Profile
+                    </a>
+                    {% endif %}
+                    {% if teacher.is_class_teacher and teacher.grade %}
+                    <a href="{% url 'class_students' teacher.grade.pk %}" class="btn btn-primary me-2">
+                        <i class="bi bi-people me-2"></i>My Class Students
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'logout' %}" class="btn btn-light">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a>
+                </div>
+        </div>
+    </div>
+                        </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-lg-4">
+            <!-- Personal Information Card -->
+            <div class="info-card">
+                <div class="info-card-header">
+                        <i class="bi bi-person-badge"></i>
+                    <h5>Personal Information</h5>
+                    </div>
+                <div class="info-card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Full Name</div>
+                            <div class="info-value">{{ teacher.get_full_name }}</div>
+                </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Date of Birth</div>
+                            <div class="info-value">{{ teacher.date_of_birth|date:"M d, Y" }}</div>
+                </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Gender</div>
+                            <div class="info-value">{{ teacher.get_gender_display }}</div>
+            </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Nationality</div>
+                            <div class="info-value">{{ teacher.nationality }}</div>
+        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Religion</div>
+                            <div class="info-value">{{ teacher.get_religion_display }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Marital Status</div>
+                            <div class="info-value">{{ teacher.get_marital_status_display }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Status</div>
+                            <div class="info-value">
+                                <span class="badge-status {% if teacher.status == 'ACTIVE' %}active{% else %}inactive{% endif %}">
+                                    <i class="bi bi-circle-fill"></i>
+                                    {{ teacher.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <i class="bi bi-geo-alt"></i>
+                    <h5>Contact Information</h5>
+                    </div>
+                <div class="info-card-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Email Address</div>
+                            <div class="info-value">
+                                <a href="mailto:{{ teacher.email }}" class="contact-link">
+                                    <i class="bi bi-envelope me-2"></i>{{ teacher.email }}
+                                </a>
+                </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Phone Number</div>
+                            <div class="info-value">
+                                <a href="tel:{{ teacher.phone }}" class="contact-link">
+                                    <i class="bi bi-telephone me-2"></i>{{ teacher.phone }}
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Physical Address</div>
+                            <div class="info-value">
+                                <i class="bi bi-house-door me-2"></i>{{ teacher.address }}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">Emergency Contact</div>
+                            <div class="info-value">
+                                {% if teacher.emergency_contact %}
+                                    <i class="bi bi-person-lines-fill me-2"></i>{{ teacher.emergency_contact }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                        {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    </div>
+                </div>
+
+        <!-- Right Column -->
+        <div class="col-lg-8">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">
+                        <i class="bi bi-briefcase"></i>
+                </div>
+                    <div class="stat-info">
+                        <h4>Years of Experience</h4>
+                        <p>{{ teacher.years_of_experience }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>Subjects Teaching</h4>
+                        <p>{{ teacher.subjects.count }}</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="bi bi-mortarboard"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h4>Class Teacher</h4>
+                        <p>{% if teacher.is_class_teacher %}Yes{% else %}No{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Content -->
+            <div class="info-card">
+                <div class="card-body">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#professional">
+                                <i class="bi bi-person-badge me-2"></i>Professional Info
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#schedule">
+                                <i class="bi bi-calendar3 me-2"></i>Schedule
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#leaves">
+                                <i class="bi bi-calendar2-check me-2"></i>Leave History
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#salary">
+                                <i class="bi bi-cash-stack me-2"></i>Salary & Payments
+                            </a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- Professional Info Tab -->
+                        <div class="tab-pane fade show active" id="professional">
+                            <div class="professional-card">
+                                <div class="info-card-header">
+                                    <i class="bi bi-briefcase"></i>
+                                    <h5>Professional Information</h5>
+                </div>
+                                <div class="info-card-body">
+                                    <!-- Qualifications Section -->
+                                    <div class="professional-grid">
+                                        <div class="info-item">
+                                            <div class="info-label">TSC Number</div>
+                                            <div class="info-value">
+                                                <i class="bi bi-card-heading me-2"></i>
+                                                {{ teacher.tsc_number }}
+        </div>
+    </div>
+
+                                        <div class="info-item">
+                                            <div class="info-label">Position</div>
+                                            <div class="info-value">
+                                                <i class="bi bi-person-workspace me-2"></i>
+                                                {{ teacher.get_position_display }}
+    </div>
+</div>
+
+                                        <div class="info-item">
+                                            <div class="info-label">Qualification</div>
+                                            <div class="info-value">
+                                                <span class="qualification-badge">
+                                                    <i class="bi bi-mortarboard me-2"></i>
+                                                    {{ teacher.get_qualifications_display }}
+                                                </span>
+            </div>
+                    </div>
+
+                                        <div class="info-item">
+                                            <div class="info-label">Date Joined</div>
+                                            <div class="info-value">
+                                                <i class="bi bi-calendar-check me-2"></i>
+                                                {{ teacher.date_joined|date:"F d, Y" }}
+                        </div>
+                        </div>
+                    </div>
+
+                                    <!-- Experience Box -->
+                                    <div class="experience-box">
+                                        <div class="row align-items-center">
+                                            <div class="col-auto">
+                                                <div class="experience-number">{{ teacher.years_of_experience }}</div>
+                                                <div class="experience-label">Years of Experience</div>
+                    </div>
+                                            {% if teacher.certificate %}
+                                            <div class="col text-end">
+                                                <a href="{{ teacher.certificate.url }}" class="certificate-link" target="_blank">
+                                                    <i class="bi bi-file-earmark-pdf"></i>
+                                                    View Certificate
+                                                </a>
+                </div>
+                                            {% endif %}
+                </div>
+        </div>
+
+                                    <!-- Teaching Subjects -->
+                                    <div class="mt-4">
+                                        <div class="info-label mb-3">Teaching Subjects</div>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            {% for subject in teacher.subjects.all %}
+                                            <span class="subject-badge">
+                                                <i class="bi bi-book"></i>
+                                                {{ subject.name }}
+                                            </span>
+                                            {% empty %}
+                                            <span class="text-muted fst-italic">No subjects assigned</span>
+                                            {% endfor %}
+    </div>
+</div>
+
+                                    <!-- Class Teacher Information -->
+                                    {% if teacher.is_class_teacher %}
+                                    <div class="mt-4">
+                                        <div class="info-label">Class Teacher Of</div>
+                                        <div class="info-value">
+                                            <span class="badge-status active">
+                                                <i class="bi bi-mortarboard-fill me-2"></i>
+                                                {{ teacher.grade.get_name_display }}
+                                            </span>
+    </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Tab -->
+                        <div class="tab-pane fade" id="schedule">
+                            <div class="schedule-card">
+                                {% if teacher.schedules.exists %}
+        <div class="table-responsive">
+                                        <table class="schedule-table">
+                <thead>
+                    <tr>
+                                                    <th>Day</th>
+                                                    <th>Time</th>
+                                                    <th>Subject</th>
+                                                    <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                                {% for schedule in teacher.schedules.all %}
+                    <tr>
+                        <td>
+                                                        <strong>{{ schedule.get_day_display }}</strong>
+                        </td>
+                        <td>
+                                                        <span class="time-slot">
+                                                            <i class="bi bi-clock"></i>
+                                                            {{ schedule.start_time|time:"g:i A" }} - {{ schedule.end_time|time:"g:i A" }}
+                                                        </span>
+                        </td>
+                        <td>
+                                                        <div class="subject-cell">
+                                                            <div class="subject-icon">
+                                                                <i class="bi bi-book"></i>
+                                                            </div>
+                                                            {{ schedule.subject.name }}
+                                                        </div>
+                        </td>
+                                                    <td>
+                                                        <span class="grade-badge">
+                                                            <i class="bi bi-mortarboard me-2"></i>
+                                                            {{ schedule.grade.get_name_display }}
+                                                        </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                                        {% if request.user.is_superuser %}
+                                        <div class="text-end mt-3">
+                                            <a href="{% url 'schedule_create' teacher.id %}" class="btn btn-primary">
+                                                <i class="bi bi-plus-circle me-2"></i>Add More Schedule
+                                            </a>
+        </div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="empty-schedule">
+                                        <i class="bi bi-calendar2-x"></i>
+                                        <p>No schedule available at the moment</p>
+                                        {% if request.user.is_superuser %}
+                                        <a href="{% url 'schedule_create' teacher.id %}" class="btn btn-primary mt-3">
+                                            <i class="bi bi-plus-circle me-2"></i>Add Schedule
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+    </div>
+</div>
+
+                        <!-- Leave History Tab -->
+                        <div class="tab-pane fade" id="leaves">
+                            <!-- Add Apply for Leave Button -->
+                            <div class="d-flex justify-content-end mb-4">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#applyLeaveModal">
+                                    <i class="bi bi-plus-lg me-2"></i>Apply for Leave
+                                </button>
+                            </div>
+
+                            {% if teacher.leaves.exists %}
+                                <div class="timeline">
+                                    {% for leave in teacher.leaves.all %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-date">
+                                            {{ leave.start_date|date:"F d, Y" }} - {{ leave.end_date|date:"F d, Y" }}
+        </div>
+                                        <div class="timeline-content">
+                                            <h6 class="mb-2">{{ leave.get_leave_type_display }}</h6>
+                                            <span class="status-badge {% if leave.status == 'APPROVED' %}approved{% elif leave.status == 'REJECTED' %}rejected{% else %}pending{% endif %}">
+                                                {{ leave.get_status_display }}
+                                            </span>
+                                            {% if leave.reason %}
+                                                <p class="mt-2 mb-0">{{ leave.reason }}</p>
+                                            {% endif %}
+    </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="bi bi-calendar2-x display-4 text-muted"></i>
+                                    <p class="text-muted mt-3">No leave history available</p>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Salary & Payments Tab -->
+                        <div class="tab-pane fade" id="salary">
+                            {% include 'schools/hr/includes/teacher_salary_tab.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Apply Leave Modal -->
+<div class="modal fade" id="applyLeaveModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar2-plus me-2"></i>Apply for Leave
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'leave_request' teacher.id %}" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Leave Type</label>
+                        <select name="leave_type" class="form-select" required>
+                            <option value="">Select Leave Type</option>
+                            <option value="ANNUAL">Annual Leave</option>
+                            <option value="SICK">Sick Leave</option>
+                            <option value="MATERNITY">Maternity Leave</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">End Date</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason</label>
+                        <textarea name="reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+{% endblock %} 

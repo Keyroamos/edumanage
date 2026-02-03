@@ -1,0 +1,1967 @@
+{% load school_filters %}
+
+<!-- Add CSRF token at the top of the file -->
+{% csrf_token %}
+
+<!-- Add these CSS links in the head section or your base template -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+
+<!-- Add these script tags before your existing script -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+
+<!-- Attendance Tab -->
+<div class="tab-pane fade" id="attendance">
+    <!-- Attendance Overview Cards -->
+    <div class="row g-4 mb-4">
+        <!-- Present Days Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="attendance-card present">
+                <div class="attendance-icon">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+                <div class="attendance-info">
+                    <span class="label">Present Days</span>
+                    <h2 class="value">{{ attendance_stats.present_count }}</h2>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ attendance_stats.present_percentage }}%">
+                        </div>
+                    </div>
+                    <span class="percentage">{{ attendance_stats.present_percentage|floatformat:1 }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Absent Days Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="attendance-card absent">
+                <div class="attendance-icon">
+                    <i class="bi bi-person-x-fill"></i>
+                </div>
+                <div class="attendance-info">
+                    <span class="label">Absent Days</span>
+                    <h2 class="value">{{ attendance_stats.absent_count }}</h2>
+                    <div class="progress">
+                        <div class="progress-bar bg-danger" 
+                             style="width: {{ attendance_stats.absent_percentage }}%">
+                        </div>
+                    </div>
+                    <span class="percentage">{{ attendance_stats.absent_percentage|floatformat:1 }}%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Rate Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="attendance-card rate">
+                <div class="attendance-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div class="attendance-info">
+                    <span class="label">Attendance Rate</span>
+                    <h2 class="value">{{ attendance_stats.attendance_rate }}%</h2>
+                    <div class="progress">
+                        <div class="progress-bar bg-primary" 
+                             style="width: {{ attendance_stats.attendance_rate }}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Days Card -->
+        <div class="col-xl-3 col-md-6">
+            <div class="attendance-card total">
+                <div class="attendance-icon">
+                    <i class="bi bi-calendar-check-fill"></i>
+                </div>
+                <div class="attendance-info">
+                    <span class="label">Total School Days</span>
+                    <h2 class="value">{{ attendance_stats.total_days }}</h2>
+                    <small class="text-muted">Current Term</small>
+                </div>
+                </div>
+            </div>
+        </div>
+
+    <!-- Modern Attendance Marking Section -->
+    <div class="section-card-modern fade-in-up mb-4">
+        <div class="section-header-modern">
+            <h2 class="section-title-modern">
+                <i class="bi bi-calendar-check-fill"></i>
+                Mark Today's Attendance
+            </h2>
+            <div class="current-date-modern">
+                <i class="bi bi-calendar3"></i>
+                <span>{{ today|date:"l, F d, Y" }}</span>
+            </div>
+        </div>
+        {% if user|can_mark_attendance:student.grade or user.is_superuser %}
+        <div class="attendance-marking-section">
+            {% with today_attendance=attendance_records|first %}
+            {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}
+                <div class="attendance-already-marked">
+                    <div class="marked-status-badge {{ today_attendance.status|lower }}">
+                        <i class="bi {% if today_attendance.status == 'PRESENT' %}bi-check-circle-fill
+                                   {% elif today_attendance.status == 'ABSENT' %}bi-x-circle-fill
+                                   {% elif today_attendance.status == 'LATE' %}bi-clock-fill
+                                   {% else %}bi-dash-circle-fill{% endif %}"></i>
+                        <div>
+                            <div class="marked-label">Already Marked</div>
+                            <div class="marked-status">{{ today_attendance.get_status_display }}</div>
+                        </div>
+                    </div>
+                    <p class="marked-message">Attendance for today has already been recorded. You can update it by selecting a different status below.</p>
+                </div>
+            {% else %}
+                <p class="marking-prompt">Select the attendance status for today:</p>
+            {% endif %}
+            <div class="attendance-buttons-grid">
+                <button type="button" 
+                        class="btn-attendance-modern present {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'PRESENT' %}active{% endif %}"
+                        onclick="{% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}showAlreadyMarkedMessage('{{ today_attendance.get_status_display }}'){% else %}markAttendance('PRESENT'){% endif %}"
+                        {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'PRESENT' %}disabled{% endif %}>
+                    <div class="btn-icon-wrapper present">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="btn-content">
+                        <div class="btn-label">Present</div>
+                        <div class="btn-subtitle">Student is in class</div>
+                    </div>
+                </button>
+                <button type="button" 
+                        class="btn-attendance-modern absent {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'ABSENT' %}active{% endif %}"
+                        onclick="{% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}showAlreadyMarkedMessage('{{ today_attendance.get_status_display }}'){% else %}markAttendance('ABSENT'){% endif %}"
+                        {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'ABSENT' %}disabled{% endif %}>
+                    <div class="btn-icon-wrapper absent">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <div class="btn-content">
+                        <div class="btn-label">Absent</div>
+                        <div class="btn-subtitle">Student is not present</div>
+                    </div>
+                </button>
+                <button type="button" 
+                        class="btn-attendance-modern late {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'LATE' %}active{% endif %}"
+                        onclick="{% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}showAlreadyMarkedMessage('{{ today_attendance.get_status_display }}'){% else %}markAttendance('LATE'){% endif %}"
+                        {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'LATE' %}disabled{% endif %}>
+                    <div class="btn-icon-wrapper late">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
+                    <div class="btn-content">
+                        <div class="btn-label">Late</div>
+                        <div class="btn-subtitle">Student arrived late</div>
+                    </div>
+                </button>
+            </div>
+            {% endwith %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="row g-4">
+        <!-- Calendar Section -->
+        <div class="col-lg-8">
+            <div class="section-card-modern fade-in-up">
+                <div class="section-header-modern">
+                    <h2 class="section-title-modern">
+                        <i class="bi bi-calendar3-fill"></i>
+                        Attendance Calendar
+                    </h2>
+                    <div class="calendar-controls">
+                        <select class="form-select-modern" id="monthFilter">
+                            {% for month in months %}
+                                <option value="{{ month.value }}" 
+                                        {% if current_month == month.value %}selected{% endif %}>
+                                    {{ month.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="calendar-nav-buttons">
+                            <button class="btn-nav" id="prevMonth" title="Previous Month">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn-nav" id="nextMonth" title="Next Month">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="calendar-container">
+                    <div id="attendanceCalendar"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Records Section -->
+        <div class="col-lg-4">
+            <div class="section-card-modern fade-in-up">
+                <div class="section-header-modern">
+                    <h2 class="section-title-modern">
+                        <i class="bi bi-clock-history"></i>
+                        Recent Records
+                    </h2>
+                </div>
+                <div class="records-container">
+                    <div class="attendance-list-modern">
+                        {% for record in attendance_records|slice:":7" %}
+                        <div class="record-item-modern">
+                            <div class="record-date-modern">
+                                <div class="record-day">{{ record.date|date:"d" }}</div>
+                                <div class="record-month">{{ record.date|date:"M" }}</div>
+                            </div>
+                            <div class="record-info-modern">
+                                <div class="record-status-badge {{ record.status|lower }}">
+                                    <i class="bi {% if record.status == 'PRESENT' %}bi-check-circle-fill
+                                               {% elif record.status == 'ABSENT' %}bi-x-circle-fill
+                                               {% elif record.status == 'LATE' %}bi-clock-fill
+                                               {% else %}bi-dash-circle-fill{% endif %}"></i>
+                                    <span>{{ record.get_status_display }}</span>
+                                </div>
+                                <div class="record-meta">
+                                    <i class="bi bi-person"></i>
+                                    <span>{{ record.recorded_by.get_full_name }}</span>
+                                </div>
+                                {% if record.remarks %}
+                                <div class="record-remarks">
+                                    <i class="bi bi-chat-left-text"></i>
+                                    <span>{{ record.remarks }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="empty-records">
+                            <i class="bi bi-inbox"></i>
+                            <p>No attendance records yet</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --warning-gradient: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --surface: #f8fafc;
+    --surface-elevated: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+}
+
+/* Modern Attendance Marking Section */
+.attendance-marking-section {
+    padding-top: 1rem;
+}
+
+.marking-prompt {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.attendance-already-marked {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #667eea;
+}
+
+.marked-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.marked-status-badge i {
+    font-size: 2rem;
+}
+
+.marked-status-badge.present i {
+    color: #10b981;
+}
+
+.marked-status-badge.absent i {
+    color: #ef4444;
+}
+
+.marked-status-badge.late i {
+    color: #f59e0b;
+}
+
+.marked-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.marked-status {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.marked-message {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.attendance-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+}
+
+.btn-attendance-modern {
+    background: var(--surface-elevated);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-attendance-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-gradient);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.btn-attendance-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+}
+
+.btn-attendance-modern:hover::before {
+    transform: scaleX(1);
+}
+
+.btn-attendance-modern.present:hover {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(56, 239, 125, 0.05));
+    border-color: #10b981;
+}
+
+.btn-attendance-modern.present:hover::before {
+    background: var(--success-gradient);
+}
+
+.btn-attendance-modern.absent:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(244, 92, 67, 0.05));
+    border-color: #ef4444;
+}
+
+.btn-attendance-modern.absent:hover::before {
+    background: var(--danger-gradient);
+}
+
+.btn-attendance-modern.late:hover {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(251, 191, 36, 0.05));
+    border-color: #f59e0b;
+}
+
+.btn-attendance-modern.late:hover::before {
+    background: var(--warning-gradient);
+}
+
+.btn-attendance-modern.active {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border-color: #667eea;
+}
+
+.btn-attendance-modern.active::before {
+    transform: scaleX(1);
+    background: var(--primary-gradient);
+}
+
+.btn-attendance-modern.present.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 239, 125, 0.1));
+    border-color: #10b981;
+}
+
+.btn-attendance-modern.present.active::before {
+    background: var(--success-gradient);
+}
+
+.btn-attendance-modern.absent.active {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(244, 92, 67, 0.1));
+    border-color: #ef4444;
+}
+
+.btn-attendance-modern.absent.active::before {
+    background: var(--danger-gradient);
+}
+
+.btn-attendance-modern.late.active {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+    border-color: #f59e0b;
+}
+
+.btn-attendance-modern.late.active::before {
+    background: var(--warning-gradient);
+}
+
+.btn-attendance-modern:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    flex-shrink: 0;
+}
+
+.btn-icon-wrapper.present {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.btn-icon-wrapper.absent {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.btn-icon-wrapper.late {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.btn-content {
+    flex: 1;
+}
+
+.btn-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.btn-subtitle {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.current-date-modern {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* Modern Calendar Styles */
+.calendar-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-select-modern {
+    padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 140px;
+}
+
+.form-select-modern:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.calendar-nav-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-nav {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-nav:hover {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.calendar-container {
+    padding-top: 1rem;
+}
+
+#attendanceCalendar {
+    min-height: 600px;
+    font-family: inherit;
+}
+
+/* Modern FullCalendar Styling */
+.fc {
+    background: transparent;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: var(--border-color);
+}
+
+.fc .fc-daygrid-day-frame {
+    padding: 8px;
+    min-height: 100px;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    padding: 6px 8px;
+    font-weight: 500;
+}
+
+.fc .fc-day-today {
+    background: rgba(102, 126, 234, 0.05) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+    font-weight: 600;
+}
+
+.fc-event {
+    border: none !important;
+    background: none !important;
+    padding: 2px 4px;
+    margin: 2px 0;
+}
+
+.fc-event-main-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: white;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-left: 3px solid;
+}
+
+.fc-event.status-present .fc-event-main-content {
+    border-left-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.fc-event.status-absent .fc-event-main-content {
+    border-left-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.fc-event.status-late .fc-event-main-content {
+    border-left-color: #f59e0b;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.fc-day-past {
+    background-color: var(--surface);
+}
+
+.fc-day:hover {
+    background: rgba(102, 126, 234, 0.02) !important;
+}
+
+/* Modern Records List */
+.records-container {
+    padding-top: 1rem;
+}
+
+.attendance-list-modern {
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.attendance-list-modern::-webkit-scrollbar {
+    width: 6px;
+}
+
+.attendance-list-modern::-webkit-scrollbar-track {
+    background: var(--surface);
+    border-radius: 10px;
+}
+
+.attendance-list-modern::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
+
+.attendance-list-modern::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+.record-item-modern {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 0.75rem;
+    background: var(--surface);
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.record-item-modern:hover {
+    background: var(--surface-elevated);
+    border-color: var(--border-color);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm);
+}
+
+.record-date-modern {
+    text-align: center;
+    min-width: 50px;
+    padding: 0.5rem;
+    background: var(--surface-elevated);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.record-day {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.record-month {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.record-info-modern {
+    flex: 1;
+}
+
+.record-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.record-status-badge.present {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.record-status-badge.absent {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.record-status-badge.late {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.record-status-badge i {
+    font-size: 1rem;
+}
+
+.record-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.record-meta i {
+    font-size: 0.875rem;
+}
+
+.record-remarks {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--border-color);
+}
+
+.record-remarks i {
+    font-size: 0.875rem;
+    margin-top: 0.125rem;
+    flex-shrink: 0;
+}
+
+.empty-records {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+
+.empty-records i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-records p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .attendance-buttons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .calendar-controls {
+        flex-wrap: wrap;
+    }
+    
+    #attendanceCalendar {
+        min-height: 400px !important;
+    }
+    
+    .record-item-modern {
+        flex-direction: column;
+    }
+    
+    .record-date-modern {
+        align-self: flex-start;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to mark attendance
+    function markAttendance(status) {
+        const studentId = '{{ student.id }}';
+        const date = new Date().toISOString().split('T')[0];
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Show loading state
+        const statusBox = document.querySelector('.attendance-marking-section');
+        if (statusBox) statusBox.classList.add('loading');
+
+        fetch('/record-attendance/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                status: status,
+                date: date
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Attendance Recorded',
+                    text: `Marked as ${status.toLowerCase()} successfully!`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to record attendance',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong while recording attendance',
+                confirmButtonText: 'OK'
+            });
+        })
+        .finally(() => {
+            if (statusBox) statusBox.classList.remove('loading');
+        });
+    }
+
+    window.markAttendance = markAttendance;
+
+    // Initialize calendar
+    const calendarEl = document.getElementById('attendanceCalendar');
+    if (calendarEl) {
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: false,
+            height: 'auto',
+            initialDate: new Date(new Date().getFullYear(), {{ current_month }} - 1, 1),
+            events: '/student/{{ student.id }}/attendance-events/',
+            eventContent: function(arg) {
+                return {
+                    html: `
+                        <div class="fc-content">
+                            <div class="attendance-dot ${arg.event.extendedProps.status.toLowerCase()}"></div>
+                            <div class="fc-title">${arg.event.title}</div>
+                        </div>
+                    `
+                };
+            },
+            eventDidMount: function(info) {
+                new bootstrap.Tooltip(info.el, {
+                    title: `
+                        Status: ${info.event.title}<br>
+                        Recorded by: ${info.event.extendedProps.recordedBy}
+                    `,
+                    html: true,
+                    placement: 'top',
+                    container: 'body'
+                });
+            }
+        });
+        calendar.render();
+
+        document.getElementById('prevMonth')?.addEventListener('click', () => {
+            calendar.prev();
+            updateMonthFilter(calendar.getDate());
+        });
+
+        document.getElementById('nextMonth')?.addEventListener('click', () => {
+            calendar.next();
+            updateMonthFilter(calendar.getDate());
+        });
+
+        document.getElementById('monthFilter')?.addEventListener('change', function() {
+            const selectedMonth = parseInt(this.value) - 1;
+            const currentDate = calendar.getDate();
+            const newDate = new Date(currentDate.getFullYear(), selectedMonth, 1);
+            calendar.gotoDate(newDate);
+        });
+
+        function updateMonthFilter(date) {
+            const monthSelect = document.getElementById('monthFilter');
+            if (monthSelect) {
+                monthSelect.value = date.getMonth() + 1;
+            }
+        }
+
+        const currentDate = calendar.getDate();
+        updateMonthFilter(currentDate);
+    }
+});
+
+function showAlreadyMarkedMessage(status) {
+    Swal.fire({
+        icon: 'info',
+        title: 'Already Marked',
+        text: `Attendance already marked as ${status.toLowerCase()} for today`,
+        showConfirmButton: false,
+        timer: 2000,
+        position: 'top-end',
+        toast: true
+    });
+}
+</script>
+    font-size: 0.8rem;
+    color: #495057;
+}
+
+/* Card Variants */
+.attendance-card.present .attendance-icon {
+    color: #198754;
+}
+
+.attendance-card.absent .attendance-icon {
+    color: #dc3545;
+}
+
+.attendance-card.rate .attendance-icon {
+    color: #0d6efd;
+}
+
+.attendance-card.total .attendance-icon {
+    color: #6610f2;
+}
+
+/* Panel Styling */
+.attendance-panel {
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    height: 100%;
+}
+
+.panel-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-title {
+    margin: 0;
+    font-size: 1rem;
+    color: #344767;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.panel-body {
+    padding: 1rem;
+}
+
+/* Attendance List Styling */
+.attendance-list {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.attendance-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.attendance-date {
+    text-align: center;
+    min-width: 40px;
+}
+
+.attendance-date .day {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #344767;
+    display: block;
+}
+
+.attendance-date .month {
+    font-size: 0.7rem;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+.attendance-details {
+    flex: 1;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2rem;
+    font-size: 0.7rem;
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+
+.present-status {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.absent-status {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.attendance-remarks {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    padding-left: 0.4rem;
+    border-left: 2px solid #e9ecef;
+}
+
+/* Calendar Styles */
+.fc {
+    background: white;
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.fc-theme-standard td, .fc-theme-standard th {
+    border-color: #f1f5f9;
+}
+
+.fc .fc-daygrid-day-frame {
+    padding: 4px;
+    min-height: 100px;
+}
+
+.fc .fc-daygrid-day-number {
+    font-size: 0.875rem;
+    color: #64748b;
+    padding: 4px 8px;
+}
+
+/* Today Styling */
+.fc .fc-day-today {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.fc .fc-day-today .fc-daygrid-day-number {
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 4px;
+}
+
+/* Event Styling */
+.fc-event {
+    border: none !important;
+    background: none !important;
+    padding: 2px 4px;
+}
+
+.fc-event-main-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    font-size: 0.875rem;
+}
+
+/* Status Colors */
+.fc-event.status-present .fc-event-main-content {
+    border-left: 3px solid #059669;
+}
+
+.fc-event.status-absent .fc-event-main-content {
+    border-left: 3px solid #dc2626;
+}
+
+.fc-event.status-late .fc-event-main-content {
+    border-left: 3px solid #d97706;
+}
+
+/* Past Days */
+.fc-day-past {
+    background-color: #f8fafc;
+}
+
+/* Month Navigation */
+.panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#monthFilter {
+    min-width: 120px;
+}
+
+/* Attendance Details Modal */
+.attendance-details {
+    text-align: left;
+    padding: 1rem;
+}
+
+.detail-item {
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.detail-item i {
+    color: #6b7280;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .attendance-card {
+        padding: 0.75rem;
+    }
+    
+    .attendance-info .value {
+        font-size: 1.25rem;
+    }
+    
+    .attendance-icon {
+        font-size: 1.25rem;
+    }
+    
+    #attendanceCalendar {
+        height: 400px !important;
+    }
+}
+
+/* Grid Spacing Adjustment */
+.row.g-4 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+}
+
+/* Form Control Sizes */
+.form-select-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Action Card Styling */
+.attendance-card.action {
+    background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+    border: 1px solid rgba(13, 110, 253, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.attendance-card.action:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(13, 110, 253, 0.15);
+}
+
+.attendance-card.action .attendance-icon {
+    color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.1);
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+/* Pulse animation for the icon */
+.attendance-icon.pulse {
+    position: relative;
+}
+
+.attendance-icon.pulse::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    background-color: rgba(13, 110, 253, 0.2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+/* Today badge styling */
+.today-badge {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35rem 0.75rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.action-title {
+    color: #344767;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+/* Enhanced button styling */
+.btn-mark-attendance {
+    background: linear-gradient(145deg, #0d6efd, #0b5ed7);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-mark-attendance:hover {
+    background: linear-gradient(145deg, #0b5ed7, #0a58ca);
+    transform: translateY(-1px);
+    color: white;
+}
+
+.btn-mark-attendance:active {
+    transform: translateY(1px);
+}
+
+.btn-mark-attendance i {
+    transition: transform 0.3s ease;
+}
+
+.btn-mark-attendance:hover i.bi-arrow-right {
+    transform: translateX(3px);
+}
+
+.btn-mark-attendance:hover i.bi-plus-circle {
+    transform: rotate(90deg);
+}
+
+/* Add subtle hover effect to the entire card */
+.attendance-card.action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(13, 110, 253, 0.1) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: 0.75rem;
+}
+
+.attendance-card.action:hover::before {
+    opacity: 1;
+}
+
+/* Modal Styles */
+.modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #4b5563;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+/* Status Select Colors */
+.form-select option[value="PRESENT"] {
+    color: #059669;
+}
+
+.form-select option[value="ABSENT"] {
+    color: #dc2626;
+}
+
+.form-select option[value="LATE"] {
+    color: #d97706;
+}
+
+.form-select option[value="EXCUSED"] {
+    color: #2563eb;
+}
+
+/* Modal specific styles */
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 3.5rem);
+}
+
+.status-select option {
+    padding: 8px 12px;
+}
+
+.status-select option[value="PRESENT"] {
+    color: #198754;
+}
+
+.status-select option[value="ABSENT"] {
+    color: #dc3545;
+}
+
+.status-select option[value="LATE"] {
+    color: #ffc107;
+}
+
+.status-select option[value="EXCUSED"] {
+    color: #0dcaf0;
+}
+
+.form-label.required::after {
+    content: '*';
+    color: #dc3545;
+    margin-left: 4px;
+}
+
+.char-counter {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+/* Animation for modal */
+.modal.fade .modal-dialog {
+    transform: scale(0.8);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+/* Add these to your existing styles */
+.modal {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-backdrop {
+    opacity: 0.5;
+}
+
+/* Ensure modal appears above other elements */
+.modal {
+    z-index: 1050;
+}
+
+.modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 500px;
+}
+
+/* Fix for modal shifting page content */
+body.modal-open {
+    padding-right: 0 !important;
+    overflow: hidden;
+}
+
+/* Smooth modal animation */
+.modal.fade .modal-dialog {
+    transform: scale(0.8);
+    transition: transform 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1);
+}
+
+.attendance-status-box {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-width: 250px;
+}
+
+.attendance-status-box:hover {
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.status-indicator i {
+    font-size: 1.25rem;
+}
+
+.status-indicator.present {
+    color: #059669;
+}
+
+.status-indicator.absent {
+    color: #dc2626;
+}
+
+.status-indicator.late {
+    color: #d97706;
+}
+
+.status-indicator.excused {
+    color: #2563eb;
+}
+
+.status-indicator.pending {
+    color: #6b7280;
+}
+
+.status-indicator.pending i {
+    animation: pulse 2s infinite;
+}
+
+.current-date {
+    font-size: 0.875rem;
+    color: #6b7280;
+    padding-left: 1rem;
+    border-left: 2px solid #e5e7eb;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.6;
+    }
+}
+
+/* Add a subtle checkmark animation when marked */
+.status-indicator i {
+    transition: transform 0.3s ease;
+}
+
+.status-indicator.present i {
+    animation: checkmark 0.3s ease-out;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: scale(0);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.attendance-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-status {
+    border: none;
+    background: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    opacity: 1;
+}
+
+.btn-status:disabled {
+    opacity: 0.5;
+    cursor: pointer !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-status:disabled:hover {
+    opacity: 0.6;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.status-indicator.present {
+    background-color: var(--bs-success-bg-subtle);
+    color: var(--bs-success);
+}
+
+.status-indicator.absent {
+    background-color: var(--bs-danger-bg-subtle);
+    color: var(--bs-danger);
+}
+
+.status-indicator.late {
+    background-color: var(--bs-warning-bg-subtle);
+    color: var(--bs-warning);
+}
+
+/* Calendar Container */
+#attendanceCalendar {
+    min-height: 600px;
+    font-family: inherit;
+}
+
+/* Calendar Header */
+.fc-header-toolbar {
+    padding: 1rem !important;
+    margin-bottom: 0 !important;
+}
+
+/* Day Cells */
+.fc-daygrid-day {
+    transition: background-color 0.2s;
+}
+
+.fc-day-today {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.fc-day-future {
+    background: #ffffff;
+}
+
+.fc-day-past {
+    background: #f8fafc;
+}
+
+/* Event Styling */
+.fc-event {
+    margin: 2px 0;
+    transition: transform 0.2s;
+}
+
+.fc-event:hover {
+    transform: translateY(-1px);
+}
+
+.fc-event-main-content {
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Status-specific styling */
+.status-present .fc-event-main-content {
+    border-left: 3px solid #059669;
+}
+
+.status-absent .fc-event-main-content {
+    border-left: 3px solid #dc2626;
+}
+
+.status-late .fc-event-main-content {
+    border-left: 3px solid #d97706;
+}
+
+/* Event Details Modal */
+.attendance-popup {
+    border-radius: 12px;
+    padding: 0;
+}
+
+.attendance-details {
+    padding: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+}
+
+.detail-item i {
+    font-size: 1.25rem;
+    color: #6b7280;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+.remarks-text {
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    background: #f8fafc;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+/* Status Badge in Modal */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.present-status {
+    background-color: rgba(5, 150, 105, 0.1);
+    color: #059669;
+}
+
+.absent-status {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+}
+
+.late-status {
+    background-color: rgba(217, 119, 6, 0.1);
+    color: #d97706;
+}
+
+/* Calendar specific styles */
+.fc-daygrid-event {
+    white-space: nowrap;
+    border-radius: 3px;
+    font-size: 0.85em;
+    margin: 1px 2px 0;
+}
+
+.fc-event-main-content {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    font-size: 0.85em;
+}
+
+.status-present .fc-event-main-content {
+    background-color: var(--bs-success-bg-subtle);
+    color: var(--bs-success);
+    border-left: 3px solid var(--bs-success);
+}
+
+.status-absent .fc-event-main-content {
+    background-color: var(--bs-danger-bg-subtle);
+    color: var(--bs-danger);
+    border-left: 3px solid var(--bs-danger);
+}
+
+.status-late .fc-event-main-content {
+    background-color: var(--bs-warning-bg-subtle);
+    color: var(--bs-warning);
+    border-left: 3px solid var(--bs-warning);
+}
+
+/* Calendar container */
+#attendanceCalendar {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    min-height: 600px;
+    margin-top: 1rem;
+}
+
+.fc-day-today {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.fc-day:hover {
+    background: rgba(59, 130, 246, 0.02);
+}
+
+/* Calendar specific improvements */
+#attendanceCalendar {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    min-height: 600px;
+    margin-top: 1rem;
+}
+
+.fc-day-today {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.fc-day:hover {
+    background: rgba(59, 130, 246, 0.02);
+}
+
+/* Improve month filter dropdown appearance */
+#monthFilter {
+    min-width: 120px;
+}
+
+/* Make navigation buttons more visible */
+.btn-group .btn {
+    padding: 0.375rem 0.75rem;
+}
+
+.btn-group .btn i {
+    font-size: 0.875rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to mark attendance
+    function markAttendance(status) {
+        const studentId = '{{ student.id }}';
+        const date = new Date().toISOString().split('T')[0];
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+        // Show loading state
+        const statusBox = document.querySelector('.attendance-status-box');
+        statusBox.classList.add('loading');
+
+        fetch('/record-attendance/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                status: status,
+                date: date
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Attendance Recorded',
+                    text: `Marked as ${status.toLowerCase()} successfully!`,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    position: 'top-end',
+                    toast: true
+                }).then(() => {
+                    // Refresh the page after showing the message
+                    window.location.reload();
+                });
+            } else {
+                // Show error message
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to record attendance',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong while recording attendance',
+                confirmButtonText: 'OK'
+            });
+        })
+        .finally(() => {
+            statusBox.classList.remove('loading');
+        });
+    }
+
+    // Make markAttendance function globally available
+    window.markAttendance = markAttendance;
+
+    // Initialize calendar
+    const calendarEl = document.getElementById('attendanceCalendar');
+    if (calendarEl) {
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: false,
+            height: 'auto',
+            initialDate: new Date(new Date().getFullYear(), {{ current_month }} - 1, 1),
+            events: '/student/{{ student.id }}/attendance-events/',
+            eventContent: function(arg) {
+                return {
+                    html: `
+                        <div class="fc-content">
+                            <div class="attendance-dot ${arg.event.extendedProps.status.toLowerCase()}"></div>
+                            <div class="fc-title">${arg.event.title}</div>
+                        </div>
+                    `
+                };
+            },
+            eventDidMount: function(info) {
+                // Add tooltips to events
+                new bootstrap.Tooltip(info.el, {
+                    title: `
+                        Status: ${info.event.title}<br>
+                        Recorded by: ${info.event.extendedProps.recordedBy}
+                    `,
+                    html: true,
+                    placement: 'top',
+                    container: 'body'
+                });
+            }
+        });
+        calendar.render();
+
+        // Add month navigation functionality
+        document.getElementById('prevMonth')?.addEventListener('click', () => {
+            calendar.prev();
+            updateMonthFilter(calendar.getDate());
+        });
+
+        document.getElementById('nextMonth')?.addEventListener('click', () => {
+            calendar.next();
+            updateMonthFilter(calendar.getDate());
+        });
+
+        // Month filter change handler
+        document.getElementById('monthFilter')?.addEventListener('change', function() {
+            const selectedMonth = parseInt(this.value) - 1;
+            const currentDate = calendar.getDate();
+            const newDate = new Date(currentDate.getFullYear(), selectedMonth, 1);
+            calendar.gotoDate(newDate);
+        });
+
+        function updateMonthFilter(date) {
+            const monthSelect = document.getElementById('monthFilter');
+            if (monthSelect) {
+                monthSelect.value = date.getMonth() + 1;
+            }
+        }
+
+        // Add these lines to ensure month filter is initialized correctly
+        const currentDate = calendar.getDate();
+        updateMonthFilter(currentDate);
+    }
+});
+
+function showAlreadyMarkedMessage(status) {
+    Swal.fire({
+        icon: 'info',
+        title: 'Already Marked',
+        text: `Attendance already marked as ${status.toLowerCase()} for today`,
+        showConfirmButton: false,
+        timer: 2000,
+        position: 'top-end',
+        toast: true
+    });
+}
+</script> 

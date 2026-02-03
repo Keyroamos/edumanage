@@ -1,0 +1,436 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+
+{% block title %}Login - Bishop Dr Mando International School System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header styles */
+    .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        padding: 1rem 0;
+        transition: all 0.3s ease;
+    }
+
+    .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .site-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: 1.5rem;
+    }
+
+    .site-logo i {
+        font-size: 1.75rem;
+    }
+
+    .site-nav {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .nav-item {
+        text-decoration: none;
+        color: #4a5568;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .nav-item:hover {
+        color: var(--primary-color);
+    }
+
+    .nav-item::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+
+    .nav-item:hover::after {
+        width: 100%;
+    }
+
+    .header-cta {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border: 2px solid var(--primary-color);
+    }
+
+    .header-cta:hover {
+        background: transparent;
+        color: var(--primary-color);
+    }
+
+    .mobile-menu-btn {
+        display: none;
+        background: none;
+        border: none;
+        color: var(--primary-color);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .site-nav {
+            display: none;
+            position: fixed;
+            top: 72px;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 1rem;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .site-nav.active {
+            display: flex;
+        }
+
+        .mobile-menu-btn {
+            display: block;
+        }
+
+        .header-container {
+            padding: 0 1rem;
+        }
+    }
+
+    /* Existing login page styles */
+    .login-page {
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        padding-top: 80px; /* Add padding to account for fixed header */
+    }
+
+    .login-page::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('{% static "images/pattern.png" %}') repeat;
+        opacity: 0.1;
+    }
+
+    .login-container {
+        width: 100%;
+        max-width: 1000px;
+        margin: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .login-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    }
+
+    .login-header {
+        background: white;
+        padding: 2rem;
+        text-align: center;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .login-logo {
+        width: 80px;
+        height: 80px;
+        background: var(--primary-color);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 2.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .login-logo:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .login-form {
+        padding: 2rem;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    .form-floating > label {
+        padding-left: 1rem;
+    }
+
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        height: auto;
+        font-size: 1rem;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
+    }
+
+    .login-btn {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        border-radius: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+
+    .home-btn {
+        position: absolute;
+        top: 2rem;
+        left: 2rem;
+        background: white;
+        color: var(--primary-color);
+        padding: 0.75rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .home-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        color: var(--primary-color);
+    }
+
+    .login-footer {
+        text-align: center;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .social-auth {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .social-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        color: #6c757d;
+        border: 2px solid rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .social-btn:hover {
+        transform: translateY(-3px);
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .alert {
+        border: none;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    .login-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.logo-img {
+    width: 70px;
+    height: auto;
+}
+
+
+    @media (max-width: 768px) {
+        .login-container {
+            margin: 1rem;
+        }
+
+        .home-btn {
+            top: 1rem;
+            left: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<header class="site-header">
+    <div class="header-container">
+       
+     
+       
+        <button class="mobile-menu-btn">
+            <i class="bi bi-list"></i>
+        </button>
+    </div>
+</header>
+
+<div class="login-page">
+    <!-- Home Button -->
+   
+
+    <div class="login-container">
+        <div class="row">
+            <!-- Left Column - Login Form -->
+            <div class="col-lg-6">
+                <div class="login-card h-100">
+                    <div class="login-header">
+                        <div class="login-logo">
+                            <img src="{% static 'images/logo.png' %}" alt="BDMIS Logo" class="logo-img">
+                        </div>
+                        <h4 class="mb-0">Welcome Back</h4>
+                        <p class="text-muted">Sign in to continue to BDMIS</p>
+                    </div>
+                    
+
+                    <div class="login-form">
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+
+                        <form method="post" action="{% url 'login' %}" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+                                <label for="username">Username</label>
+                            </div>
+                            <div class="form-floating">
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                                <label for="password">Password</label>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="remember" name="remember">
+                                    <label class="form-check-label" for="remember">Remember me</label>
+                                </div>
+                                <a href="#" class="text-primary text-decoration-none">Forgot password?</a>
+                            </div>
+                            <button type="submit" class="btn btn-primary login-btn">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Login
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="login-footer">
+                        <p class="text-muted mb-2">Or login with</p>
+                        <div class="social-auth">
+                            <a href="#" class="social-btn">
+                                <i class="bi bi-google"></i>
+                            </a>
+                            <a href="#" class="social-btn">
+                                <i class="bi bi-microsoft"></i>
+                            </a>
+                            <a href="#" class="social-btn">
+                                <i class="bi bi-facebook"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Information -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="login-card h-100 d-flex flex-column">
+                    <div class="p-4 flex-grow-1 d-flex flex-column justify-content-center">
+                        <img src="{% static 'images/login-illustration.svg' %}" alt="Login" class="img-fluid mb-4">
+                        <h3 class="text-center mb-3">Manage Your School Efficiently</h3>
+                        <p class="text-muted text-center mb-4">
+                            Access all your school management tools in one place. Track student progress, 
+                            manage finances, and communicate with parents effectively.
+                        </p>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+});
+</script>
+{% endblock %} 

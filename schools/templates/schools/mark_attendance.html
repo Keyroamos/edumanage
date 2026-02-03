@@ -1,0 +1,814 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<style>
+    :root {
+        --primary: #4361ee;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --light: #f8fafc;
+        --dark: #1e293b;
+        --border: #e2e8f0;
+        --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    body {
+        background: var(--light);
+        font-size: 0.875rem;
+    }
+
+    .attendance-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, var(--primary) 0%, #3b82f6 100%);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        color: white;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .page-header .breadcrumb {
+        margin: 0.5rem 0 0 0;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+    }
+
+    .page-header .breadcrumb a {
+        color: white;
+        text-decoration: none;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 1rem;
+        border-left: 4px solid;
+    }
+
+    .stats-card.present { border-left-color: var(--success); }
+    .stats-card.absent { border-left-color: var(--danger); }
+    .stats-card.late { border-left-color: var(--warning); }
+    .stats-card.total { border-left-color: var(--info); }
+
+    .stats-card .label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stats-card .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin: 0.25rem 0;
+    }
+
+    .main-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+        .main-content {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .card-header-custom {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .card-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .date-selector {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .date-selector label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .date-selector input {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        width: auto;
+    }
+
+    .student-list {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .student-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .student-item:hover {
+        box-shadow: var(--shadow);
+        transform: translateY(-1px);
+    }
+
+    .student-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), #3b82f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+
+    .student-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .student-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .student-admission {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin: 0.125rem 0 0 0;
+    }
+
+    .attendance-select {
+        min-width: 120px;
+        font-size: 0.8125rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .attendance-select:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+    }
+
+    .attendance-select.present { border-color: var(--success); }
+    .attendance-select.absent { border-color: var(--danger); }
+    .attendance-select.late { border-color: var(--warning); }
+
+    .calendar-container {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid var(--border);
+    }
+
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.625rem 1.25rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #3b5fe6;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow);
+    }
+
+    .btn-success {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-outline {
+        background: white;
+        color: var(--primary);
+        border: 1px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    /* FullCalendar Customization */
+    .fc {
+        font-size: 0.8125rem;
+    }
+
+    .fc-toolbar-title {
+        font-size: 1.125rem !important;
+        font-weight: 600;
+    }
+
+    .fc-button {
+        font-size: 0.8125rem !important;
+        padding: 0.375rem 0.75rem !important;
+    }
+
+    .fc-daygrid-day {
+        font-size: 0.75rem;
+    }
+
+    .fc-event {
+        font-size: 0.75rem;
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+    }
+
+    .quick-action-btn {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .quick-action-btn:hover {
+        background: var(--light);
+        border-color: var(--primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    /* Scrollbar styling */
+    .student-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .student-list::-webkit-scrollbar-track {
+        background: var(--light);
+        border-radius: 3px;
+    }
+
+    .student-list::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+    }
+
+    .student-list::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="attendance-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>
+            <i class="bi bi-calendar-check me-2"></i>
+            Mark Attendance
+            {% if grade %}- {{ grade.name }}{% endif %}
+        </h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                {% if user.is_superuser %}
+                <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                {% elif user|is_teacher %}
+                    {% if user.teacher.is_class_teacher and user.teacher.grade %}
+                    <li class="breadcrumb-item"><a href="{% url 'class_students' user.teacher.grade.pk %}">My Class</a></li>
+                    {% else %}
+                    <li class="breadcrumb-item"><a href="{% url 'teacher_detail' user.teacher.pk %}">My Profile</a></li>
+                    {% endif %}
+                {% endif %}
+                {% if grade %}
+                <li class="breadcrumb-item"><a href="{% url 'class_students' grade.id %}">{{ grade.name }}</a></li>
+                {% endif %}
+                <li class="breadcrumb-item active">Attendance</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stats-card present">
+                <div class="label">Present</div>
+                <div class="value" id="statPresent">{{ present_count|default:0 }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card absent">
+                <div class="label">Absent</div>
+                <div class="value" id="statAbsent">{{ absent_count|default:0 }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card late">
+                <div class="label">Late</div>
+                <div class="value" id="statLate">{{ late_count|default:0 }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card total">
+                <div class="label">Total Students</div>
+                <div class="value" id="statTotal">{{ students|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Student List -->
+        <div class="content-card">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-people me-2"></i>
+                    Students List
+                </h5>
+            </div>
+
+            <div class="date-selector">
+                <label for="attendance-date">Select Date:</label>
+                <input type="date" id="attendance-date" class="form-control" 
+                       value="{{ selected_date|date:'Y-m-d' }}" 
+                       max="{{ today|date:'Y-m-d' }}">
+            </div>
+
+            {% if students %}
+            <div class="quick-actions">
+                <button type="button" class="quick-action-btn" data-action="all-present">
+                    <i class="bi bi-check-circle me-1"></i>Mark All Present
+                </button>
+                <button type="button" class="quick-action-btn" data-action="all-absent">
+                    <i class="bi bi-x-circle me-1"></i>Mark All Absent
+                </button>
+                <button type="button" class="quick-action-btn" data-action="clear-all">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Clear All
+                </button>
+            </div>
+
+            <div class="student-list">
+                <form id="attendance-form">
+                    {% csrf_token %}
+                    {% for student in students %}
+                    <div class="student-item" data-student-id="{{ student.id }}">
+                        <div class="student-avatar">
+                            {{ student.first_name|first }}{{ student.last_name|first }}
+                        </div>
+                        <div class="student-info">
+                            <div class="student-name">{{ student.get_full_name }}</div>
+                            <div class="student-admission">{{ student.admission_number }}</div>
+                        </div>
+                        <select name="status_{{ student.id }}" 
+                                class="attendance-select" 
+                                data-student-id="{{ student.id }}"
+                                data-default-status="{% if attendance_records|get_item:student.id %}{{ attendance_records|get_item:student.id.status }}{% else %}{% endif %}">
+                            <option value="">-- Select --</option>
+                            {% for value, label in attendance_choices %}
+                            <option value="{{ value }}" 
+                                    {% with att_record=attendance_records|get_item:student.id %}
+                                    {% if att_record and att_record.status == value %}selected{% endif %}
+                                    {% endwith %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="student_id_{{ student.id }}" value="{{ student.id }}">
+                    </div>
+                    {% endfor %}
+                </form>
+            </div>
+
+            <div class="action-buttons">
+                <button type="button" class="btn btn-primary" id="save-attendance">
+                    <i class="bi bi-save me-2"></i>Save Attendance
+                </button>
+                <button type="button" class="btn btn-outline" id="reset-form">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Reset
+                </button>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-people"></i>
+                <p>No students found</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Calendar -->
+        <div class="calendar-container">
+            <div class="card-header-custom">
+                <h5 class="card-title">
+                    <i class="bi bi-calendar3 me-2"></i>
+                    Calendar View
+                </h5>
+            </div>
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('attendance-date');
+    const attendanceForm = document.getElementById('attendance-form');
+    const saveBtn = document.getElementById('save-attendance');
+    const resetBtn = document.getElementById('reset-form');
+    const quickActionBtns = document.querySelectorAll('.quick-action-btn');
+    
+    // Calendar initialization
+    const calendarEl = document.getElementById('calendar');
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 'auto',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listWeek'
+        },
+        events: {{ calendar_events|safe }},
+        eventClick: function(info) {
+            const date = info.event.startStr;
+            dateInput.value = date;
+            loadAttendanceForDate(date);
+        },
+        dateClick: function(info) {
+            const date = info.dateStr;
+            if (date <= '{{ today|date:"Y-m-d" }}') {
+                dateInput.value = date;
+                loadAttendanceForDate(date);
+            }
+        },
+        eventDisplay: 'block',
+        dayMaxEvents: 3,
+        moreLinkClick: 'popover'
+    });
+    calendar.render();
+
+    // Update statistics
+    function updateStatistics() {
+        const selects = document.querySelectorAll('.attendance-select');
+        let present = 0, absent = 0, late = 0;
+        const totalStudents = selects.length;
+        
+        selects.forEach(select => {
+            const value = select.value;
+            if (value === 'PRESENT') {
+                present++;
+            } else if (value === 'ABSENT') {
+                absent++;
+            } else if (value === 'LATE') {
+                late++;
+            }
+        });
+        
+        // Update statistics display
+        const statPresentEl = document.getElementById('statPresent');
+        const statAbsentEl = document.getElementById('statAbsent');
+        const statLateEl = document.getElementById('statLate');
+        const statTotalEl = document.getElementById('statTotal');
+        
+        if (statPresentEl) statPresentEl.textContent = present;
+        if (statAbsentEl) statAbsentEl.textContent = absent;
+        if (statLateEl) statLateEl.textContent = late;
+        if (statTotalEl) statTotalEl.textContent = totalStudents;
+    }
+
+    // Load attendance for a specific date
+    function loadAttendanceForDate(date) {
+        window.location.href = `?date=${date}{% if grade %}&grade_id={{ grade.id }}{% endif %}`;
+    }
+
+    // Date change handler
+    dateInput.addEventListener('change', function() {
+        const selectedDate = this.value;
+        if (selectedDate <= '{{ today|date:"Y-m-d" }}') {
+            loadAttendanceForDate(selectedDate);
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Invalid Date',
+                text: 'Cannot mark attendance for future dates',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            this.value = '{{ selected_date|date:"Y-m-d" }}';
+        }
+    });
+
+    // Quick actions
+    quickActionBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.dataset.action;
+            const selects = document.querySelectorAll('.attendance-select');
+            
+            selects.forEach(select => {
+                if (action === 'all-present') {
+                    select.value = 'PRESENT';
+                } else if (action === 'all-absent') {
+                    select.value = 'ABSENT';
+                } else if (action === 'clear-all') {
+                    select.value = '';
+                }
+                select.classList.remove('present', 'absent', 'late');
+                if (select.value) {
+                    select.classList.add(select.value.toLowerCase());
+                }
+            });
+            
+            updateStatistics();
+        });
+    });
+
+    // Status change handler - initialize selects and set up event listeners
+    document.querySelectorAll('.attendance-select').forEach(select => {
+        const defaultStatus = select.dataset.defaultStatus;
+        
+        // Ensure the select value is set from saved attendance (template sets selected attribute)
+        // The value should already be set by the template, but we ensure it's correct
+        if (select.value) {
+            select.classList.add(select.value.toLowerCase());
+        } else if (defaultStatus) {
+            // If no value but we have a default status, use it
+            select.value = defaultStatus;
+            select.classList.add(defaultStatus.toLowerCase());
+        }
+        
+        select.addEventListener('change', function() {
+            this.classList.remove('present', 'absent', 'late');
+            if (this.value) {
+                this.classList.add(this.value.toLowerCase());
+            }
+            updateStatistics();
+        });
+    });
+    
+    // Initialize statistics after all selects are set up
+    // Use setTimeout to ensure DOM is fully ready and all values are set
+    setTimeout(function() {
+        updateStatistics();
+    }, 100);
+
+    // Save attendance
+    saveBtn.addEventListener('click', function() {
+        const date = dateInput.value;
+        if (!date) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please select a date'
+            });
+            return;
+        }
+
+        const students = [];
+        document.querySelectorAll('.student-item').forEach(item => {
+            const studentId = item.dataset.studentId;
+            const select = item.querySelector('.attendance-select');
+            const status = select.value;
+            
+            if (status) {
+                students.push({
+                    student_id: studentId,
+                    status: status,
+                    remarks: ''
+                });
+            }
+        });
+
+        if (students.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Attendance Selected',
+                text: 'Please mark attendance for at least one student'
+            });
+            return;
+        }
+
+        // Show loading
+        Swal.fire({
+            title: 'Saving...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Get CSRF token - try multiple methods
+        let csrfToken = null;
+        const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (tokenInput) {
+            csrfToken = tokenInput.value;
+        } else {
+            // Try to get from cookies
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    csrfToken = value;
+                    break;
+                }
+            }
+        }
+        
+        if (!csrfToken) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Security token not found. Please refresh the page and try again.'
+            });
+            return;
+        }
+
+        // Send request
+        const url = '{% if grade %}{% url "mark_attendance_grade" grade_id=grade.id %}{% elif students %}{% url "mark_attendance_student" student_id=students.0.id %}{% else %}{% url "mark_attendance" %}{% endif %}';
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                students: students,
+                date: date
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.close();
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message || 'Attendance saved successfully',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    // Reload the page with the same date to show updated attendance records
+                    const currentDate = dateInput.value;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    urlParams.set('date', currentDate);
+                    {% if grade %}
+                    urlParams.set('grade_id', '{{ grade.id }}');
+                    {% endif %}
+                    window.location.href = window.location.pathname + '?' + urlParams.toString();
+                });
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || data.error || 'Failed to save attendance'
+                });
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to save attendance. Please check your connection and try again.'
+            });
+        });
+    });
+
+    // Reset form
+    resetBtn.addEventListener('click', function() {
+        document.querySelectorAll('.attendance-select').forEach(select => {
+            const defaultStatus = select.dataset.defaultStatus || '';
+            select.value = defaultStatus;
+            select.classList.remove('present', 'absent', 'late');
+            if (defaultStatus) {
+                select.classList.add(defaultStatus.toLowerCase());
+            }
+        });
+        updateStatistics();
+    });
+
+    // Final initialization of statistics - ensure all saved attendance is reflected
+    // This runs after all event listeners are set up
+    setTimeout(function() {
+        // Re-read all select values to ensure statistics are accurate
+        document.querySelectorAll('.attendance-select').forEach(select => {
+            // Ensure visual class matches the selected value
+            const value = select.value;
+            select.classList.remove('present', 'absent', 'late');
+            if (value) {
+                select.classList.add(value.toLowerCase());
+            }
+        });
+        updateStatistics();
+    }, 200);
+});
+</script>
+{% endblock %}

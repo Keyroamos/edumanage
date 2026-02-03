@@ -1,0 +1,395 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block extra_css %}
+<style>
+    .recipient-option {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .recipient-option:hover {
+        border-color: var(--primary-color);
+        background-color: #f8f9fa;
+    }
+    
+    .recipient-option.active {
+        border-color: var(--primary-color);
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+    
+    .recipient-option input[type="radio"] {
+        margin-right: 0.5rem;
+    }
+    
+    .message-preview {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .char-count {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .char-count.warning {
+        color: #ffc107;
+    }
+    
+    .char-count.danger {
+        color: #dc3545;
+    }
+    
+    .info-badge {
+        display: inline-block;
+        background-color: #e7f3ff;
+        color: #0066cc;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        margin-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="card bg-primary-subtle border-0 mb-4">
+        <div class="card-body py-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="mb-1 text-primary">
+                        <i class="bi bi-chat-dots me-2"></i>Send SMS Message
+                    </h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'sms_list' %}" class="text-decoration-none">SMS Messages</a></li>
+                            <li class="breadcrumb-item active">Send SMS</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <a href="{% url 'sms_list' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to SMS List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="post" id="smsForm">
+                {% csrf_token %}
+                
+                <!-- Recipient Selection Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-people me-2 text-primary"></i>Select Recipients
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Who should receive this SMS?</label>
+                            <div id="recipientOptions">
+                                <div class="recipient-option" data-value="ALL_STUDENTS">
+                                    <input type="radio" name="recipient_type" value="ALL_STUDENTS" id="id_recipient_type_0" required>
+                                    <label for="id_recipient_type_0" class="mb-0">
+                                        <strong>All Students (Parents)</strong>
+                                        <span class="info-badge">All parents/guardians</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="recipient-option" data-value="GRADE">
+                                    <input type="radio" name="recipient_type" value="GRADE" id="id_recipient_type_1">
+                                    <label for="id_recipient_type_1" class="mb-0">
+                                        <strong>Students of Specific Grade/Class</strong>
+                                    </label>
+                                    <div id="gradeField" style="display: none; margin-top: 0.75rem; margin-left: 1.75rem;">
+                                        <label for="{{ form.specific_grade.id_for_label }}" class="form-label">Select Grade/Class</label>
+                                        {% render_field form.specific_grade class="form-select" %}
+                                        {% if form.specific_grade.errors %}
+                                            <div class="text-danger small">{{ form.specific_grade.errors|join:", " }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="recipient-option" data-value="LOCATION_MAIN">
+                                    <input type="radio" name="recipient_type" value="LOCATION_MAIN" id="id_recipient_type_2">
+                                    <label for="id_recipient_type_2" class="mb-0">
+                                        <strong>Students of Main School</strong>
+                                    </label>
+                                </div>
+                                
+                                <div class="recipient-option" data-value="LOCATION_ANNEX">
+                                    <input type="radio" name="recipient_type" value="LOCATION_ANNEX" id="id_recipient_type_3">
+                                    <label for="id_recipient_type_3" class="mb-0">
+                                        <strong>Students of Annex School</strong>
+                                    </label>
+                                </div>
+                                
+                                <div class="recipient-option" data-value="FEES_REMINDER">
+                                    <input type="radio" name="recipient_type" value="FEES_REMINDER" id="id_recipient_type_4">
+                                    <label for="id_recipient_type_4" class="mb-0">
+                                        <strong>All Students with Fees Reminders</strong>
+                                        <span class="info-badge">Outstanding fees only</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="recipient-option" data-value="ALL_TEACHERS">
+                                    <input type="radio" name="recipient_type" value="ALL_TEACHERS" id="id_recipient_type_5">
+                                    <label for="id_recipient_type_5" class="mb-0">
+                                        <strong>All Teachers</strong>
+                                        <span class="info-badge">All active teachers</span>
+                                    </label>
+                                </div>
+                                
+                                <div class="recipient-option" data-value="INDIVIDUAL">
+                                    <input type="radio" name="recipient_type" value="INDIVIDUAL" id="id_recipient_type_6">
+                                    <label for="id_recipient_type_6" class="mb-0">
+                                        <strong>Individual Student</strong>
+                                    </label>
+                                    <div id="studentField" style="display: none; margin-top: 0.75rem; margin-left: 1.75rem;">
+                                        <label for="{{ form.specific_student.id_for_label }}" class="form-label">Select Student</label>
+                                        {% render_field form.specific_student class="form-select" %}
+                                        {% if form.specific_student.errors %}
+                                            <div class="text-danger small">{{ form.specific_student.errors|join:", " }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% if form.recipient_type.errors %}
+                                <div class="text-danger small mt-2">{{ form.recipient_type.errors|join:", " }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-chat-text me-2 text-success"></i>Message Content
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.message.id_for_label }}" class="form-label fw-bold">Message Text</label>
+                            {% render_field form.message class="form-control" %}
+                            {% if form.message.errors %}
+                                <div class="text-danger small mt-1">{{ form.message.errors|join:", " }}</div>
+                            {% endif %}
+                            <div class="char-count" id="charCount">
+                                <span id="charNum">0</span>/160 characters
+                                <span id="smsCount"> (1 SMS)</span>
+                            </div>
+                            <div class="message-preview" id="messagePreview" style="display: none;">
+                                <strong>Preview:</strong><br>
+                                <span id="previewText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Messages are sent via Africa's Talking SMS Gateway
+                            </small>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'sms_list' %}" class="btn btn-light">Cancel</a>
+                                <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                                    <i class="bi bi-send me-2"></i>Send SMS
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 bg-light sticky-top" style="top: 1rem;">
+                <div class="card-body">
+                    <h5 class="card-title d-flex align-items-center mb-4">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        SMS Guidelines
+                    </h5>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary mb-3">Message Tips</h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Keep messages concise (160 chars = 1 SMS)</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Use clear, simple language</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Include important details first</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Test with individual student first</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h6 class="fw-bold text-primary mb-3">Recipient Types</h6>
+                        <div class="small">
+                            <p class="mb-2"><strong>All Students:</strong> Sends to all parent/guardian phone numbers</p>
+                            <p class="mb-2"><strong>Grade/Class:</strong> Sends to specific class parents</p>
+                            <p class="mb-2"><strong>Location:</strong> Filter by Main or Annex school</p>
+                            <p class="mb-2"><strong>Fees Reminder:</strong> Only students with outstanding fees</p>
+                            <p class="mb-2"><strong>Teachers:</strong> All active teaching staff</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('smsForm');
+    const messageField = document.getElementById('id_message');
+    const charNum = document.getElementById('charNum');
+    const smsCount = document.getElementById('smsCount');
+    const charCount = document.getElementById('charCount');
+    const messagePreview = document.getElementById('messagePreview');
+    const previewText = document.getElementById('previewText');
+    const submitBtn = document.getElementById('submitBtn');
+    const gradeField = document.getElementById('gradeField');
+    const studentField = document.getElementById('studentField');
+    const recipientOptions = document.querySelectorAll('.recipient-option');
+    const radioButtons = document.querySelectorAll('input[name="recipient_type"]');
+    
+    // Recipient option selection styling
+    recipientOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            const radio = this.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                updateRecipientFields();
+            }
+        });
+    });
+    
+    radioButtons.forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateRecipientFields();
+        });
+    });
+    
+    function updateRecipientFields() {
+        const selected = document.querySelector('input[name="recipient_type"]:checked');
+        if (!selected) return;
+        
+        const value = selected.value;
+        
+        // Update active styling
+        recipientOptions.forEach(opt => {
+            opt.classList.remove('active');
+            if (opt.dataset.value === value) {
+                opt.classList.add('active');
+            }
+        });
+        
+        // Show/hide dependent fields
+        if (value === 'GRADE') {
+            gradeField.style.display = 'block';
+            studentField.style.display = 'none';
+            document.getElementById('id_specific_grade').required = true;
+            document.getElementById('id_specific_student').required = false;
+        } else if (value === 'INDIVIDUAL') {
+            gradeField.style.display = 'none';
+            studentField.style.display = 'block';
+            document.getElementById('id_specific_grade').required = false;
+            document.getElementById('id_specific_student').required = true;
+        } else {
+            gradeField.style.display = 'none';
+            studentField.style.display = 'none';
+            document.getElementById('id_specific_grade').required = false;
+            document.getElementById('id_specific_student').required = false;
+        }
+    }
+    
+    // Character count and SMS calculation
+    function updateCharCount() {
+        const text = messageField.value;
+        const length = text.length;
+        const smsNumber = Math.ceil(length / 160);
+        
+        charNum.textContent = length;
+        smsCount.textContent = ` (${smsNumber} SMS${smsNumber > 1 ? 'es' : ''})`;
+        
+        // Update preview
+        if (text.trim()) {
+            previewText.textContent = text;
+            messagePreview.style.display = 'block';
+        } else {
+            messagePreview.style.display = 'none';
+        }
+        
+        // Update styling
+        charCount.classList.remove('warning', 'danger');
+        if (length > 160) {
+            charCount.classList.add('danger');
+        } else if (length > 140) {
+            charCount.classList.add('warning');
+        }
+    }
+    
+    messageField.addEventListener('input', updateCharCount);
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        const selected = document.querySelector('input[name="recipient_type"]:checked');
+        if (!selected) {
+            e.preventDefault();
+            alert('Please select a recipient type');
+            return false;
+        }
+        
+        if (selected.value === 'GRADE' && !document.getElementById('id_specific_grade').value) {
+            e.preventDefault();
+            alert('Please select a grade/class');
+            return false;
+        }
+        
+        if (selected.value === 'INDIVIDUAL' && !document.getElementById('id_specific_student').value) {
+            e.preventDefault();
+            alert('Please select a student');
+            return false;
+        }
+        
+        if (!messageField.value.trim()) {
+            e.preventDefault();
+            alert('Please enter a message');
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    });
+    
+    // Initialize
+    updateCharCount();
+    updateRecipientFields();
+});
+</script>
+{% endblock %}
+{% endblock %}

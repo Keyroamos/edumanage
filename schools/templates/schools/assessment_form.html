@@ -1,0 +1,102 @@
+{% extends 'schools/base.html' %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Record Assessment</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Assessment Details -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Student *</label>
+                                {% render_field assessment_form.student class="form-select" %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Assessment Type *</label>
+                                {% render_field assessment_form.assessment_type class="form-select" %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date *</label>
+                                {% render_field assessment_form.date class="form-control" %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Term *</label>
+                                {% render_field assessment_form.term class="form-select" %}
+                            </div>
+                        </div>
+
+                        <!-- Subject Results -->
+                        {{ result_formset.management_form }}
+                        <div id="subject-results">
+                            {% for form in result_formset %}
+                            <div class="subject-result border rounded p-3 mb-3">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Subject *</label>
+                                        {% render_field form.subject class="form-select" %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Marks *</label>
+                                        {% render_field form.marks class="form-control" type="number" min="0" max="100" step="0.1" %}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Remarks</label>
+                                        {% render_field form.remarks class="form-control" %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <button type="button" id="add-subject" class="btn btn-outline-primary mb-3">
+                            <i class="bi bi-plus-lg me-2"></i>Add Subject
+                        </button>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>Save Assessment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addSubjectBtn = document.getElementById('add-subject');
+    const subjectResults = document.getElementById('subject-results');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    
+    addSubjectBtn.addEventListener('click', function() {
+        const forms = document.getElementsByClassName('subject-result');
+        const formNum = forms.length;
+        const newForm = forms[0].cloneNode(true);
+        
+        // Update form index
+        newForm.innerHTML = newForm.innerHTML.replace(/form-0/g, `form-${formNum}`);
+        newForm.innerHTML = newForm.innerHTML.replace(/form\[0\]/g, `form[${formNum}]`);
+        
+        // Clear values
+        newForm.querySelectorAll('input, select, textarea').forEach(input => {
+            input.value = '';
+        });
+        
+        subjectResults.appendChild(newForm);
+        totalForms.value = formNum + 1;
+    });
+});
+</script>
+{% endblock %} 

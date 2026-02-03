@@ -1,0 +1,240 @@
+<!-- Record Payment Modal -->
+{% load school_filters %}
+{% if user|is_accountant %}
+<div class="modal fade" id="recordPaymentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Record Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="recordPaymentForm" method="post" action="{% url 'record_payment' student_id=student.id %}">
+                {% csrf_token %}
+                {% if redirect_url %}
+                <input type="hidden" name="next" value="{{ redirect_url }}">
+                {% endif %}
+                <div class="modal-body">
+                    <input type="hidden" name="student_id" value="{{ student.pk }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="record_amount" class="form-label required">Amount (KES)</label>
+                            <input type="number" class="form-control" id="record_amount" name="amount" 
+                                   step="0.01" min="1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="payment_method" class="form-label required">Payment Method</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Select method...</option>
+                                <option value="CASH">Cash</option>
+                                <option value="MPESA">M-Pesa</option>
+                                <option value="BANK">Bank Transfer</option>
+                                <option value="CHEQUE">Cheque</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="record_term" class="form-label required">Term</label>
+                            <select class="form-select" id="record_term" name="term" required>
+                                <option value="1">Term 1</option>
+                                <option value="2">Term 2</option>
+                                <option value="3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="record_date" class="form-label required">Date</label>
+                            <input type="date" class="form-control" id="record_date" name="date" 
+                                   value="{% now 'Y-m-d' %}" required>
+                        </div>
+                    </div>
+                    <div id="mpesaDetails" class="mb-3 d-none">
+                        <label for="mpesa_phone" class="form-label required">M-Pesa Phone Number</label>
+                        <input type="text" class="form-control" id="mpesa_phone" name="phone" 
+                               placeholder="254712345678">
+                        <label for="mpesa_code" class="form-label required mt-2">M-Pesa Reference Number</label>
+                        <input type="text" class="form-control" id="mpesa_code" name="mpesa_reference_number" 
+                               placeholder="Enter M-Pesa reference number (transaction code)">
+                        <small class="form-text text-muted">This is the M-Pesa transaction code/reference number</small>
+                    </div>
+                    <div id="bankDetails" class="mb-3 d-none">
+                        <label for="bank_name" class="form-label required">Bank Name</label>
+                        <input type="text" class="form-control" id="bank_name" name="bank_name">
+                        <label for="transaction_id" class="form-label required mt-2">Bank Reference Number</label>
+                        <input type="text" class="form-control" id="transaction_id" name="bank_reference_number" 
+                               placeholder="Enter bank transaction reference number">
+                        <small class="form-text text-muted">This is the bank transaction reference number</small>
+                    </div>
+                    <div id="chequeDetails" class="mb-3 d-none">
+                        <label for="cheque_number" class="form-label required">Cheque Number</label>
+                        <input type="text" class="form-control" id="cheque_number" name="cheque_reference_number" 
+                               placeholder="Enter cheque number">
+                        <label for="cheque_bank" class="form-label required mt-2">Bank Name</label>
+                        <input type="text" class="form-control" id="cheque_bank" name="bank_name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" 
+                                rows="2" placeholder="Add any additional notes"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Save Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Shared payment method toggle script - only load once
+if (!window.paymentMethodToggleInitialized) {
+    window.paymentMethodToggleInitialized = true;
+    
+    // Use event delegation on the modal to handle payment method changes
+    document.addEventListener('DOMContentLoaded', function() {
+        const recordPaymentModal = document.getElementById('recordPaymentModal');
+        
+        if (recordPaymentModal) {
+            // Use event delegation - listen for changes on the modal
+            recordPaymentModal.addEventListener('change', function(e) {
+                if (e.target && e.target.id === 'payment_method') {
+                    const selectedMethod = e.target.value;
+                    
+                    // Get all detail sections
+                    const mpesaDetails = document.getElementById('mpesaDetails');
+                    const bankDetails = document.getElementById('bankDetails');
+                    const chequeDetails = document.getElementById('chequeDetails');
+                    
+                    // Get all input fields
+                    const mpesaPhone = document.getElementById('mpesa_phone');
+                    const mpesaCode = document.getElementById('mpesa_code');
+                    const bankName = document.getElementById('bank_name');
+                    const transactionId = document.getElementById('transaction_id');
+                    const chequeNumber = document.getElementById('cheque_number');
+                    const chequeBank = document.getElementById('cheque_bank');
+                    
+                    // Hide all details sections first
+                    if (mpesaDetails) mpesaDetails.classList.add('d-none');
+                    if (bankDetails) bankDetails.classList.add('d-none');
+                    if (chequeDetails) chequeDetails.classList.add('d-none');
+                    
+                    // Remove required attributes from all fields
+                    if (mpesaPhone) mpesaPhone.removeAttribute('required');
+                    if (mpesaCode) mpesaCode.removeAttribute('required');
+                    if (bankName) bankName.removeAttribute('required');
+                    if (transactionId) transactionId.removeAttribute('required');
+                    if (chequeNumber) chequeNumber.removeAttribute('required');
+                    if (chequeBank) chequeBank.removeAttribute('required');
+                    
+                    // Show relevant section and add required attributes based on payment method
+                    switch(selectedMethod) {
+                        case 'MPESA':
+                            if (mpesaDetails) {
+                                mpesaDetails.classList.remove('d-none');
+                            }
+                            if (mpesaPhone) mpesaPhone.setAttribute('required', 'required');
+                            if (mpesaCode) mpesaCode.setAttribute('required', 'required');
+                            break;
+                        case 'BANK':
+                            if (bankDetails) {
+                                bankDetails.classList.remove('d-none');
+                            }
+                            if (transactionId) transactionId.setAttribute('required', 'required');
+                            break;
+                        case 'CHEQUE':
+                            if (chequeDetails) {
+                                chequeDetails.classList.remove('d-none');
+                            }
+                            if (chequeNumber) chequeNumber.setAttribute('required', 'required');
+                            break;
+                        case 'CASH':
+                            // Cash doesn't need any additional fields
+                            break;
+                    }
+                }
+            });
+            
+            // Form validation before submission
+            const recordPaymentForm = document.getElementById('recordPaymentForm');
+            if (recordPaymentForm) {
+                recordPaymentForm.addEventListener('submit', function(e) {
+                    const paymentMethod = document.getElementById('payment_method');
+                    const selectedMethod = paymentMethod ? paymentMethod.value : '';
+                    
+                    // Validate based on payment method
+                    if (selectedMethod === 'MPESA') {
+                        const mpesaPhone = document.getElementById('mpesa_phone');
+                        const mpesaCode = document.getElementById('mpesa_code');
+                        
+                        if (!mpesaPhone || !mpesaPhone.value || !mpesaPhone.value.trim()) {
+                            e.preventDefault();
+                            alert('M-Pesa phone number is required.');
+                            if (mpesaPhone) mpesaPhone.focus();
+                            return false;
+                        }
+                        
+                        if (!mpesaPhone.value.startsWith('254')) {
+                            e.preventDefault();
+                            alert('M-Pesa phone number must start with 254.');
+                            if (mpesaPhone) mpesaPhone.focus();
+                            return false;
+                        }
+                        
+                        if (!mpesaCode || !mpesaCode.value || !mpesaCode.value.trim()) {
+                            e.preventDefault();
+                            alert('M-Pesa reference number is required.');
+                            if (mpesaCode) mpesaCode.focus();
+                            return false;
+                        }
+                    } else if (selectedMethod === 'BANK') {
+                        const transactionId = document.getElementById('transaction_id');
+                        
+                        if (!transactionId || !transactionId.value || !transactionId.value.trim()) {
+                            e.preventDefault();
+                            alert('Bank transaction reference number is required.');
+                            if (transactionId) transactionId.focus();
+                            return false;
+                        }
+                    } else if (selectedMethod === 'CHEQUE') {
+                        const chequeNumber = document.getElementById('cheque_number');
+                        
+                        if (!chequeNumber || !chequeNumber.value || !chequeNumber.value.trim()) {
+                            e.preventDefault();
+                            alert('Cheque number is required.');
+                            if (chequeNumber) chequeNumber.focus();
+                            return false;
+                        }
+                    }
+                });
+                
+                // Reset form when modal is closed
+                recordPaymentModal.addEventListener('hidden.bs.modal', function() {
+                    recordPaymentForm.reset();
+                    // Hide all details sections
+                    const mpesaDetails = document.getElementById('mpesaDetails');
+                    const bankDetails = document.getElementById('bankDetails');
+                    const chequeDetails = document.getElementById('chequeDetails');
+                    if (mpesaDetails) mpesaDetails.classList.add('d-none');
+                    if (bankDetails) bankDetails.classList.add('d-none');
+                    if (chequeDetails) chequeDetails.classList.add('d-none');
+                    // Remove all required attributes
+                    const mpesaPhone = document.getElementById('mpesa_phone');
+                    const mpesaCode = document.getElementById('mpesa_code');
+                    const transactionId = document.getElementById('transaction_id');
+                    const chequeNumber = document.getElementById('cheque_number');
+                    if (mpesaPhone) mpesaPhone.removeAttribute('required');
+                    if (mpesaCode) mpesaCode.removeAttribute('required');
+                    if (transactionId) transactionId.removeAttribute('required');
+                    if (chequeNumber) chequeNumber.removeAttribute('required');
+                    // Reset payment method selection
+                    const paymentMethod = document.getElementById('payment_method');
+                    if (paymentMethod) paymentMethod.value = '';
+                });
+            }
+        }
+    });
+}
+</script>
+{% endif %}
+

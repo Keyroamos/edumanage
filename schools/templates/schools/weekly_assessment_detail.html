@@ -1,0 +1,452 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_extras %}
+{% load school_filters %}
+
+{% block title %}Weekly Assessment Details{% endblock %}
+
+{% block content %}
+<style>
+  /* Weekly Assessment Detail Styles */
+  .weekly-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
+  }
+  
+  .week-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    backdrop-filter: blur(10px);
+  }
+  
+  .performance-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    border: none;
+    margin-bottom: 2rem;
+    overflow: hidden;
+  }
+  
+  .performance-header {
+    background: linear-gradient(90deg, #ffc107 80%, #ff8f00 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .performance-icon {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+  
+  .performance-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+  }
+  
+  .stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+  }
+  
+  .stat-item:hover {
+    border-color: #ffc107;
+    transform: translateY(-2px);
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffc107;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .subject-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid #ffc107;
+    transition: all 0.3s ease;
+  }
+  
+  .subject-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.2);
+  }
+  
+  .subject-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  
+  .subject-name {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+  }
+  
+  .marks-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .marks-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: white;
+  }
+  
+  .marks-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #495057;
+  }
+  
+  .performance-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+  
+  .remarks-box {
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .remarks-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+  }
+  
+  .weekly-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    gap: 1rem;
+  }
+  
+  .weekly-actions .btn {
+    border-radius: 2rem;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+    transition: all 0.2s;
+  }
+  
+  .weekly-actions .btn-primary {
+    background: linear-gradient(90deg, #ffc107 80%, #ff8f00 100%);
+    border: none;
+  }
+  
+  .weekly-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+  }
+  
+  .weekly-actions .btn-outline-secondary {
+    border: 2px solid #ffc107;
+    color: #ffc107;
+    background: #fff;
+  }
+  
+  .weekly-actions .btn-outline-secondary:hover {
+    background: #ffc107;
+    color: #fff;
+  }
+  
+  .weekly-actions .btn-outline-danger {
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    background: #fff;
+  }
+  
+  .weekly-actions .btn-outline-danger:hover {
+    background: #dc3545;
+    color: #fff;
+  }
+  
+  @media (max-width: 768px) {
+    .performance-stats {
+      grid-template-columns: 1fr;
+    }
+    
+    .subject-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .weekly-actions {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <!-- Weekly Assessment Header -->
+            <div class="weekly-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-2">
+                            <i class="bi bi-calendar-week me-3"></i>Weekly Assessment Details
+                        </h3>
+                        <p class="mb-0 opacity-75">{{ student.get_full_name }} - Week {{ week_number }}</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="week-badge">
+                            <i class="bi bi-calendar-week"></i>
+                            Week {{ week_number }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Overview Card -->
+            <div class="performance-card">
+                <div class="performance-header">
+                    <div class="performance-icon">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">Weekly Performance Overview</h5>
+                        <p class="mb-0 opacity-75">{{ assessment.date|date:"F d, Y" }} - Term {{ assessment.term }}</p>
+                    </div>
+                </div>
+                <div class="performance-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ average_score|floatformat:1 }}</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ total_subjects }}</div>
+                        <div class="stat-label">Subjects Assessed</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ assessment.date|date:"M d" }}</div>
+                        <div class="stat-label">Assessment Date</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ week_number }}</div>
+                        <div class="stat-label">Week Number</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Overall Performance -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-2">Overall Performance</h6>
+                            <span class="badge bg-{{ overall_color }}-soft text-{{ overall_color }} fs-6">
+                                {{ overall_performance }}
+                            </span>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-{{ overall_color }}" 
+                                     style="width: {{ average_score|multiply:10 }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ average_score|floatformat:1 }}/10 ({{ average_score|multiply:10|floatformat:1 }}%)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Performance -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-book me-2 text-primary"></i>Subject Performance
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="subject-grid">
+                        {% for stat in subject_stats %}
+                        <div class="subject-card">
+                            <div class="subject-header">
+                                <h6 class="subject-name">{{ stat.subject.name }}</h6>
+                                <span class="performance-badge bg-{{ stat.performance_color }}-soft text-{{ stat.performance_color }}">
+                                    {% if stat.performance_level == 4 %}
+                                        <i class="bi bi-star-fill me-1"></i>Exceeding
+                                    {% elif stat.performance_level == 3 %}
+                                        <i class="bi bi-star-half me-1"></i>Meeting
+                                    {% elif stat.performance_level == 2 %}
+                                        <i class="bi bi-arrow-up me-1"></i>Approaching
+                                    {% else %}
+                                        <i class="bi bi-arrow-down me-1"></i>Below
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="marks-display">
+                                <div class="marks-circle bg-{{ stat.performance_color }}">
+                                    {{ stat.marks|floatformat:1 }}
+                                </div>
+                                <div>
+                                    <div class="marks-text">{{ stat.marks|floatformat:1 }}/10</div>
+                                    <small class="text-muted">Marks out of 10</small>
+                                </div>
+                            </div>
+                            
+                            {% if stat.remarks %}
+                            <div class="remarks-box">
+                                <div class="remarks-label">Teacher Remarks</div>
+                                <p class="mb-0 text-muted">{{ stat.remarks }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Remarks -->
+            {% if assessment.remarks %}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-chat-quote me-2 text-info"></i>Overall Remarks
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ assessment.remarks }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="weekly-actions">
+                <div class="d-flex gap-2">
+                    <a href="{% url 'student_detail' student.id %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Student
+                    </a>
+                    <a href="{% url 'weekly_assessment_record' student.id %}?assessment_id={{ assessment.id }}" 
+                       class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Edit Assessment
+                    </a>
+                </div>
+                
+                {% if user|is_class_teacher and user.teacher.grade == student.grade or user.is_superuser %}
+                <button type="button" 
+                        class="btn btn-outline-danger" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteWeeklyAssessmentModal"
+                        data-assessment-id="{{ assessment.id }}"
+                        data-assessment-date="{{ assessment.date|date:'M d, Y' }}">
+                    <i class="bi bi-trash me-2"></i>Delete Assessment
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Weekly Assessment Modal -->
+<div class="modal fade" id="deleteWeeklyAssessmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-confirm">
+        <div class="modal-content">
+            <div class="modal-header flex-column border-0">
+                <div class="icon-box bg-danger mb-3">
+                    <i class="bi bi-trash"></i>
+                </div>
+                <h5 class="modal-title mb-2">Delete Weekly Assessment</h5>
+                <p class="text-muted mb-0" id="deleteWeeklyAssessmentModalMessage"></p>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted">This action cannot be undone and will permanently delete the weekly assessment.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>Cancel
+                </button>
+                <form id="deleteWeeklyAssessmentForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle weekly assessment delete modal
+    const deleteWeeklyAssessmentModal = document.getElementById('deleteWeeklyAssessmentModal');
+    if (deleteWeeklyAssessmentModal) {
+        deleteWeeklyAssessmentModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const assessmentId = button.getAttribute('data-assessment-id');
+            const assessmentDate = button.getAttribute('data-assessment-date');
+            
+            const modalMessage = document.getElementById('deleteWeeklyAssessmentModalMessage');
+            modalMessage.textContent = `Are you sure you want to delete the weekly assessment from ${assessmentDate}?`;
+            
+            const deleteForm = document.getElementById('deleteWeeklyAssessmentForm');
+            deleteForm.action = `/assessments/${assessmentId}/delete/`;
+        });
+    }
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,303 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ page_title }}</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Display all form errors prominently at the top -->
+                    {% if form.errors %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>Please correct the following errors:
+                        </h5>
+                        <hr>
+                        {% if form.non_field_errors %}
+                            <div class="mb-2">
+                                <strong>General Errors:</strong>
+                                <ul class="mb-0">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <div class="mb-2">
+                                    <strong>{{ field.label }}:</strong>
+                                    <ul class="mb-0">
+                                        {% for error in field.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Django Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Student Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Student *</label>
+                            {{ form.student }}
+                            {% if form.student.errors %}
+                                <div class="text-danger">{{ form.student.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Meal Selection -->
+                        <div class="mb-3">
+                            <label class="form-label">Meals *</label>
+                            {% for checkbox in form.meals %}
+                            <div class="form-check">
+                                {{ checkbox.tag }}
+                                <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                    {{ checkbox.choice_label }}
+                                    {% if checkbox.choice_value == 'TEA_BREAK' and meal_pricing.TEA_BREAK %}
+                                        <small class="text-muted">(KES {{ meal_pricing.TEA_BREAK }}/day)</small>
+                                    {% elif checkbox.choice_value == 'LUNCH' and meal_pricing.LUNCH %}
+                                        <small class="text-muted">(KES {{ meal_pricing.LUNCH }}/day)</small>
+                                    {% elif checkbox.choice_value == 'FRUITS' and meal_pricing.FRUITS %}
+                                        <small class="text-muted">(KES {{ meal_pricing.FRUITS }}/day)</small>
+                                    {% endif %}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if form.meals.errors %}
+                                <div class="text-danger">{{ form.meals.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Payment Frequency and Days -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Frequency *</label>
+                                {{ form.payment_frequency }}
+                                {% if form.payment_frequency.errors %}
+                                    <div class="text-danger">{{ form.payment_frequency.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Number of Days *</label>
+                                {{ form.number_of_days }}
+                                {% if form.number_of_days.errors %}
+                                    <div class="text-danger">{{ form.number_of_days.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Amount -->
+                        <div class="mb-3">
+                            <label class="form-label">Total Payment Amount (KES) *</label>
+                            {{ form.amount }}
+                            <small class="form-text text-muted">Total amount for all selected meals</small>
+                            {% if form.amount.errors %}
+                                <div class="text-danger">{{ form.amount.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Payment Details -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Method *</label>
+                                {{ form.payment_method }}
+                                {% if form.payment_method.errors %}
+                                    <div class="text-danger">{{ form.payment_method.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                {{ form.phone_number }}
+                                <small class="form-text text-muted">Required for M-Pesa payments</small>
+                                {% if form.phone_number.errors %}
+                                    <div class="text-danger">{{ form.phone_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Dates -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Payment Date *</label>
+                                {{ form.payment_date }}
+                                {% if form.payment_date.errors %}
+                                    <div class="text-danger">{{ form.payment_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Start Date *</label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger">{{ form.start_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">End Date</label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <div class="text-danger">{{ form.end_date.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Additional Info -->
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Location</label>
+                                {{ form.location }}
+                                <small class="form-text text-muted">Auto-filled from student's location</small>
+                                {% if form.location.errors %}
+                                    <div class="text-danger">{{ form.location.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Transaction ID</label>
+                                {{ form.transaction_id }}
+                                {% if form.transaction_id.errors %}
+                                    <div class="text-danger">{{ form.transaction_id.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Status *</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'meal_payment_list' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Save Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-calculate amount based on selected meals and days
+    // Auto-populate location from student
+    document.addEventListener('DOMContentLoaded', function() {
+        const mealCheckboxes = document.querySelectorAll('input[type="checkbox"][name="meals"]');
+        const daysInput = document.getElementById('id_number_of_days');
+        const amountInput = document.getElementById('id_amount');
+        const studentSelect = document.getElementById('id_student');
+        const locationSelect = document.getElementById('id_location');
+        const mealPricing = {{ meal_pricing_json|safe }};
+
+        // Student location data - we'll fetch it when student is selected
+        let studentLocationMap = {};
+
+        // Fetch student location when student is selected
+        if (studentSelect && locationSelect) {
+            // Function to update location from student
+            function updateLocationFromStudent() {
+                const studentId = studentSelect.value;
+                if (!studentId) {
+                    locationSelect.value = '';
+                    return;
+                }
+                
+                if (studentLocationMap[studentId]) {
+                    locationSelect.value = studentLocationMap[studentId];
+                } else {
+                    // Fetch student location via AJAX
+                    fetch(`{% url 'get_student_location' student_id=0 %}`.replace('0', studentId))
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Failed to fetch student location');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data && data.location) {
+                                locationSelect.value = data.location;
+                                studentLocationMap[studentId] = data.location;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching student location:', error);
+                            // Set default to MAIN if fetch fails
+                            locationSelect.value = 'MAIN';
+                        });
+                }
+            }
+
+            // Update location when student changes
+            studentSelect.addEventListener('change', updateLocationFromStudent);
+            
+            // Update location on page load if student is already selected
+            if (studentSelect.value) {
+                updateLocationFromStudent();
+            }
+        }
+
+        function calculateAmount() {
+            let total = 0;
+            const days = parseInt(daysInput.value) || 0;
+            
+            mealCheckboxes.forEach(checkbox => {
+                if (checkbox.checked && mealPricing[checkbox.value]) {
+                    total += mealPricing[checkbox.value] * days;
+                }
+            });
+            
+            if (total > 0) {
+                amountInput.value = total.toFixed(2);
+            } else {
+                amountInput.value = '';
+            }
+        }
+
+        if (mealCheckboxes.length > 0 && daysInput && amountInput) {
+            mealCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', calculateAmount);
+            });
+            
+            if (daysInput) {
+                daysInput.addEventListener('input', calculateAmount);
+            }
+        }
+    });
+</script>
+{% endblock %}
+

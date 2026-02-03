@@ -1,0 +1,679 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .vehicle-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        padding: 2.5rem;
+        color: white;
+        box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+    .vehicle-hero:after {
+        content: "";
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+    }
+    .vehicle-hero:before {
+        content: "";
+        position: absolute;
+        bottom: -60px;
+        left: -60px;
+        width: 250px;
+        height: 250px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 50%;
+    }
+    .vehicle-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        background: rgba(255,255,255,0.2);
+        margin-right: 1.5rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid #f0f0f0;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .stat-icon.primary {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        color: #667eea;
+    }
+    .stat-icon.success {
+        background: linear-gradient(135deg, rgba(17, 153, 142, 0.1), rgba(56, 239, 125, 0.1));
+        color: #11998e;
+    }
+    .stat-icon.warning {
+        background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(245, 87, 108, 0.1));
+        color: #f093fb;
+    }
+    .stat-icon.info {
+        background: linear-gradient(135deg, rgba(52, 148, 230, 0.1), rgba(236, 110, 173, 0.1));
+        color: #3494E6;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin: 0.5rem 0 0 0;
+    }
+    .info-section {
+        background: white;
+        border-radius: 18px;
+        padding: 2rem;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        margin-bottom: 2rem;
+    }
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 1rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    .info-item-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    .info-item-icon.primary {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        color: #667eea;
+    }
+    .info-item-content {
+        flex: 1;
+    }
+    .info-item-label {
+        font-size: 0.85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+    .info-item-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin: 0;
+    }
+    .vehicle-type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .status-badge.active {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+    }
+    .status-badge.maintenance {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+    }
+    .status-badge.inactive {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        color: #383d41;
+    }
+    .student-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid #667eea;
+    }
+    .student-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        border-left-color: #764ba2;
+    }
+    .student-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin-right: 1rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 3rem 2rem;
+        color: #6c757d;
+    }
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    .action-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        border: 1px solid #f0f0f0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+    .btn-action {
+        border-radius: 12px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+    .capacity-bar {
+        height: 8px;
+        border-radius: 10px;
+        background: #e9ecef;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    .capacity-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.3s ease;
+    }
+    .capacity-fill.low {
+        background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+    }
+    .capacity-fill.medium {
+        background: linear-gradient(90deg, #ffc107 0%, #ff9800 100%);
+    }
+    .capacity-fill.high {
+        background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    }
+    .capacity-fill.full {
+        background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);
+    }
+    .driver-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+    .driver-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin-right: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">Vehicle Details</h1>
+            <p class="text-muted mb-0">Comprehensive information about {{ vehicle.vehicle_number }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'vehicle_edit' pk=vehicle.pk %}" class="btn btn-primary">
+                <i class="bi bi-pencil me-2"></i>Edit Vehicle
+            </a>
+            <a href="{% url 'vehicle_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="vehicle-hero">
+        <div class="row g-4 align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="vehicle-icon-large">
+                        {% if vehicle.vehicle_type == 'BUS' %}
+                            <i class="bi bi-bus-front"></i>
+                        {% elif vehicle.vehicle_type == 'VAN' %}
+                            <i class="bi bi-truck"></i>
+                        {% elif vehicle.vehicle_type == 'MINIBUS' %}
+                            <i class="bi bi-bus-front-fill"></i>
+                        {% else %}
+                            <i class="bi bi-car-front"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h2 class="mb-1" style="font-size: 2rem; font-weight: 700;">{{ vehicle.vehicle_number }}</h2>
+                        <p class="mb-0 text-white-50">
+                            {% if vehicle.make and vehicle.model %}
+                                {{ vehicle.make }} {{ vehicle.model }}
+                            {% endif %}
+                            {% if vehicle.year %}
+                                <span class="ms-2">• {{ vehicle.year }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="vehicle-type-badge">
+                        <i class="bi bi-{% if vehicle.vehicle_type == 'BUS' %}bus-front{% elif vehicle.vehicle_type == 'VAN' %}truck{% elif vehicle.vehicle_type == 'MINIBUS' %}bus-front-fill{% else %}car-front{% endif %}"></i>
+                        {{ vehicle.get_vehicle_type_display }}
+                    </span>
+                    {% if vehicle.status == 'ACTIVE' %}
+                    <span class="status-badge active" style="background: rgba(255,255,255,0.2); color: white;">
+                        <i class="bi bi-check-circle"></i>
+                        Active
+                    </span>
+                    {% elif vehicle.status == 'MAINTENANCE' %}
+                    <span class="status-badge maintenance" style="background: rgba(255,255,255,0.2); color: white;">
+                        <i class="bi bi-tools"></i>
+                        Under Maintenance
+                    </span>
+                    {% else %}
+                    <span class="status-badge inactive" style="background: rgba(255,255,255,0.2); color: white;">
+                        <i class="bi bi-x-circle"></i>
+                        Inactive
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="text-center text-lg-end">
+                    <p class="mb-2 text-white-50 text-uppercase small">Capacity</p>
+                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: 700;">
+                        {{ vehicle.get_current_students_count }}/{{ vehicle.capacity }}
+                    </h2>
+                    <p class="mb-0 text-white-50 mt-2">Students</p>
+                    <div class="mt-3">
+                        <div class="capacity-bar" style="background: rgba(255,255,255,0.2);">
+                            {% with current=vehicle.get_current_students_count capacity=vehicle.capacity %}
+                                {% widthratio current capacity 100 as percentage %}
+                                <div class="capacity-fill {% if percentage < 50 %}low{% elif percentage < 75 %}medium{% elif percentage < 100 %}high{% else %}full{% endif %}" style="width: {{ percentage }}%;"></div>
+                            {% endwith %}
+                        </div>
+                        <small class="text-white-50 mt-2 d-block">
+                            {{ vehicle.get_available_seats }} seat{{ vehicle.get_available_seats|pluralize }} available
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon primary">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h3 class="stat-value">{{ vehicle.get_current_students_count }}</h3>
+                <p class="stat-label">Current Students</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon success">
+                    <i class="bi bi-person-check"></i>
+                </div>
+                <h3 class="stat-value">{{ vehicle.get_available_seats }}</h3>
+                <p class="stat-label">Available Seats</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon info">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <h3 class="stat-value">{{ vehicle.capacity }}</h3>
+                <p class="stat-label">Total Capacity</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon warning">
+                    <i class="bi bi-percent"></i>
+                </div>
+                <h3 class="stat-value">
+                    {% with current=vehicle.get_current_students_count capacity=vehicle.capacity %}
+                        {% widthratio current capacity 100 %}%
+                    {% endwith %}
+                </h3>
+                <p class="stat-label">Occupancy Rate</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Vehicle Information -->
+        <div class="col-lg-8">
+            <div class="info-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="mb-0 fw-semibold">Vehicle Information</h5>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-item-icon primary">
+                        <i class="bi bi-upc-scan"></i>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Vehicle Number</div>
+                        <p class="info-item-value">{{ vehicle.vehicle_number }}</p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-item-icon primary">
+                        <i class="bi bi-{% if vehicle.vehicle_type == 'BUS' %}bus-front{% elif vehicle.vehicle_type == 'VAN' %}truck{% elif vehicle.vehicle_type == 'MINIBUS' %}bus-front-fill{% else %}car-front{% endif %}"></i>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Vehicle Type</div>
+                        <p class="info-item-value">
+                            <span class="vehicle-type-badge">
+                                <i class="bi bi-{% if vehicle.vehicle_type == 'BUS' %}bus-front{% elif vehicle.vehicle_type == 'VAN' %}truck{% elif vehicle.vehicle_type == 'MINIBUS' %}bus-front-fill{% else %}car-front{% endif %}"></i>
+                                {{ vehicle.get_vehicle_type_display }}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                
+                {% if vehicle.make or vehicle.model %}
+                <div class="info-item">
+                    <div class="info-item-icon primary">
+                        <i class="bi bi-gear"></i>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Make & Model</div>
+                        <p class="info-item-value">
+                            {% if vehicle.make %}{{ vehicle.make }}{% endif %}
+                            {% if vehicle.model %} {{ vehicle.model }}{% endif %}
+                            {% if not vehicle.make and not vehicle.model %}Not specified{% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if vehicle.year %}
+                <div class="info-item">
+                    <div class="info-item-icon primary">
+                        <i class="bi bi-calendar"></i>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Year</div>
+                        <p class="info-item-value">{{ vehicle.year }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="info-item">
+                    <div class="info-item-icon primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Capacity</div>
+                        <p class="info-item-value">
+                            {{ vehicle.capacity }} passenger{{ vehicle.capacity|pluralize }}
+                            <div class="capacity-bar mt-2">
+                                {% with current=vehicle.get_current_students_count capacity=vehicle.capacity %}
+                                    {% widthratio current capacity 100 as percentage %}
+                                    <div class="capacity-fill {% if percentage < 50 %}low{% elif percentage < 75 %}medium{% elif percentage < 100 %}high{% else %}full{% endif %}" style="width: {{ percentage }}%;"></div>
+                                {% endwith %}
+                            </div>
+                            <small class="text-muted">
+                                {{ vehicle.get_current_students_count }} of {{ vehicle.capacity }} seats occupied
+                            </small>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-item-icon primary">
+                        <i class="bi bi-toggle-on"></i>
+                    </div>
+                    <div class="info-item-content">
+                        <div class="info-item-label">Status</div>
+                        <p class="info-item-value">
+                            {% if vehicle.status == 'ACTIVE' %}
+                            <span class="status-badge active">
+                                <i class="bi bi-check-circle"></i>
+                                Active
+                            </span>
+                            {% elif vehicle.status == 'MAINTENANCE' %}
+                            <span class="status-badge maintenance">
+                                <i class="bi bi-tools"></i>
+                                Under Maintenance
+                            </span>
+                            {% else %}
+                            <span class="status-badge inactive">
+                                <i class="bi bi-x-circle"></i>
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assigned Students -->
+            <div class="info-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h5 class="mb-1 fw-semibold">Assigned Students</h5>
+                        <p class="text-muted small mb-0">{{ assignments.count }} active assignment{{ assignments.count|pluralize }}</p>
+                    </div>
+                    <a href="{% url 'transport_assignment_create' %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-person-plus me-2"></i>Assign Student
+                    </a>
+                </div>
+                
+                {% if assignments %}
+                    {% for assignment in assignments %}
+                    <div class="student-card">
+                        <div class="d-flex align-items-center">
+                            <div class="student-avatar">
+                                {{ assignment.student.first_name|first }}{{ assignment.student.last_name|first }}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'student_detail' pk=assignment.student.pk %}" class="text-decoration-none text-dark">
+                                        {{ assignment.student.get_full_name }}
+                                    </a>
+                                </h6>
+                                <div class="d-flex align-items-center gap-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-person-badge me-1"></i>
+                                        {{ assignment.student.admission_number }}
+                                    </small>
+                                    {% if assignment.student.grade %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-mortarboard me-1"></i>
+                                        {{ assignment.student.grade.get_name_display }}
+                                    </small>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-signpost-2 me-1"></i>
+                                        {{ assignment.route.name }}
+                                    </small>
+                                    {% if assignment.pickup_time %}
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock me-1"></i>
+                                        {{ assignment.pickup_time }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="status-badge active">
+                                    <i class="bi bi-check-circle"></i>
+                                    Active
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h6 class="mb-2">No students assigned</h6>
+                        <p class="text-muted mb-3">Get started by assigning a student to this vehicle.</p>
+                        <a href="{% url 'transport_assignment_create' %}" class="btn btn-primary">
+                            <i class="bi bi-person-plus me-2"></i>Assign Student
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="action-card">
+                <h6 class="mb-3 fw-semibold">Quick Actions</h6>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'transport_assignment_create' %}" class="btn btn-action btn-primary">
+                        <i class="bi bi-person-plus"></i>
+                        <span>Assign Student</span>
+                    </a>
+                    <a href="{% url 'vehicle_edit' pk=vehicle.pk %}" class="btn btn-action btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                        <span>Edit Vehicle</span>
+                    </a>
+                </div>
+            </div>
+
+            {% if vehicle.driver %}
+            <div class="action-card">
+                <h6 class="mb-3 fw-semibold">Driver</h6>
+                <div class="driver-card">
+                    <div class="d-flex align-items-center">
+                        <div class="driver-avatar">
+                            {{ vehicle.driver.first_name|first }}{{ vehicle.driver.last_name|first }}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ vehicle.driver.get_full_name }}</h6>
+                            <small class="text-muted">Assigned Driver</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="action-card">
+                <h6 class="mb-3 fw-semibold">Vehicle Summary</h6>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <span class="text-muted">Status</span>
+                    <span>
+                        {% if vehicle.status == 'ACTIVE' %}
+                        <span class="status-badge active">
+                            <i class="bi bi-check-circle"></i>
+                            Active
+                        </span>
+                        {% elif vehicle.status == 'MAINTENANCE' %}
+                        <span class="status-badge maintenance">
+                            <i class="bi bi-tools"></i>
+                            Maintenance
+                        </span>
+                        {% else %}
+                        <span class="status-badge inactive">
+                            <i class="bi bi-x-circle"></i>
+                            Inactive
+                        </span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <span class="text-muted">Type</span>
+                    <strong>{{ vehicle.get_vehicle_type_display }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <span class="text-muted">Capacity</span>
+                    <strong>{{ vehicle.capacity }} seats</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                    <span class="text-muted">Students</span>
+                    <strong>{{ vehicle.get_current_students_count }}/{{ vehicle.capacity }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Available</span>
+                    <strong class="text-success">{{ vehicle.get_available_seats }} seats</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_filters %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <h4 class="mb-0">Edit Assessment Results</h4>
+                                <span class="badge bg-{{ assessment.get_assessment_type_display|lower }}-soft">
+                                    {{ assessment.get_assessment_type_display }}
+                                </span>
+                            </div>
+                            <div class="text-muted">
+                                <div class="mb-1">
+                                    <i class="bi bi-person me-2"></i>{{ assessment.student.get_full_name }}
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-calendar3 me-2"></i>Term {{ assessment.term }}
+                                </div>
+                                <div>
+                                    <i class="bi bi-clock-history me-2"></i>{{ assessment.date|date:"F d, Y" }}
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-grid me-2"></i>{{ assessment.student.grade.name }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'student_assessment_detail' assessment.id %}" 
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-eye me-2"></i>View Details
+                            </a>
+                            <a href="{% url 'student_detail' assessment.student.id %}" 
+                               class="btn btn-primary">
+                                <i class="bi bi-arrow-left me-2"></i>Back to Student
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <!-- ... rest of the form ... -->
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Add these styles for the header badges */
+.badge.bg-opener-soft {
+    background: rgba(4, 120, 87, 0.1);
+    color: #047857;
+}
+
+.badge.bg-mid-term-soft {
+    background: rgba(30, 64, 175, 0.1);
+    color: #1e40af;
+}
+
+.badge.bg-end-term-soft {
+    background: rgba(180, 83, 9, 0.1);
+    color: #b45309;
+}
+
+/* Rest of your existing styles... */
+</style>
+
+<!-- ... rest of the template ... -->
+{% endblock %} 

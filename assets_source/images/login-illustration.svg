@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Background Elements -->
+    <circle cx="300" cy="200" r="150" fill="#4361ee" fill-opacity="0.1"/>
+    <circle cx="300" cy="200" r="100" fill="#4361ee" fill-opacity="0.15"/>
+    
+    <!-- Device Frame -->
+    <rect x="200" y="100" width="200" height="300" rx="20" fill="#4361ee"/>
+    <rect x="210" y="110" width="180" height="280" rx="15" fill="white"/>
+    
+    <!-- Screen Content -->
+    <circle cx="300" cy="160" r="30" fill="#4cc9f0"/>
+    <path d="M285 150 L300 165 L315 150" stroke="white" stroke-width="3"/>
+    
+    <!-- Form Elements -->
+    <rect x="240" y="210" width="120" height="10" rx="5" fill="#e2e8f0"/>
+    <rect x="240" y="240" width="120" height="10" rx="5" fill="#e2e8f0"/>
+    
+    <!-- Button -->
+    <rect x="240" y="280" width="120" height="20" rx="10" fill="#4361ee"/>
+    
+    <!-- Decorative Elements -->
+    <circle cx="150" cy="150" r="10" fill="#f72585"/>
+    <circle cx="450" cy="250" r="15" fill="#4cc9f0"/>
+    <circle cx="180" cy="350" r="8" fill="#3f37c9"/>
+    <circle cx="420" cy="120" r="12" fill="#4cc9f0"/>
+    
+    <!-- Abstract Lines -->
+    <path d="M100 200 Q 150 150, 200 200" stroke="#4361ee" stroke-width="2" fill="none"/>
+    <path d="M400 200 Q 450 250, 500 200" stroke="#4361ee" stroke-width="2" fill="none"/>
+</svg> 

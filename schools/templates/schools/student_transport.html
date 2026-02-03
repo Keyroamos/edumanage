@@ -1,0 +1,546 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_filters %}
+{% load humanize %}
+
+{% block title %}{{ student.get_full_name }} - Transport{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    :root {
+        --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --surface: #f8fafc;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --border-radius: 12px;
+        --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        background: var(--surface);
+        font-size: 0.875rem;
+    }
+
+    .page-header {
+        background: var(--warning-gradient);
+        border-radius: var(--border-radius);
+        padding: 1rem 1.25rem;
+        color: white;
+        margin-bottom: 1.25rem;
+    }
+
+    .page-header h1 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .page-header p {
+        font-size: 0.8rem;
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+
+    .breadcrumb-nav a {
+        color: white;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+
+    .breadcrumb-nav a:hover {
+        opacity: 0.8;
+    }
+
+    .section-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1rem;
+        transition: box-shadow 0.3s ease;
+    }
+
+    .section-card:hover {
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.875rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0;
+    }
+
+    .section-title i {
+        color: #f093fb;
+        font-size: 1.1rem;
+    }
+
+    .transport-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 0;
+    }
+
+    .summary-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border-left: 3px solid #f093fb;
+        transition: all 0.3s ease;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .summary-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        background: rgba(240, 147, 251, 0.1);
+        color: #f093fb;
+    }
+
+    .summary-card h6 {
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+        font-weight: 500;
+    }
+
+    .summary-card .h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .summary-card .h5 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: 0.15rem;
+    }
+
+    .summary-card small {
+        font-size: 0.7rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .info-item {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border-left: 3px solid #f093fb;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .info-label {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+    }
+
+    .info-value {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .info-value i {
+        font-size: 0.85rem;
+    }
+
+    .modern-table {
+        width: 100%;
+        font-size: 0.8rem;
+    }
+
+    .modern-table thead {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .modern-table thead th {
+        padding: 0.6rem 0.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.3px;
+        border: none;
+    }
+
+    .modern-table tbody tr {
+        transition: all 0.3s ease;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .modern-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .modern-table tbody td {
+        padding: 0.6rem 0.75rem;
+        vertical-align: middle;
+        font-size: 0.8rem;
+    }
+
+    .badge-modern {
+        padding: 0.3rem 0.6rem;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 0.7rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .badge-modern i {
+        font-size: 0.75rem;
+    }
+
+    .btn {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    .btn i {
+        font-size: 0.85rem;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.4s ease-out;
+    }
+
+    code {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Page Header -->
+    <div class="page-header fade-in-up">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <div class="breadcrumb-nav">
+                    <a href="{% url 'student_detail' student.pk %}">
+                        <i class="bi bi-house"></i> Student Profile
+                    </a>
+                    <i class="bi bi-chevron-right"></i>
+                    <span>Transport</span>
+                </div>
+                <h1>
+                    <i class="bi bi-truck me-2"></i>
+                    Transport Information
+                </h1>
+                <p class="mb-0 opacity-75">{{ student.get_full_name }} - {{ student.admission_number }}</p>
+            </div>
+            <div>
+                <a href="{% url 'student_detail' student.pk %}" class="btn btn-light btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i>Back to Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transport Summary -->
+    {% if active_assignment %}
+    <div class="section-card fade-in-up">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-info-circle"></i>
+                Current Assignment
+            </h2>
+            <span class="badge-modern bg-success text-white">
+                <i class="bi bi-check-circle"></i>Active
+            </span>
+        </div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Route Name</div>
+                <div class="info-value">
+                    <i class="bi bi-signpost-2"></i>
+                    <a href="{% url 'route_detail' pk=active_assignment.route.pk %}" class="text-decoration-none">
+                        {{ active_assignment.route.name }}
+                    </a>
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Route Details</div>
+                <div class="info-value">
+                    <i class="bi bi-geo-alt"></i>
+                    {{ active_assignment.route.start_location }} → {{ active_assignment.route.end_location }}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Vehicle</div>
+                <div class="info-value">
+                    <i class="bi bi-truck"></i>
+                    {% if active_assignment.vehicle %}
+                        <a href="{% url 'vehicle_detail' pk=active_assignment.vehicle.pk %}" class="text-decoration-none">
+                            {{ active_assignment.vehicle.vehicle_number }}
+                        </a>
+                    {% else %}
+                        <span class="text-muted">Not Assigned</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Start Date</div>
+                <div class="info-value">
+                    <i class="bi bi-calendar-event"></i>
+                    {{ active_assignment.start_date|date:"F d, Y" }}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Term Fee</div>
+                <div class="info-value">
+                    <i class="bi bi-cash-stack"></i>
+                    KES {{ active_assignment.route.fee_per_term|floatformat:0|intcomma }}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Status</div>
+                <div class="info-value">
+                    <span class="badge-modern bg-success text-white">
+                        <i class="bi bi-check-circle"></i>Active
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transport Fee Summary -->
+    <div class="section-card fade-in-up">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-wallet2"></i>
+                Transport Fee Summary
+            </h2>
+        </div>
+        <div class="transport-summary">
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="bi bi-cash-stack"></i>
+                </div>
+                <h6 class="text-muted mb-2">Total Paid</h6>
+                <div class="h4 mb-0 text-success">KES {{ total_transport_paid|floatformat:0|intcomma }}</div>
+            </div>
+            {% if active_assignment %}
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <h6 class="text-muted mb-2">Term Fee</h6>
+                <div class="h4 mb-0">KES {{ active_assignment.route.fee_per_term|floatformat:0|intcomma }}</div>
+            </div>
+            {% endif %}
+            {% if transport_fees_by_term %}
+            {% for term_num, term_data in transport_fees_by_term.items %}
+            {% if term_data.due > 0 %}
+            <div class="summary-card">
+                <div class="summary-icon">
+                    <i class="bi bi-calendar3"></i>
+                </div>
+                <h6 class="text-muted mb-2">Term {{ term_num }}</h6>
+                <div class="h5 mb-1">KES {{ term_data.paid|floatformat:0|intcomma }}</div>
+                <small class="text-muted">of KES {{ term_data.due|floatformat:0|intcomma }}</small>
+                {% if term_data.balance > 0 %}
+                <div class="mt-2">
+                    <span class="badge-modern bg-warning text-dark">
+                        Balance: KES {{ term_data.balance|floatformat:0|intcomma }}
+                    </span>
+                </div>
+                {% else %}
+                <div class="mt-2">
+                    <span class="badge-modern bg-success text-white">
+                        <i class="bi bi-check-circle"></i>Paid
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Transport Payment History -->
+    {% if transport_fees %}
+    <div class="section-card fade-in-up">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-clock-history"></i>
+                Payment History
+            </h2>
+        </div>
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Route</th>
+                        <th>Term</th>
+                        <th class="text-end">Amount</th>
+                        <th>Method</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-end">Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fee in transport_fees %}
+                    <tr>
+                        <td>{{ fee.date|date:"M d, Y" }}</td>
+                        <td>{{ fee.route.name }}</td>
+                        <td><span class="badge-modern bg-secondary text-white">Term {{ fee.term }}</span></td>
+                        <td class="text-end"><strong>KES {{ fee.amount|floatformat:0|intcomma }}</strong></td>
+                        <td><span class="badge-modern bg-info text-white">{{ fee.get_payment_method_display }}</span></td>
+                        <td class="text-center">
+                            <span class="badge-modern {% if fee.status == 'COMPLETED' %}bg-success text-white{% elif fee.status == 'PENDING' %}bg-warning text-dark{% else %}bg-danger text-white{% endif %}">
+                                {{ fee.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="text-end"><code class="small">{{ fee.reference_number|default:"N/A" }}</code></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-3">
+                            <div class="text-muted">
+                                <i class="bi bi-inbox fs-5 d-block mb-1"></i>
+                                <small>No transport payment records found</small>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Transport Assignment History -->
+    {% if transport_assignments %}
+    <div class="section-card fade-in-up">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-list-ul"></i>
+                Assignment History
+            </h2>
+        </div>
+        <div class="table-responsive">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Route</th>
+                        <th>Vehicle</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th class="text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in transport_assignments %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'route_detail' pk=assignment.route.pk %}" class="text-decoration-none">
+                                {{ assignment.route.name }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if assignment.vehicle %}
+                                <a href="{% url 'vehicle_detail' pk=assignment.vehicle.pk %}" class="text-decoration-none">
+                                    {{ assignment.vehicle.vehicle_number }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">Not Assigned</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ assignment.start_date|date:"M d, Y" }}</td>
+                        <td>{{ assignment.end_date|date:"M d, Y"|default:"—" }}</td>
+                        <td class="text-center">
+                            <span class="badge-modern {% if assignment.is_active %}bg-success text-white{% else %}bg-secondary text-white{% endif %}">
+                                {% if assignment.is_active %}
+                                    <i class="bi bi-check-circle"></i>Active
+                                {% else %}
+                                    <i class="bi bi-x-circle"></i>Inactive
+                                {% endif %}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not active_assignment and not transport_fees %}
+    <div class="section-card fade-in-up">
+        <div class="text-center py-4">
+            <div class="mb-2">
+                <i class="bi bi-truck fs-3 text-muted"></i>
+            </div>
+            <h6 class="text-muted mb-2">No Transport Information</h6>
+            <p class="text-muted small mb-0" style="font-size: 0.75rem;">This student has no transport assignments or payment records.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

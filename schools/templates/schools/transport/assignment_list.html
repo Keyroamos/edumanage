@@ -1,0 +1,700 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stat-card.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-card.info { background: linear-gradient(135deg, #3494E6 0%, #EC6EAD 100%); }
+    .stat-card.danger { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    
+    .assignment-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .assignment-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+    }
+    
+    .assignment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    }
+    
+    .assignment-card:hover::before {
+        width: 6px;
+    }
+    
+    .assignment-card.active::before {
+        background: linear-gradient(180deg, #11998e 0%, #38ef7d 100%);
+    }
+    
+    .assignment-card.inactive::before {
+        background: linear-gradient(180deg, #6c757d 0%, #495057 100%);
+    }
+    
+    .assignment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .student-info {
+        flex: 1;
+    }
+    
+    .student-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 0.25rem 0;
+    }
+    
+    .student-details {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .status-badge.active {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+    }
+    
+    .status-badge.inactive {
+        background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+        color: #383d41;
+    }
+    
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    
+    .status-dot.active {
+        background: #28a745;
+        box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+    }
+    
+    .status-dot.inactive {
+        background: #6c757d;
+    }
+    
+    .assignment-info {
+        margin: 1rem 0;
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .info-item i {
+        width: 24px;
+        margin-right: 0.75rem;
+        color: #667eea;
+        font-size: 1.1rem;
+    }
+    
+    .info-item strong {
+        color: #2c3e50;
+        margin-right: 0.5rem;
+        min-width: 100px;
+    }
+    
+    .route-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .vehicle-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .location-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+    }
+    
+    .location-item {
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .location-item.pickup {
+        border-left: 3px solid #11998e;
+    }
+    
+    .location-item.dropoff {
+        border-left: 3px solid #f5576c;
+    }
+    
+    .location-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .location-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .time-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.9rem;
+        background: #f8f9fa;
+        color: #2c3e50;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.85rem;
+    }
+    
+    .assignment-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f0f0f0;
+    }
+    
+    .btn-action {
+        flex: 1;
+        padding: 0.6rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .search-filter-section {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        margin-bottom: 2rem;
+    }
+    
+    .search-input-wrapper {
+        position: relative;
+    }
+    
+    .search-input-wrapper i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-input-wrapper input {
+        padding-left: 2.5rem;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input-wrapper input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    }
+    
+    .filter-btn {
+        border-radius: 12px;
+        padding: 0.6rem 1.2rem;
+        border: 2px solid #e9ecef;
+        background: white;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-btn:hover,
+    .filter-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+    
+    .empty-state-icon {
+        font-size: 5rem;
+        color: #e9ecef;
+        margin-bottom: 1rem;
+    }
+    
+    .view-toggle {
+        display: flex;
+        gap: 0.5rem;
+        background: #f8f9fa;
+        padding: 0.25rem;
+        border-radius: 12px;
+    }
+    
+    .view-toggle-btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        background: transparent;
+        border-radius: 8px;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .view-toggle-btn.active {
+        background: white;
+        color: #667eea;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .grade-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e9ecef;
+        color: #495057;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">Transport Assignments</h1>
+            <p class="text-muted mb-0">Manage student transportation assignments</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" id="cardViewBtn" title="Card View">
+                    <i class="bi bi-grid-3x3-gap"></i>
+                </button>
+                <button class="view-toggle-btn" id="tableViewBtn" title="Table View">
+                    <i class="bi bi-list-ul"></i>
+                </button>
+            </div>
+            <a href="{% url 'transport_assignment_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Assign Student
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Total Assignments</h6>
+                        <h2 class="mb-0">{{ total_assignments }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-people"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Active Assignments</h6>
+                        <h2 class="mb-0">{{ active_assignments }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">With Vehicle</h6>
+                        <h2 class="mb-0">{{ assigned_vehicles }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Pending Vehicle</h6>
+                        <h2 class="mb-0">{{ unassigned_vehicles }}</h2>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <div class="search-input-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="search" class="form-control" placeholder="Search by student, route, vehicle, location..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select" style="border-radius: 12px; border: 2px solid #e9ecef;">
+                    <option value="">All Status</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100" style="border-radius: 12px;">
+                    <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Assignment Cards/Table View -->
+    {% if assignments %}
+        <!-- Card View -->
+        <div id="cardView" class="row g-4">
+            {% for assignment in assignments %}
+            <div class="col-lg-6 col-md-6">
+                <div class="assignment-card {% if assignment.is_active %}active{% else %}inactive{% endif %}">
+                    <div class="assignment-header">
+                        <div class="student-info">
+                            <h3 class="student-name">
+                                <a href="{% url 'student_detail' pk=assignment.student.pk %}" class="text-decoration-none text-dark">
+                                    {{ assignment.student.get_full_name }}
+                                </a>
+                            </h3>
+                            <div class="student-details">
+                                <span class="grade-badge">{{ assignment.student.grade.name|default:"N/A" }}</span>
+                                <span class="text-muted ms-2">{{ assignment.student.admission_number }}</span>
+                            </div>
+                        </div>
+                        <span class="status-badge {% if assignment.is_active %}active{% else %}inactive{% endif %}">
+                            <span class="status-dot {% if assignment.is_active %}active{% else %}inactive{% endif %}"></span>
+                            {% if assignment.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="assignment-info">
+                        <div class="info-item">
+                            <i class="bi bi-signpost-2"></i>
+                            <div>
+                                <strong>Route:</strong>
+                                <span class="route-badge">
+                                    <i class="bi bi-route"></i>
+                                    {{ assignment.route.name }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-truck"></i>
+                            <div>
+                                <strong>Vehicle:</strong>
+                                {% if assignment.vehicle %}
+                                    <span class="vehicle-badge">
+                                        <i class="bi bi-car-front"></i>
+                                        {{ assignment.vehicle.vehicle_number }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Not Assigned</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Location Information -->
+                    {% if assignment.pickup_location or assignment.dropoff_location %}
+                    <div class="location-info">
+                        {% if assignment.pickup_location %}
+                        <div class="location-item pickup">
+                            <div class="location-label">
+                                <i class="bi bi-geo-alt-fill text-success me-1"></i>Pickup
+                            </div>
+                            <div class="location-value">{{ assignment.pickup_location }}</div>
+                            {% if assignment.pickup_time %}
+                                <div class="mt-2">
+                                    <span class="time-badge">
+                                        <i class="bi bi-clock"></i>
+                                        {{ assignment.pickup_time|time:"g:i A" }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if assignment.dropoff_location %}
+                        <div class="location-item dropoff">
+                            <div class="location-label">
+                                <i class="bi bi-geo-alt-fill text-danger me-1"></i>Dropoff
+                            </div>
+                            <div class="location-value">{{ assignment.dropoff_location }}</div>
+                            {% if assignment.dropoff_time %}
+                                <div class="mt-2">
+                                    <span class="time-badge">
+                                        <i class="bi bi-clock"></i>
+                                        {{ assignment.dropoff_time|time:"g:i A" }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="assignment-info">
+                        <div class="info-item">
+                            <i class="bi bi-calendar-event"></i>
+                            <div>
+                                <strong>Start Date:</strong> {{ assignment.start_date|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        {% if assignment.end_date %}
+                        <div class="info-item">
+                            <i class="bi bi-calendar-x"></i>
+                            <div>
+                                <strong>End Date:</strong> {{ assignment.end_date|date:"M d, Y" }}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="assignment-actions">
+                        <a href="{% url 'transport_assignment_detail' pk=assignment.pk %}" class="btn btn-action btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                            <span>View</span>
+                        </a>
+                        <a href="{% url 'transport_assignment_edit' pk=assignment.pk %}" class="btn btn-action btn-outline-secondary">
+                            <i class="bi bi-pencil"></i>
+                            <span>Edit</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Table View (Hidden by default) -->
+        <div id="tableView" class="d-none">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Route</th>
+                                    <th>Vehicle</th>
+                                    <th>Pickup Location</th>
+                                    <th>Pickup Time</th>
+                                    <th>Start Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'student_detail' pk=assignment.student.pk %}" class="text-decoration-none">
+                                            <strong>{{ assignment.student.get_full_name }}</strong>
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">{{ assignment.student.admission_number }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="route-badge">
+                                            {{ assignment.route.name }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if assignment.vehicle %}
+                                            <span class="vehicle-badge">
+                                                {{ assignment.vehicle.vehicle_number }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">Not Assigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if assignment.pickup_location %}
+                                            <i class="bi bi-geo-alt-fill text-success me-1"></i>
+                                            {{ assignment.pickup_location }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if assignment.pickup_time %}
+                                            <span class="time-badge">
+                                                <i class="bi bi-clock"></i>
+                                                {{ assignment.pickup_time|time:"g:i A" }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Not set</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ assignment.start_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="status-badge {% if assignment.is_active %}active{% else %}inactive{% endif %}">
+                                            <span class="status-dot {% if assignment.is_active %}active{% else %}inactive{% endif %}"></span>
+                                            {% if assignment.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a href="{% url 'transport_assignment_detail' pk=assignment.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'transport_assignment_edit' pk=assignment.pk %}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-people"></i>
+            </div>
+            <h4 class="text-muted mb-2">No assignments found</h4>
+            <p class="text-muted mb-4">Get started by assigning a student to a transportation route.</p>
+            <a href="{% url 'transport_assignment_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Assign Student
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // View toggle functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const cardViewBtn = document.getElementById('cardViewBtn');
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const cardView = document.getElementById('cardView');
+        const tableView = document.getElementById('tableView');
+        
+        if (cardViewBtn && tableViewBtn) {
+            cardViewBtn.addEventListener('click', function() {
+                cardView.classList.remove('d-none');
+                tableView.classList.add('d-none');
+                cardViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+            });
+            
+            tableViewBtn.addEventListener('click', function() {
+                cardView.classList.add('d-none');
+                tableView.classList.remove('d-none');
+                tableViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+            });
+        }
+    });
+</script>
+{% endblock %}

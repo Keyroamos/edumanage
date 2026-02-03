@@ -1,0 +1,1137 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_filters %}
+{% load humanize %}
+
+{% block title %}{{ student.get_full_name }} - Attendance{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+<style>
+    :root {
+        --primary: #6366f1;
+        --primary-dark: #4f46e5;
+        --success: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --surface: #f8fafc;
+        --surface-elevated: #ffffff;
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --border: #e2e8f0;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        --radius: 12px;
+        --radius-lg: 16px;
+    }
+
+    body {
+        background: var(--surface);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* Modern Header */
+    .attendance-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem 1.75rem;
+        color: white;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+
+    .attendance-header::before {
+        content: '';
+        position: absolute;
+        top: -40%;
+        right: -8%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+        filter: blur(50px);
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.9;
+    }
+
+    .breadcrumb-nav a {
+        color: white;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+
+    .breadcrumb-nav a:hover {
+        opacity: 0.8;
+    }
+
+    .header-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.01em;
+    }
+
+    .header-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.9;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.875rem;
+        margin-bottom: 0;
+    }
+
+    .stat-card {
+        background: var(--surface-elevated);
+        border-radius: var(--radius);
+        padding: 1rem;
+        box-shadow: var(--shadow-md);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card.present::before { background: var(--success); }
+    .stat-card.absent::before { background: var(--danger); }
+    .stat-card.late::before { background: var(--warning); }
+    .stat-card.rate::before { background: var(--info); }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+    }
+
+    .stat-card.present .stat-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .stat-card.absent .stat-icon {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .stat-card.late .stat-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .stat-card.rate .stat-icon {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.2;
+        margin-bottom: 0.35rem;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+    }
+
+    .stat-progress {
+        height: 5px;
+        background: #f1f5f9;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 0.4rem;
+    }
+
+    .stat-progress-bar {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.6s ease;
+        background: var(--primary);
+    }
+
+    .stat-card.present .stat-progress-bar { background: var(--success); }
+    .stat-card.absent .stat-progress-bar { background: var(--danger); }
+    .stat-card.rate .stat-progress-bar { background: var(--info); }
+
+    .stat-percentage {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Section Cards */
+    .section-card {
+        background: var(--surface-elevated);
+        border-radius: var(--radius);
+        padding: 1.25rem;
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1.25rem;
+        border: 1px solid var(--border);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .section-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0;
+    }
+
+    .section-title i {
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    /* Attendance Marking */
+    .attendance-marking {
+        padding-top: 0.75rem;
+    }
+
+    .marking-prompt {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+
+    .attendance-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .btn-attendance {
+        background: var(--surface-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 0.875rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-attendance::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .btn-attendance:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        border-color: transparent;
+    }
+
+    .btn-attendance:hover::before {
+        transform: scaleX(1);
+    }
+
+    .btn-attendance.present:hover {
+        background: rgba(16, 185, 129, 0.05);
+        border-color: var(--success);
+    }
+
+    .btn-attendance.present:hover::before {
+        background: var(--success);
+    }
+
+    .btn-attendance.absent:hover {
+        background: rgba(239, 68, 68, 0.05);
+        border-color: var(--danger);
+    }
+
+    .btn-attendance.absent:hover::before {
+        background: var(--danger);
+    }
+
+    .btn-attendance.late:hover {
+        background: rgba(245, 158, 11, 0.05);
+        border-color: var(--warning);
+    }
+
+    .btn-attendance.late:hover::before {
+        background: var(--warning);
+    }
+
+    .btn-attendance.active {
+        background: rgba(99, 102, 241, 0.1);
+        border-color: var(--primary);
+    }
+
+    .btn-attendance.active::before {
+        transform: scaleX(1);
+    }
+
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        background: rgba(99, 102, 241, 0.1);
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .btn-attendance.present .btn-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .btn-attendance.absent .btn-icon {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .btn-attendance.late .btn-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .btn-content {
+        flex: 1;
+    }
+
+    .btn-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 0.2rem;
+    }
+
+    .btn-subtitle {
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+    }
+
+    /* Calendar */
+    .calendar-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .form-select-modern {
+        padding: 0.5rem 2.5rem 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-elevated);
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 140px;
+    }
+
+    .form-select-modern:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .btn-nav {
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--surface-elevated);
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+
+    #attendanceCalendar {
+        min-height: 600px;
+        font-family: inherit;
+    }
+
+    /* FullCalendar Styling */
+    .fc {
+        background: transparent;
+    }
+
+    .fc-theme-standard td, .fc-theme-standard th {
+        border-color: var(--border);
+    }
+
+    .fc .fc-daygrid-day-frame {
+        padding: 8px;
+        min-height: 100px;
+    }
+
+    .fc .fc-daygrid-day-number {
+        font-size: 0.875rem;
+        color: var(--text-primary);
+        padding: 6px 8px;
+        font-weight: 500;
+    }
+
+    .fc .fc-day-today {
+        background: rgba(99, 102, 241, 0.05) !important;
+    }
+
+    .fc .fc-day-today .fc-daygrid-day-number {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 4px;
+        font-weight: 600;
+    }
+
+    .fc-event {
+        border: none !important;
+        background: none !important;
+        padding: 2px 4px;
+        margin: 2px 0;
+    }
+
+    .fc-event-main-content {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: white;
+        box-shadow: var(--shadow-sm);
+        font-size: 0.8rem;
+        font-weight: 500;
+        border-left: 3px solid;
+    }
+
+    .fc-event.status-present .fc-event-main-content {
+        border-left-color: var(--success);
+        color: var(--success);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .fc-event.status-absent .fc-event-main-content {
+        border-left-color: var(--danger);
+        color: var(--danger);
+        background: rgba(239, 68, 68, 0.05);
+    }
+
+    .fc-event.status-late .fc-event-main-content {
+        border-left-color: var(--warning);
+        color: var(--warning);
+        background: rgba(245, 158, 11, 0.05);
+    }
+
+    /* Recent Records */
+    .records-list {
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+
+    .records-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .records-list::-webkit-scrollbar-track {
+        background: var(--surface);
+        border-radius: 10px;
+    }
+
+    .records-list::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+    }
+
+    .records-list::-webkit-scrollbar-thumb:hover {
+        background: var(--text-muted);
+    }
+
+    .record-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        border-radius: var(--radius);
+        margin-bottom: 0.625rem;
+        background: var(--surface);
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .record-item:hover {
+        background: var(--surface-elevated);
+        border-color: var(--border);
+        transform: translateX(3px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .record-date {
+        text-align: center;
+        min-width: 45px;
+        padding: 0.4rem;
+        background: var(--surface-elevated);
+        border-radius: 8px;
+        border: 1px solid var(--border);
+    }
+
+    .record-day {
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.2;
+    }
+
+    .record-month {
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+    }
+
+    .record-info {
+        flex: 1;
+    }
+
+    .record-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-bottom: 0.4rem;
+    }
+
+    .record-status.present {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .record-status.absent {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    .record-status.late {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .record-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.2rem;
+    }
+
+    .empty-records {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted);
+    }
+
+    .empty-records i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .attendance-header {
+            padding: 1.25rem;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .stat-card {
+            padding: 0.875rem;
+        }
+
+        .section-card {
+            padding: 1rem;
+        }
+
+        .attendance-buttons {
+            grid-template-columns: 1fr;
+        }
+
+        #attendanceCalendar {
+            min-height: 400px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid py-3">
+    <!-- Modern Header -->
+    <div class="attendance-header fade-in-up">
+            <div class="header-content">
+            <div class="breadcrumb-nav">
+                    <a href="{% url 'student_detail' student.pk %}">
+                        <i class="bi bi-house"></i>
+                        <span>Student Profile</span>
+                    </a>
+                <span><i class="bi bi-chevron-right"></i></span>
+                    <span>Attendance</span>
+                </div>
+                <h1 class="header-title">
+                    <i class="bi bi-calendar-check me-2"></i>
+                    Attendance Information
+                </h1>
+                <p class="header-subtitle mb-0">
+                {{ student.get_full_name }} • {{ student.admission_number }} • {{ student.grade.name }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Attendance Statistics -->
+    {% if attendance_stats %}
+    <div class="section-card fade-in-up">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-bar-chart-fill"></i>
+                Attendance Overview
+            </h2>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card present">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">{{ attendance_stats.present_days|default:0 }}</div>
+                        <div class="stat-label">Present Days</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-person-check-fill"></i>
+                    </div>
+                </div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" style="width: {{ attendance_stats.present_percentage|default:0 }}%"></div>
+                </div>
+                <div class="stat-percentage">{{ attendance_stats.present_percentage|default:0|floatformat:1 }}% of total days</div>
+            </div>
+
+            <div class="stat-card absent">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">{{ attendance_stats.absent_days|default:0 }}</div>
+                        <div class="stat-label">Absent Days</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-person-x-fill"></i>
+                    </div>
+                </div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" style="width: {{ attendance_stats.absent_percentage|default:0 }}%"></div>
+                </div>
+                <div class="stat-percentage">{{ attendance_stats.absent_percentage|default:0|floatformat:1 }}% of total days</div>
+            </div>
+
+            <div class="stat-card late">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">{{ attendance_stats.late_days|default:0 }}</div>
+                        <div class="stat-label">Late Arrivals</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card rate">
+                <div class="stat-header">
+                    <div>
+                        <div class="stat-value">{{ attendance_stats.attendance_rate|default:0 }}%</div>
+                        <div class="stat-label">Attendance Rate</div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-graph-up-arrow"></i>
+                    </div>
+                </div>
+                <div class="stat-progress">
+                    <div class="stat-progress-bar" style="width: {{ attendance_stats.attendance_rate|default:0 }}%"></div>
+                </div>
+                <div class="stat-percentage">Overall performance</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Mark Attendance Section -->
+    {% if user|can_mark_attendance:student.grade or user.is_superuser %}
+    <div class="section-card fade-in-up">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="bi bi-calendar-check-fill"></i>
+                Mark Today's Attendance
+            </h2>
+            <div style="display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); font-size: 0.8rem; font-weight: 500;">
+                <i class="bi bi-calendar3"></i>
+                <span>{{ today|date:"l, F d, Y" }}</span>
+            </div>
+        </div>
+        <div class="attendance-marking">
+            {% with today_attendance=attendance_records|first %}
+            {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}
+                <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(118, 75, 162, 0.05)); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; border-left: 3px solid var(--primary);">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.625rem;">
+                        <i class="bi {% if today_attendance.status == 'PRESENT' %}bi-check-circle-fill text-success
+                                   {% elif today_attendance.status == 'ABSENT' %}bi-x-circle-fill text-danger
+                                   {% elif today_attendance.status == 'LATE' %}bi-clock-fill text-warning
+                                   {% else %}bi-dash-circle-fill{% endif %}" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin-bottom: 0.2rem;">Already Marked</div>
+                            <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary);">{{ today_attendance.get_status_display }}</div>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0;">Attendance for today has already been recorded. You can update it by selecting a different status below.</p>
+                </div>
+            {% else %}
+                <p class="marking-prompt">Select the attendance status for today:</p>
+            {% endif %}
+            <div class="attendance-buttons">
+                <button type="button" 
+                        class="btn-attendance present {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'PRESENT' %}active{% endif %}"
+                        onclick="{% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}showAlreadyMarkedMessage('{{ today_attendance.get_status_display }}'){% else %}markAttendance('PRESENT'){% endif %}"
+                        {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'PRESENT' %}disabled{% endif %}>
+                    <div class="btn-icon">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </div>
+                    <div class="btn-content">
+                        <div class="btn-label">Present</div>
+                        <div class="btn-subtitle">Student is in class</div>
+                    </div>
+                </button>
+                <button type="button" 
+                        class="btn-attendance absent {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'ABSENT' %}active{% endif %}"
+                        onclick="{% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}showAlreadyMarkedMessage('{{ today_attendance.get_status_display }}'){% else %}markAttendance('ABSENT'){% endif %}"
+                        {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'ABSENT' %}disabled{% endif %}>
+                    <div class="btn-icon">
+                        <i class="bi bi-x-circle-fill"></i>
+                    </div>
+                    <div class="btn-content">
+                        <div class="btn-label">Absent</div>
+                        <div class="btn-subtitle">Student is not present</div>
+                    </div>
+                </button>
+                <button type="button" 
+                        class="btn-attendance late {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'LATE' %}active{% endif %}"
+                        onclick="{% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' %}showAlreadyMarkedMessage('{{ today_attendance.get_status_display }}'){% else %}markAttendance('LATE'){% endif %}"
+                        {% if today_attendance and today_attendance.date|date:'Y-m-d' == today|date:'Y-m-d' and today_attendance.status == 'LATE' %}disabled{% endif %}>
+                    <div class="btn-icon">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
+                    <div class="btn-content">
+                        <div class="btn-label">Late</div>
+                        <div class="btn-subtitle">Student arrived late</div>
+                    </div>
+                </button>
+            </div>
+            {% endwith %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="row g-4">
+        <!-- Calendar Section -->
+        <div class="col-lg-8">
+            <div class="section-card fade-in-up">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="bi bi-calendar3-fill"></i>
+                        Attendance Calendar
+                    </h2>
+                    <div class="calendar-controls">
+                        <select class="form-select-modern" id="monthFilter">
+                            {% for month in months %}
+                                <option value="{{ month.value }}" 
+                                        {% if current_month == month.value %}selected{% endif %}>
+                                    {{ month.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="btn-nav" id="prevMonth" title="Previous Month">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+                            <button class="btn-nav" id="nextMonth" title="Next Month">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="attendanceCalendar"></div>
+            </div>
+        </div>
+
+        <!-- Recent Records -->
+        <div class="col-lg-4">
+            <div class="section-card fade-in-up">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="bi bi-clock-history"></i>
+                        Recent Records
+                    </h2>
+                </div>
+                <div class="records-list">
+                    {% for record in attendance_records|slice:":10" %}
+                    <div class="record-item">
+                        <div class="record-date">
+                            <div class="record-day">{{ record.date|date:"d" }}</div>
+                            <div class="record-month">{{ record.date|date:"M" }}</div>
+                        </div>
+                        <div class="record-info">
+                            <div class="record-status {{ record.status|lower }}">
+                                <i class="bi {% if record.status == 'PRESENT' %}bi-check-circle-fill
+                                           {% elif record.status == 'ABSENT' %}bi-x-circle-fill
+                                           {% elif record.status == 'LATE' %}bi-clock-fill
+                                           {% else %}bi-dash-circle-fill{% endif %}"></i>
+                                <span>{{ record.get_status_display }}</span>
+                            </div>
+                            <div class="record-meta">
+                                <i class="bi bi-person"></i>
+                                <span>{{ record.recorded_by.get_full_name|default:"System" }}</span>
+                            </div>
+                            {% if record.remarks %}
+                            <div style="display: flex; align-items: flex-start; gap: 0.4rem; font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.4rem; padding: 0.4rem; background: var(--surface); border-radius: 6px; border-left: 3px solid var(--border);">
+                                <i class="bi bi-chat-left-text" style="margin-top: 0.1rem; flex-shrink: 0; font-size: 0.75rem;"></i>
+                                <span>{{ record.remarks }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-records">
+                        <i class="bi bi-inbox"></i>
+                        <p>No attendance records yet</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mark Attendance Function
+    function markAttendance(status) {
+        const studentId = '{{ student.id }}';
+        const date = new Date().toISOString().split('T')[0];
+        
+        // Get CSRF token - try multiple methods
+        let csrfToken = null;
+        const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (tokenInput) {
+            csrfToken = tokenInput.value;
+        } else {
+            // Try to get from cookies
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    csrfToken = value;
+                    break;
+                }
+            }
+        }
+        
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Security token not found. Please refresh the page and try again.',
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                alert('Security token not found. Please refresh the page and try again.');
+            }
+            return;
+        }
+
+        console.log('Recording attendance:', { studentId, status, date });
+
+        fetch('/record-attendance/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                student_id: studentId,
+                status: status,
+                date: date
+            })
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || data.message || `HTTP ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Attendance Recorded',
+                        text: data.message || `Marked as ${status.toLowerCase()} successfully!`,
+                        showConfirmButton: false,
+                        timer: 1500,
+                        position: 'top-end',
+                        toast: true
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    alert(data.message || `Attendance marked as ${status.toLowerCase()} successfully!`);
+                    window.location.reload();
+                }
+            } else {
+                const errorMsg = data.error || data.message || 'Failed to record attendance';
+                console.error('Error from server:', errorMsg);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMsg,
+                        confirmButtonText: 'OK'
+                    });
+                } else {
+                    alert(errorMsg);
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorMsg = error.message || 'Something went wrong while recording attendance';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: errorMsg,
+                    confirmButtonText: 'OK'
+                });
+            } else {
+                alert(errorMsg);
+            }
+        });
+    }
+
+    window.markAttendance = markAttendance;
+
+    // Initialize Calendar
+    const calendarEl = document.getElementById('attendanceCalendar');
+    if (calendarEl && typeof FullCalendar !== 'undefined') {
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            headerToolbar: false,
+            height: 'auto',
+            initialDate: new Date(new Date().getFullYear(), {{ current_month }} - 1, 1),
+            events: '/student/{{ student.id }}/attendance-events/',
+            eventContent: function(arg) {
+                const status = arg.event.extendedProps.status?.toLowerCase() || '';
+                return {
+                    html: `
+                        <div class="fc-event-main-content status-${status}">
+                            <i class="bi ${status === 'present' ? 'bi-check-circle-fill' : 
+                                         status === 'absent' ? 'bi-x-circle-fill' : 
+                                         status === 'late' ? 'bi-clock-fill' : 'bi-dash-circle-fill'}"></i>
+                            <span>${arg.event.title}</span>
+                        </div>
+                    `
+                };
+            },
+            eventDidMount: function(info) {
+                const status = info.event.extendedProps.status?.toLowerCase() || '';
+                info.el.classList.add('status-' + status);
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    new bootstrap.Tooltip(info.el, {
+                        title: `Status: ${info.event.title}<br>Recorded by: ${info.event.extendedProps.recordedBy || 'System'}`,
+                        html: true,
+                        placement: 'top',
+                        container: 'body'
+                    });
+                }
+            }
+        });
+        calendar.render();
+
+        document.getElementById('prevMonth')?.addEventListener('click', () => {
+            calendar.prev();
+            updateMonthFilter(calendar.getDate());
+        });
+
+        document.getElementById('nextMonth')?.addEventListener('click', () => {
+            calendar.next();
+            updateMonthFilter(calendar.getDate());
+        });
+
+        document.getElementById('monthFilter')?.addEventListener('change', function() {
+            const selectedMonth = parseInt(this.value) - 1;
+            const currentDate = calendar.getDate();
+            const newDate = new Date(currentDate.getFullYear(), selectedMonth, 1);
+            calendar.gotoDate(newDate);
+        });
+
+        function updateMonthFilter(date) {
+            const monthSelect = document.getElementById('monthFilter');
+            if (monthSelect) {
+                monthSelect.value = date.getMonth() + 1;
+            }
+        }
+
+        const currentDate = calendar.getDate();
+        updateMonthFilter(currentDate);
+    }
+});
+
+function showAlreadyMarkedMessage(status) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            icon: 'info',
+            title: 'Already Marked',
+            text: `Attendance already marked as ${status.toLowerCase()} for today`,
+            showConfirmButton: false,
+            timer: 2000,
+            position: 'top-end',
+            toast: true
+        });
+    } else {
+        alert(`Attendance already marked as ${status.toLowerCase()} for today`);
+    }
+}
+</script>
+{% endblock %}

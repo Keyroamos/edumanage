@@ -1,0 +1,677 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_extras %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    {% csrf_token %}
+    <!-- Header -->
+    <div class="header-card mb-4">
+        <div class="card-body py-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h4 class="header-title mb-1">
+                        <i class="bi bi-calendar3-week me-2"></i>Schedule Management
+                    </h4>
+                    <p class="header-subtitle mb-0">
+                        <span class="teacher-name">{{ teacher.get_full_name }}</span>
+                        <span class="date-range">Week of {{ week_start|date:"M d, Y" }}</span>
+                    </p>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary btn-add-schedule" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                        <i class="bi bi-plus-lg me-2"></i>Add Class
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Grid -->
+    <div class="schedule-grid">
+        {% for day in "01234"|make_list %}
+        {% with day_date=week_start|add_days:day %}
+        <div class="schedule-day {% if day_date == today %}today{% endif %}">
+            <div class="day-header">
+                <div class="day-info">
+                    <h5 class="day-name">{{ day_date|date:"l" }}</h5>
+                    <span class="day-date">{{ day_date|date:"M d" }}</span>
+                </div>
+                <span class="schedule-count">
+                    {{ schedules|filter_by_date:day_date|length }} Classes
+                </span>
+            </div>
+            <div class="schedule-slots">
+                {% for schedule in schedules %}
+                {% if schedule.date == day_date %}
+                <div class="schedule-slot subject-{{ schedule.subject.code|lower }}" data-schedule-id="{{ schedule.id }}">
+                    <div class="slot-time">
+                        <span class="time-badge">
+                            {{ schedule.start_time|time:"g:i A" }}
+                        </span>
+                        <span class="duration-badge">
+                            {{ schedule.duration }} min
+                        </span>
+                    </div>
+                    <div class="slot-info">
+                        <h6 class="mb-1">{{ schedule.subject.name }}</h6>
+                        <span class="grade-badge">{{ schedule.grade.name }}</span>
+                    </div>
+                    <div class="slot-actions">
+                        <button class="btn btn-sm btn-icon edit-schedule"
+                                data-schedule-id="{{ schedule.id }}"
+                                data-subject-id="{{ schedule.subject.id }}"
+                                data-grade-id="{{ schedule.grade.id }}"
+                                data-start-time="{{ schedule.start_time|time:'H:i' }}"
+                                data-duration="{{ schedule.duration }}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-icon delete-schedule"
+                                data-schedule-id="{{ schedule.id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% if not schedules|filter_by_date:day_date %}
+                <div class="empty-day">
+                    <i class="bi bi-calendar-x"></i>
+                    <p>No classes scheduled</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Schedule Modal -->
+<div class="modal fade" id="addScheduleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title-wrapper">
+                    <div class="modal-icon">
+                        <i class="bi bi-calendar-plus"></i>
+                    </div>
+                    <div class="modal-title-content">
+                        <h5 class="modal-title">Add Class Schedule</h5>
+                        <p class="modal-subtitle">Schedule a new class for {{ teacher.get_full_name }}</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheduleForm">
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-book me-2"></i>Subject
+                        </label>
+                        <select class="form-select custom-select" name="subject_id" required>
+                            <option value="" disabled selected>Select a subject</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}">{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-mortarboard me-2"></i>Grade
+                        </label>
+                        <select class="form-select custom-select" name="grade_id" required>
+                            <option value="" disabled selected>Select a grade</option>
+                            {% for grade in grades %}
+                            <option value="{{ grade.id }}">{{ grade.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-row mb-4">
+                        <div class="col">
+                            <label class="form-label">
+                                <i class="bi bi-calendar-date me-2"></i>Date
+                            </label>
+                            <input type="date" class="form-control custom-input" name="date" required
+                                   min="{{ week_start|date:'Y-m-d' }}" 
+                                   max="{{ week_end|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col">
+                            <label class="form-label">
+                                <i class="bi bi-clock me-2"></i>Start Time
+                            </label>
+                            <input type="time" class="form-control custom-input" name="start_time" required>
+                        </div>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="bi bi-hourglass-split me-2"></i>Duration
+                        </label>
+                        <div class="duration-selector">
+                            <button type="button" class="duration-option" data-duration="30">30 min</button>
+                            <button type="button" class="duration-option active" data-duration="45">45 min</button>
+                            <button type="button" class="duration-option" data-duration="60">1 hour</button>
+                            <button type="button" class="duration-option" data-duration="90">1.5 hours</button>
+                        </div>
+                        <input type="hidden" name="duration" value="45" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light btn-modal" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-primary btn-modal" id="saveSchedule">
+                    <i class="bi bi-check-lg me-2"></i>Save Schedule
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let editingScheduleId = null;
+    
+    // Add/Edit Schedule
+    document.getElementById('saveSchedule').addEventListener('click', function() {
+        const form = document.getElementById('scheduleForm');
+        const formData = new FormData(form);
+        const action = editingScheduleId ? 'update' : 'add';
+        
+        const data = {
+            action: action,
+            subject_id: formData.get('subject_id'),
+            grade_id: formData.get('grade_id'),
+            date: formData.get('date'),
+            start_time: formData.get('start_time'),
+            duration: formData.get('duration')
+        };
+        
+        if (editingScheduleId) {
+            data.schedule_id = editingScheduleId;
+        }
+        
+        fetch(`/teachers/{{ teacher.id }}/schedule/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                Swal.fire('Error', data.error, 'error');
+            }
+        });
+    });
+    
+    // Edit Schedule Button Click
+    document.querySelectorAll('.edit-schedule').forEach(button => {
+        button.addEventListener('click', function() {
+            const scheduleData = this.dataset;
+            editingScheduleId = scheduleData.scheduleId;
+            
+            // Populate modal with schedule data
+            const form = document.getElementById('scheduleForm');
+            form.querySelector('[name=subject_id]').value = scheduleData.subjectId;
+            form.querySelector('[name=grade_id]').value = scheduleData.gradeId;
+            form.querySelector('[name=start_time]').value = scheduleData.startTime;
+            form.querySelector('[name=duration]').value = scheduleData.duration;
+            
+            // Update modal title and show
+            document.querySelector('#addScheduleModal .modal-title').textContent = 'Edit Class Schedule';
+            new bootstrap.Modal(document.getElementById('addScheduleModal')).show();
+        });
+    });
+    
+    // Reset modal on close
+    document.getElementById('addScheduleModal').addEventListener('hidden.bs.modal', function () {
+        editingScheduleId = null;
+        document.getElementById('scheduleForm').reset();
+        document.querySelector('#addScheduleModal .modal-title').textContent = 'Add Class Schedule';
+    });
+    
+    // Delete Schedule
+    document.querySelectorAll('.delete-schedule').forEach(button => {
+        button.addEventListener('click', function() {
+            const scheduleId = this.dataset.scheduleId;
+            
+            Swal.fire({
+                title: 'Delete Schedule?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Delete',
+                confirmButtonColor: '#dc3545'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/teachers/{{ teacher.id }}/schedule/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'delete',
+                            schedule_id: scheduleId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            Swal.fire('Error', data.error, 'error');
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    // Duration selector functionality
+    const durationOptions = document.querySelectorAll('.duration-option');
+    const durationInput = document.querySelector('input[name="duration"]');
+
+    durationOptions.forEach(option => {
+        option.addEventListener('click', function() {
+            // Remove active class from all options
+            durationOptions.forEach(opt => opt.classList.remove('active'));
+            // Add active class to clicked option
+            this.classList.add('active');
+            // Update hidden input value
+            durationInput.value = this.dataset.duration;
+        });
+    });
+});
+</script>
+
+<style>
+.header-card {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.15);
+}
+
+.header-title {
+    color: white;
+    font-weight: 600;
+    font-size: 1.5rem;
+}
+
+.header-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.teacher-name {
+    font-weight: 500;
+}
+
+.date-range {
+    padding-left: 1rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-add-schedule {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    backdrop-filter: blur(10px);
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-add-schedule:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.schedule-day {
+    background: white;
+    border-radius: 1rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.schedule-day.today {
+    border: 2px solid #4f46e5;
+    box-shadow: 0 5px 20px rgba(79, 70, 229, 0.15);
+}
+
+.day-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.day-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.day-name {
+    font-weight: 600;
+    margin: 0;
+    color: #1e293b;
+}
+
+.day-date {
+    font-size: 0.875rem;
+    color: #64748b;
+}
+
+.schedule-count {
+    background: #f1f5f9;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-size: 0.875rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.schedule-slots {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.schedule-slot {
+    background: #f8fafc;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    position: relative;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.schedule-slot:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+/* Subject-specific colors */
+.subject-math { border-left-color: #3b82f6; }
+.subject-science { border-left-color: #10b981; }
+.subject-english { border-left-color: #f59e0b; }
+/* Add more subject colors as needed */
+
+.slot-time {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.time-badge, .duration-badge {
+    background: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.time-badge {
+    color: #4f46e5;
+    border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+.duration-badge {
+    color: #64748b;
+    background: #f1f5f9;
+}
+
+.grade-badge {
+    background: #e0e7ff;
+    color: #4f46e5;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.slot-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.schedule-slot:hover .slot-actions {
+    opacity: 1;
+}
+
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    background: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+}
+
+.empty-day {
+    text-align: center;
+    padding: 2rem;
+    color: #94a3b8;
+}
+
+.empty-day i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-day p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Modal Styling */
+.modal-content {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    background: #f8fafc;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #475569;
+}
+
+.form-control, .form-select {
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-color: #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* Modal Enhancements */
+.modal-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.modal-icon {
+    width: 48px;
+    height: 48px;
+    background: #4f46e5;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.modal-title-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+}
+
+.modal-subtitle {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+.form-label i {
+    color: #4f46e5;
+}
+
+.custom-select, .custom-input {
+    background-color: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.custom-select:focus, .custom-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    background-color: white;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.duration-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.duration-option {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.duration-option:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+}
+
+.duration-option.active {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+}
+
+.btn-modal {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 10px;
+}
+
+.btn-modal.btn-primary {
+    background: #4f46e5;
+    border: none;
+}
+
+.btn-modal.btn-primary:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+.btn-modal.btn-light {
+    background: #f1f5f9;
+    border: none;
+    color: #64748b;
+}
+
+.btn-modal.btn-light:hover {
+    background: #e2e8f0;
+}
+</style>
+{% endblock %} 

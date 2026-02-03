@@ -1,0 +1,343 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Meal Serving & Reports{% endblock %}
+
+{% block extra_css %}
+<style>
+    .student-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    .student-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    .student-card.served {
+        background: #f0f9ff;
+        border-color: #3b82f6;
+    }
+    .meal-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 500;
+        margin: 0.25rem;
+    }
+    .meal-badge.tea-break { background: #fef3c7; color: #92400e; }
+    .meal-badge.lunch { background: #dbeafe; color: #1e40af; }
+    .meal-badge.fruits { background: #d1fae5; color: #065f46; }
+    .meal-badge.served { opacity: 0.6; text-decoration: line-through; }
+    .serve-btn {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .serve-btn:hover {
+        transform: scale(1.05);
+    }
+    .serve-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .days-remaining {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #059669;
+    }
+    .balance-amount {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #dc2626;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">Meal Serving & Tracking</h1>
+            <p class="text-muted mb-0">Mark meals as served and track student meal balances</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <h6 class="text-white-50 mb-2">Meals Served Today</h6>
+                <h2 class="mb-0">{{ total_served_today }}</h2>
+                <small class="text-white-50">{{ serving_date|date:"F d, Y" }}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Active Students</h6>
+                    <h3 class="mb-0">{{ unique_students_count }}</h3>
+                    <small class="text-muted">{{ students_data|length }} shown (filtered)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Revenue Today</h6>
+                    <h3 class="mb-0 text-success">KES {{ total_revenue_today|floatformat:0|intcomma }}</h3>
+                    <small class="text-muted">From meals served</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total Balance</h6>
+                    <h3 class="mb-0 text-info">KES {{ total_balance_remaining|floatformat:0|intcomma }}</h3>
+                    <small class="text-muted">{{ total_days_remaining }} days remaining</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Statistics Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total Active Payments</h6>
+                    <h3 class="mb-0">{{ total_active_payments }}</h3>
+                    <small class="text-muted">With remaining days</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Total Revenue (All Time)</h6>
+                    <h3 class="mb-0 text-primary">KES {{ total_revenue_all_time|floatformat:0|intcomma }}</h3>
+                    <small class="text-muted">From all completed payments</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-md-3">
+                    <label class="form-label">Serving Date</label>
+                    <input type="date" name="serving_date" class="form-control" value="{{ serving_date|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Meal Type</label>
+                    <select name="meal_type" class="form-select">
+                        <option value="">All Meals</option>
+                        {% for meal_type, meal_name in meal_types %}
+                        <option value="{{ meal_type }}" {% if meal_type_filter == meal_type %}selected{% endif %}>{{ meal_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Grade</label>
+                    <select name="grade" class="form-select">
+                        <option value="">All Grades</option>
+                        {% for grade in grades %}
+                        <option value="{{ grade.id }}" {% if grade_id == grade.id|stringformat:"s" %}selected{% endif %}>{{ grade.get_name_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Search Student</label>
+                    <input type="text" name="search" class="form-control" value="{{ search_query }}" placeholder="Name or admission number">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search me-2"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Students List -->
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Students with Active Meal Payments</h5>
+            <span class="badge bg-light text-dark">{{ students_data|length }} students</span>
+        </div>
+        <div class="card-body">
+            {% if students_data %}
+            <div id="studentsList">
+                {% for student_id, student_info in students_data.items %}
+                <div class="student-card" id="student-{{ student_id }}">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <h6 class="mb-1 fw-bold">
+                                <a href="{% url 'student_detail' pk=student_info.student.pk %}">
+                                    {{ student_info.student.get_full_name }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                {{ student_info.student.admission_number }} | 
+                                {% if student_info.student.grade %}{{ student_info.student.grade.get_name_display }}{% else %}No Grade{% endif %}
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-wrap">
+                                {% for meal_type, meal_data in student_info.meals.items %}
+                                <div class="meal-badge {% if meal_data.already_served_today %}served{% endif %} 
+                                    {% if meal_type == 'TEA_BREAK' %}tea-break{% elif meal_type == 'LUNCH' %}lunch{% elif meal_type == 'FRUITS' %}fruits{% endif %}"
+                                    id="meal-{{ student_id }}-{{ meal_type }}">
+                                    <span>
+                                        {% if meal_type == 'TEA_BREAK' %}☕ Tea Break
+                                        {% elif meal_type == 'LUNCH' %}🍽️ Lunch
+                                        {% elif meal_type == 'FRUITS' %}🍎 Fruits
+                                        {% endif %}
+                                    </span>
+                                    <span class="badge bg-secondary">{{ meal_data.days_remaining }} days</span>
+                                    <span class="badge bg-info">KES {{ meal_data.balance|floatformat:0|intcomma }}</span>
+                                    {% if meal_data.already_served_today %}
+                                    <span class="badge bg-success">✓ Served</span>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success serve-btn" 
+                                            onclick="markMealServed({{ student_id }}, '{{ meal_type }}', '{{ serving_date|date:"Y-m-d" }}')"
+                                            id="btn-{{ student_id }}-{{ meal_type }}">
+                                        <i class="bi bi-check-circle me-1"></i>Mark Served
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <div>
+                                <small class="text-muted d-block">Total Balance</small>
+                                <span class="balance-amount">
+                                    KES {{ student_info.total_balance|floatformat:0|intcomma }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-inbox fs-1 text-muted d-block mb-3"></i>
+                <p class="text-muted">No students found with active meal payments matching your filters.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function markMealServed(studentId, mealType, servingDate) {
+    const btn = document.getElementById(`btn-${studentId}-${mealType}`);
+    const mealBadge = document.getElementById(`meal-${studentId}-${mealType}`);
+    
+    // Disable button
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Processing...';
+    
+    // Make AJAX request
+    const formData = new FormData();
+    formData.append('student_id', studentId);
+    formData.append('meal_type', mealType);
+    formData.append('serving_date', servingDate);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch('{% url "mark_meal_served" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update UI
+            mealBadge.classList.add('served');
+            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Served';
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-secondary');
+            btn.disabled = true;
+            
+            // Update days remaining and balance
+            const daysBadge = mealBadge.querySelector('.badge.bg-secondary');
+            const balanceBadge = mealBadge.querySelector('.badge.bg-info');
+            if (daysBadge) {
+                daysBadge.textContent = data.days_remaining + ' days';
+                if (data.days_remaining === 0) {
+                    daysBadge.classList.remove('bg-secondary');
+                    daysBadge.classList.add('bg-danger');
+                }
+            }
+            if (balanceBadge) {
+                balanceBadge.textContent = 'KES ' + parseFloat(data.balance).toLocaleString();
+            }
+            
+            // Show success message
+            showNotification('success', data.message);
+            
+            // Update statistics
+            updateStatistics();
+        } else {
+            // Show error
+            showNotification('error', data.error || 'Failed to mark meal as served');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Mark Served';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Mark Served';
+    });
+}
+
+function showNotification(type, message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+
+function updateStatistics() {
+    // Reload page after a short delay to update statistics
+    setTimeout(() => {
+        location.reload();
+    }, 2000);
+}
+</script>
+{% endblock %}

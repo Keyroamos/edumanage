@@ -1,0 +1,45 @@
+<!-- Assessment Modal -->
+<div class="modal fade" id="assessmentModal" tabindex="-1" aria-labelledby="assessmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assessmentModalLabel">Record Assessment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="assessmentForm" method="post" action="{% url 'assessment_form' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="student_id" value="{{ student.id }}">
+                    
+                    <!-- Assessment Period -->
+                    <div class="form-floating mb-4">
+                        <select class="form-select" id="assessmentPeriod" name="assessment_period" required>
+                            <option value="">Select Assessment Period</option>
+                            <option value="OPENER">Opener Assessment</option>
+                            <option value="MID_TERM">Mid Term Assessment</option>
+                            <option value="END_TERM">End Term Assessment</option>
+                        </select>
+                        <label>Assessment Period</label>
+                    </div>
+
+                    <!-- Subjects Assessment -->
+                    <div class="subjects-grid">
+                        {% for subject in subjects %}
+                        <div class="subject-card">
+                            <!-- Subject header and content from your original form -->
+                            {{ subject_form_content|safe }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-2"></i>Save Assessment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div> 

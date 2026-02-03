@@ -1,0 +1,172 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card receipt-card">
+                <!-- Receipt Header -->
+                <div class="receipt-header text-center py-3">
+                    <img src="{% static 'logo.png' %}" alt="Bishop Dr Mando International School" class="receipt-logo mb-2">
+                    <h5 class="school-name mb-1">Bishop Dr Mando International School</h5>
+                    <div class="school-details text-muted small">
+                        <div>P.O. Box 6675-00100, Nairobi</div>
+                        <div>Tel: +254 724 581 824</div>
+                    </div>
+                </div>
+
+                <div class="receipt-divider"></div>
+
+                <!-- Salary Details -->
+                <div class="receipt-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="text-muted small">Receipt No.</div>
+                            <div class="fw-medium">SAL-{{ salary.pk|stringformat:"04d" }}</div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <div class="text-muted small">Date</div>
+                            <div class="fw-medium">{{ salary.payment_date|date:"M d, Y"|default:"Pending" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="employee-info mb-4">
+                        <div class="text-muted small mb-1">Employee Details</div>
+                        <div class="fw-medium">{{ employee.get_full_name }}</div>
+                        <div class="text-muted small">
+                            {{ employee.position }} | ID: {{ employee.national_id }}
+                        </div>
+                    </div>
+
+                    <div class="salary-details">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <div class="text-muted small">Month</div>
+                                    <div class="fw-medium">{{ salary.month|date:"F Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <div class="text-muted small">Status</div>
+                                    <div class="fw-medium">{{ salary.get_status_display }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <div class="text-muted small">Basic Salary</div>
+                                    <div class="fw-medium">KES {{ employee.basic_salary|intcomma }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <div class="text-muted small">Net Amount</div>
+                                    <div class="fw-medium">KES {{ salary.amount|intcomma }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Footer -->
+                <div class="receipt-footer bg-light p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="signatures">
+                                <div class="row g-4">
+                                    <div class="col-6">
+                                        <div class="signature-line"></div>
+                                        <div class="text-muted small">HR Manager</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="signature-line"></div>
+                                        <div class="text-muted small">Employee Signature</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="qr-code d-inline-block">
+                                    <img src="data:image/png;base64,{{ qr_code }}" 
+                                         alt="Salary QR Code"
+                                         class="qr-image">
+                                </div>
+                                <div class="verify-text mt-2">
+                                    <small class="text-muted">
+                                        <i class="bi bi-shield-check me-1"></i>
+                                        Scan to verify salary payment
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button onclick="window.print()" class="btn btn-primary">
+                    <i class="bi bi-printer me-2"></i>Print Receipt
+                </button>
+                <a href="{% url 'salary_list' %}" class="btn btn-light ms-2">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.receipt-card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+}
+
+.receipt-logo {
+    height: 60px;
+    width: auto;
+}
+
+.receipt-divider {
+    height: 2px;
+    background: linear-gradient(to right, #4f46e5, #3b82f6);
+    opacity: 0.7;
+}
+
+.detail-item {
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.signature-line {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 0.5rem;
+}
+
+.qr-code {
+    padding: 0.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.qr-image {
+    width: 120px;
+    height: 120px;
+}
+
+@media print {
+    .btn {
+        display: none;
+    }
+    .receipt-card {
+        box-shadow: none;
+    }
+}
+</style>
+{% endblock %} 

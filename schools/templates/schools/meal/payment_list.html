@@ -1,0 +1,492 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Meal Payments{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meal-payment-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+    }
+
+    .stat-card-modern {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+        background: white;
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, transparent, currentColor, transparent);
+    }
+
+    .stat-card-primary::before { background: linear-gradient(90deg, transparent, #667eea, transparent); }
+    .stat-card-success::before { background: linear-gradient(90deg, transparent, #10b981, transparent); }
+    .stat-card-warning::before { background: linear-gradient(90deg, transparent, #f59e0b, transparent); }
+    .stat-card-info::before { background: linear-gradient(90deg, transparent, #3b82f6, transparent); }
+
+    .stat-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon-primary { background: rgba(102, 126, 234, 0.1); color: #667eea; }
+    .stat-icon-success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+    .stat-icon-warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+    .stat-icon-info { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .filter-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        background: white;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-card .card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 12px 12px 0 0;
+        padding: 1rem 1.5rem;
+    }
+
+    .table-modern {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-modern thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: none;
+        padding: 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+    }
+
+    .table-modern tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .table-modern tbody tr:hover {
+        background: #f9fafb;
+        transform: scale(1.01);
+    }
+
+    .table-modern tbody td {
+        padding: 1rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    .badge-modern {
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    .meal-badge {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+
+    .status-badge-completed {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .status-badge-pending {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .status-badge-failed {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .btn-action-modern {
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #d1d5db;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Modern Header -->
+    <div class="meal-payment-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h1 class="h2 mb-2 fw-bold">Meal Payment Management</h1>
+                <p class="mb-0 opacity-90">Track and manage all meal payments efficiently</p>
+            </div>
+            <a href="{% url 'meal_payment_create' %}" class="btn btn-light btn-lg mt-3 mt-md-0">
+                <i class="bi bi-plus-circle me-2"></i>Record New Payment
+            </a>
+        </div>
+    </div>
+
+    <!-- Modern Statistics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-modern stat-card-primary">
+                <div class="card-body p-4">
+                    <div class="stat-icon-wrapper stat-icon-primary">
+                        <i class="bi bi-receipt-cutoff"></i>
+                    </div>
+                    <div class="stat-label">Total Payments</div>
+                    <div class="stat-value text-primary">{{ total_payments }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-modern stat-card-success">
+                <div class="card-body p-4">
+                    <div class="stat-icon-wrapper stat-icon-success">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-value text-success">KES {{ total_revenue|floatformat:0|intcomma }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-modern stat-card-success">
+                <div class="card-body p-4">
+                    <div class="stat-icon-wrapper stat-icon-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value text-success">{{ completed_payments }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-card-modern stat-card-warning">
+                <div class="card-body p-4">
+                    <div class="stat-icon-wrapper stat-icon-warning">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value text-warning">{{ pending_payments }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern Filter Section -->
+    <div class="filter-card">
+        <div class="card-header">
+            <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-funnel me-2 text-primary"></i>Filter Payments
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-medium">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control border-start-0" value="{{ search_query }}" placeholder="Student name, admission number...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Meal Type</label>
+                    <select name="meal_type" class="form-select">
+                        <option value="">All Meals</option>
+                        <option value="TEA_BREAK" {% if meal_filter == 'TEA_BREAK' %}selected{% endif %}>Tea Break</option>
+                        <option value="LUNCH" {% if meal_filter == 'LUNCH' %}selected{% endif %}>Lunch</option>
+                        <option value="FRUITS" {% if meal_filter == 'FRUITS' %}selected{% endif %}>Fruits</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                        <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                        <option value="FAILED" {% if status_filter == 'FAILED' %}selected{% endif %}>Failed</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">From Date</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-medium">To Date</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label fw-medium">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modern Payments Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="bi bi-list-ul me-2 text-primary"></i>Payment Records
+                </h5>
+                <span class="badge bg-light text-dark">{{ payments|length }} records</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-modern mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Meal Type</th>
+                            <th>Days</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Reference</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment_item in payments %}
+                        {% if payment_item.is_grouped %}
+                        <!-- Grouped Payment (All 3 meals together) -->
+                        <tr>
+                            <td>
+                                <div class="fw-medium">{{ payment_item.payment_date|date:"M d, Y" }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <a href="{% url 'student_detail' pk=payment_item.student.pk %}" class="text-decoration-none fw-medium text-dark">
+                                            {{ payment_item.student.get_full_name }}
+                                        </a>
+                                        <br><small class="text-muted">{{ payment_item.student.admission_number }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for meal_type in payment_item.meal_types %}
+                                    <span class="badge badge-modern meal-badge">{{ meal_type }}</span>
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted d-block mt-1">
+                                    <i class="bi bi-link-45deg me-1"></i>All Meals
+                                </small>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">{{ payment_item.number_of_days }}</span>
+                                <small class="text-muted d-block">days</small>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">KES {{ payment_item.total_amount|floatformat:2|intcomma }}</span>
+                                <small class="text-muted d-block">Total</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ payment_item.payment_method }}</span>
+                            </td>
+                            <td>
+                                {% if payment_item.status == 'COMPLETED' %}
+                                    <span class="badge badge-modern status-badge-completed">
+                                        <i class="bi bi-check-circle me-1"></i>Completed
+                                    </span>
+                                {% elif payment_item.status == 'PENDING' %}
+                                    <span class="badge badge-modern status-badge-pending">
+                                        <i class="bi bi-clock me-1"></i>Pending
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-modern status-badge-failed">
+                                        <i class="bi bi-x-circle me-1"></i>Failed
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted font-monospace">{{ payment_item.reference_number|default:"-" }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'meal_payment_detail' pk=payment_item.payments.0.pk %}" class="btn btn-sm btn-action-modern btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'meal_payment_edit' pk=payment_item.payments.0.pk %}" class="btn btn-sm btn-action-modern btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <!-- Individual Payment -->
+                        {% with payment=payment_item.payment %}
+                        <tr>
+                            <td>
+                                <div class="fw-medium">{{ payment.payment_date|date:"M d, Y" }}</div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-grow-1">
+                                        <a href="{% url 'student_detail' pk=payment.student.pk %}" class="text-decoration-none fw-medium text-dark">
+                                            {{ payment.student.get_full_name }}
+                                        </a>
+                                        <br><small class="text-muted">{{ payment.student.admission_number }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-modern meal-badge">{{ payment.get_meal_type_display }}</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold">{{ payment.number_of_days }}</span>
+                                <small class="text-muted d-block">days</small>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success">KES {{ payment.amount|floatformat:2|intcomma }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ payment.get_payment_method_display }}</span>
+                            </td>
+                            <td>
+                                {% if payment.status == 'COMPLETED' %}
+                                    <span class="badge badge-modern status-badge-completed">
+                                        <i class="bi bi-check-circle me-1"></i>{{ payment.get_status_display }}
+                                    </span>
+                                {% elif payment.status == 'PENDING' %}
+                                    <span class="badge badge-modern status-badge-pending">
+                                        <i class="bi bi-clock me-1"></i>{{ payment.get_status_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-modern status-badge-failed">
+                                        <i class="bi bi-x-circle me-1"></i>{{ payment.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted font-monospace">{{ payment.reference_number|default:"-" }}</small>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="{% url 'meal_payment_detail' pk=payment.pk %}" class="btn btn-sm btn-action-modern btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'meal_payment_edit' pk=payment.pk %}" class="btn btn-sm btn-action-modern btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endif %}
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="empty-state">
+                                <i class="bi bi-inbox empty-state-icon"></i>
+                                <h5 class="text-muted mb-2">No meal payments found</h5>
+                                <p class="text-muted mb-3">Start by recording a new meal payment</p>
+                                <a href="{% url 'meal_payment_create' %}" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>Record Payment
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if payments.has_other_pages %}
+        <div class="card-footer bg-white border-top">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                    {% if payments.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ payments.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if meal_filter %}&meal_type={{ meal_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            <i class="bi bi-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ payments.number }} of {{ payments.paginator.num_pages }}</span>
+                    </li>
+                    {% if payments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ payments.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if meal_filter %}&meal_type={{ meal_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                            Next <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

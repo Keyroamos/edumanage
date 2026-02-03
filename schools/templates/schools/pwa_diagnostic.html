@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Diagnostic Tool</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid;
+        }
+        .success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 PWA Diagnostic Tool</h1>
+        <p>This tool will help diagnose why the PWA install button isn't showing on your online site.</p>
+        
+        <div id="results"></div>
+        
+        <h2>Manual Tests</h2>
+        <button class="test-button" onclick="testManifest()">Test Manifest</button>
+        <button class="test-button" onclick="testServiceWorker()">Test Service Worker</button>
+        <button class="test-button" onclick="testIcons()">Test Icons</button>
+        <button class="test-button" onclick="testHTTPS()">Test HTTPS</button>
+        <button class="test-button" onclick="testInstallCriteria()">Test Install Criteria</button>
+        
+        <h2>Console Log</h2>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+        const log = document.getElementById('log');
+        
+        function logMessage(message) {
+            log.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            console.log(message);
+        }
+        
+        function addResult(title, status, message) {
+            const div = document.createElement('div');
+            div.className = `status ${status}`;
+            div.innerHTML = `<strong>${title}:</strong> ${message}`;
+            results.appendChild(div);
+        }
+        
+        // Auto-run diagnostics
+        window.addEventListener('load', function() {
+            logMessage('Starting PWA diagnostics...');
+            
+            // Test 1: HTTPS
+            if (location.protocol === 'https:') {
+                addResult('HTTPS', 'success', 'Site is served over HTTPS ✓');
+            } else {
+                addResult('HTTPS', 'error', 'Site is NOT served over HTTPS. PWA requires HTTPS!');
+            }
+            
+            // Test 2: Manifest
+            fetch('/static/manifest.json')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
+                .then(manifest => {
+                    addResult('Manifest', 'success', 'Manifest is accessible and valid ✓');
+                    logMessage('Manifest content: ' + JSON.stringify(manifest, null, 2));
+                    
+                    // Check required fields
+                    const required = ['name', 'short_name', 'start_url', 'display', 'icons'];
+                    const missing = required.filter(field => !manifest[field]);
+                    if (missing.length === 0) {
+                        addResult('Manifest Fields', 'success', 'All required fields present ✓');
+                    } else {
+                        addResult('Manifest Fields', 'error', `Missing required fields: ${missing.join(', ')}`);
+                    }
+                })
+                .catch(error => {
+                    addResult('Manifest', 'error', `Manifest not accessible: ${error.message}`);
+                });
+            
+            // Test 3: Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations()
+                    .then(registrations => {
+                        if (registrations.length > 0) {
+                            addResult('Service Worker', 'success', `${registrations.length} service worker(s) registered ✓`);
+                            registrations.forEach((reg, index) => {
+                                logMessage(`SW ${index + 1}: ${reg.scope} (${reg.active ? 'active' : 'inactive'})`);
+                            });
+                        } else {
+                            addResult('Service Worker', 'warning', 'No service workers registered');
+                        }
+                    });
+            } else {
+                addResult('Service Worker', 'error', 'Service Worker not supported in this browser');
+            }
+            
+            // Test 4: Icons
+            const iconSizes = [192, 512];
+            let iconsFound = 0;
+            iconSizes.forEach(size => {
+                const img = new Image();
+                img.onload = function() {
+                    iconsFound++;
+                    if (iconsFound === iconSizes.length) {
+                        addResult('Icons', 'success', 'All required icons are accessible ✓');
+                    }
+                };
+                img.onerror = function() {
+                    addResult('Icons', 'error', `Icon ${size}x${size} not accessible`);
+                };
+                img.src = `/static/favicon/android-chrome-${size}x${size}.png`;
+            });
+            
+            // Test 5: Install criteria
+            let deferredPrompt = null;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                deferredPrompt = e;
+                addResult('Install Prompt', 'success', 'Install prompt event fired ✓');
+                logMessage('Install prompt is available');
+            });
+            
+            // Test 6: Display mode
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                addResult('Display Mode', 'info', 'App is already installed/running in standalone mode');
+            } else {
+                addResult('Display Mode', 'info', 'App is running in browser mode');
+            }
+        });
+        
+        // Manual test functions
+        function testManifest() {
+            logMessage('Testing manifest...');
+            fetch('/static/manifest.json')
+                .then(response => response.json())
+                .then(manifest => {
+                    logMessage('Manifest test successful');
+                    console.log('Manifest:', manifest);
+                })
+                .catch(error => {
+                    logMessage('Manifest test failed: ' + error.message);
+                });
+        }
+        
+        function testServiceWorker() {
+            logMessage('Testing service worker...');
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/static/js/sw.js')
+                    .then(registration => {
+                        logMessage('Service worker registration successful');
+                        console.log('Registration:', registration);
+                    })
+                    .catch(error => {
+                        logMessage('Service worker registration failed: ' + error.message);
+                    });
+            } else {
+                logMessage('Service worker not supported');
+            }
+        }
+        
+        function testIcons() {
+            logMessage('Testing icons...');
+            const icons = [
+                '/static/favicon/android-chrome-192x192.png',
+                '/static/favicon/android-chrome-512x512.png',
+                '/static/favicon/apple-touch-icon.png'
+            ];
+            
+            icons.forEach(icon => {
+                const img = new Image();
+                img.onload = () => logMessage(`${icon} - OK`);
+                img.onerror = () => logMessage(`${icon} - FAILED`);
+                img.src = icon;
+            });
+        }
+        
+        function testHTTPS() {
+            logMessage('Testing HTTPS...');
+            logMessage(`Protocol: ${location.protocol}`);
+            logMessage(`Host: ${location.host}`);
+            logMessage(`URL: ${location.href}`);
+        }
+        
+        function testInstallCriteria() {
+            logMessage('Testing install criteria...');
+            logMessage(`User agent: ${navigator.userAgent}`);
+            logMessage(`Platform: ${navigator.platform}`);
+            logMessage(`Standalone: ${window.matchMedia('(display-mode: standalone)').matches}`);
+            logMessage(`Before install prompt: ${typeof deferredPrompt !== 'undefined' && deferredPrompt !== null}`);
+        }
+    </script>
+</body>
+</html> 

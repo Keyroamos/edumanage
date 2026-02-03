@@ -1,0 +1,176 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_filters %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h4 class="mb-1">Edit Assessment Results</h4>
+                    <p class="text-muted mb-0">
+                        {{ assessment.student.get_full_name }} - 
+                        {{ assessment.get_assessment_type_display }} 
+                        (Term {{ assessment.term }})
+                    </p>
+                </div>
+                <a href="{% url 'student_detail' assessment.student.id %}" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Student
+                </a>
+            </div>
+
+            <!-- Assessment Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        
+                        <!-- Assessment Details -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label">Assessment Type</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ assessment.get_assessment_type_display }}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Term</label>
+                                <input type="text" class="form-control" 
+                                       value="Term {{ assessment.term }}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date</label>
+                                <input type="text" class="form-control" 
+                                       value="{{ assessment.date|date:'M d, Y' }}" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Subject Results -->
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th style="width: 200px;">Performance Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for result in assessment.results.all %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="subject-icon bg-{{ result.performance_level|performance_label|lower }}-soft me-2">
+                                                    {% with subject_name=result.subject.name|lower %}
+                                                        {% if 'math' in subject_name %}
+                                                            <i class="bi bi-calculator"></i>
+                                                        {% elif 'english' in subject_name %}
+                                                            <i class="bi bi-journal-text"></i>
+                                                        {% elif 'science' in subject_name %}
+                                                            <i class="bi bi-flask"></i>
+                                                        {% elif 'social' in subject_name %}
+                                                            <i class="bi bi-globe"></i>
+                                                        {% elif 'kiswahili' in subject_name %}
+                                                            <i class="bi bi-chat-quote"></i>
+                                                        {% else %}
+                                                            <i class="bi bi-book"></i>
+                                                        {% endif %}
+                                                    {% endwith %}
+                                                </div>
+                                                {{ result.subject.name }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <select name="subject_{{ result.subject.id }}" 
+                                                    class="form-select performance-select"
+                                                    data-subject="{{ result.subject.name }}">
+                                                {% for level in performance_levels %}
+                                                    <option value="{{ level.value }}" 
+                                                            {% if result.performance_level == level.value %}selected{% endif %}>
+                                                        {{ level.label }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="text-end mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.subject-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.performance-select {
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Color variations for subject icons */
+.bg-exceeding-soft { 
+    background: linear-gradient(135deg, rgba(4, 120, 87, 0.08) 0%, rgba(4, 120, 87, 0.12) 100%);
+    color: #047857; 
+}
+
+.bg-meeting-soft { 
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(30, 64, 175, 0.12) 100%);
+    color: #1e40af; 
+}
+
+.bg-approaching-soft { 
+    background: linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, rgba(180, 83, 9, 0.12) 100%);
+    color: #b45309; 
+}
+
+.bg-below-soft { 
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.08) 0%, rgba(185, 28, 28, 0.12) 100%);
+    color: #b91c1c; 
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update subject icon colors when performance level changes
+    const performanceSelects = document.querySelectorAll('.performance-select');
+    performanceSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const icon = row.querySelector('.subject-icon');
+            const level = this.value;
+            
+            // Remove existing color classes
+            icon.classList.remove('bg-exceeding-soft', 'bg-meeting-soft', 'bg-approaching-soft', 'bg-below-soft');
+            
+            // Add new color class based on selected level
+            if (level === '4') icon.classList.add('bg-exceeding-soft');
+            else if (level === '3') icon.classList.add('bg-meeting-soft');
+            else if (level === '2') icon.classList.add('bg-approaching-soft');
+            else if (level === '1') icon.classList.add('bg-below-soft');
+        });
+    });
+});
+</script>
+{% endblock %} 

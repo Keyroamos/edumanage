@@ -1,0 +1,544 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Meal Payment Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 16px;
+        padding: 2rem;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .payment-detail-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+
+    .payment-detail-header::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -5%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+
+    .payment-detail-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .info-card-modern {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        background: white;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-card-modern:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        transform: translateY(-2px);
+    }
+
+    .info-card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 12px 12px 0 0;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .info-item-modern {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid #f3f4f6;
+        transition: all 0.2s ease;
+    }
+
+    .info-item-modern:last-child {
+        border-bottom: none;
+    }
+
+    .info-item-modern:hover {
+        background: #f9fafb;
+    }
+
+    .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: #1f2937;
+    }
+
+    .info-value-large {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .badge-modern-detail {
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .status-badge-completed {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .status-badge-pending {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+    }
+
+    .status-badge-failed {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .meal-badge-detail {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .action-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        background: white;
+        position: sticky;
+        top: 1rem;
+    }
+
+    .action-card-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-bottom: 1px solid #e5e7eb;
+        border-radius: 12px 12px 0 0;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .btn-action-modern {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        margin-bottom: 0.75rem;
+    }
+
+    .btn-action-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-action-modern:last-child {
+        margin-bottom: 0;
+    }
+
+    .highlight-box {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border-left: 4px solid #10b981;
+        border-radius: 8px;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+    }
+
+    .highlight-box-warning {
+        background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        border-left-color: #f59e0b;
+    }
+
+    .highlight-box-danger {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border-left-color: #ef4444;
+    }
+
+    .table-modern-detail {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table-modern-detail thead th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: none;
+        padding: 0.875rem 1rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #6b7280;
+    }
+
+    .table-modern-detail tbody tr {
+        transition: all 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .table-modern-detail tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .table-modern-detail tbody td {
+        padding: 0.875rem 1rem;
+        vertical-align: middle;
+        border: none;
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .icon-box-primary {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .icon-box-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .icon-box-info {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+    }
+
+    .icon-box-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Modern Header -->
+    <div class="payment-detail-header">
+        <div class="payment-detail-content">
+            <div class="d-flex justify-content-between align-items-start flex-wrap">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-box icon-box-primary">
+                            <i class="bi bi-receipt-cutoff"></i>
+                        </div>
+                        <div>
+                            <h1 class="h3 mb-1 fw-bold">Meal Payment Details</h1>
+                            <p class="mb-0 opacity-90">Complete payment information and records</p>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if payment.status == 'COMPLETED' %}
+                            <span class="badge badge-modern-detail status-badge-completed">
+                                <i class="bi bi-check-circle me-1"></i>Completed
+                            </span>
+                        {% elif payment.status == 'PENDING' %}
+                            <span class="badge badge-modern-detail status-badge-pending">
+                                <i class="bi bi-clock me-1"></i>Pending
+                            </span>
+                        {% else %}
+                            <span class="badge badge-modern-detail status-badge-failed">
+                                <i class="bi bi-x-circle me-1"></i>Failed
+                            </span>
+                        {% endif %}
+                        <span class="badge badge-modern-detail meal-badge-detail">
+                            <i class="bi bi-cup-hot me-1"></i>{{ payment.get_meal_type_display }}
+                        </span>
+                    </div>
+                </div>
+                <a href="{% url 'meal_payment_edit' pk=payment.pk %}" class="btn btn-light btn-lg mt-3 mt-md-0">
+                    <i class="bi bi-pencil me-2"></i>Edit Payment
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Payment Information Card -->
+            <div class="info-card-modern">
+                <div class="info-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-info-circle me-2 text-primary"></i>Payment Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-item-modern">
+                        <div class="info-label">Student</div>
+                        <div class="info-value">
+                            <a href="{% url 'student_detail' pk=payment.student.pk %}" class="text-decoration-none fw-semibold text-dark">
+                                <i class="bi bi-person me-2"></i>{{ payment.student.get_full_name }}
+                            </a>
+                            <br>
+                            <small class="text-muted">{{ payment.student.admission_number }}</small>
+                        </div>
+                    </div>
+
+                    <div class="info-item-modern">
+                        <div class="info-label">Payment Amount</div>
+                        <div class="info-value info-value-large text-success">
+                            KES {{ payment.amount|floatformat:2|intcomma }}
+                        </div>
+                        <small class="text-muted">KES {{ payment.get_price_per_day|floatformat:2|intcomma }} per day</small>
+                    </div>
+
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Payment Date</div>
+                                <div class="info-value">
+                                    <i class="bi bi-calendar3 me-2 text-muted"></i>{{ payment.payment_date|date:"F d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Payment Method</div>
+                                <div class="info-value">
+                                    <i class="bi bi-wallet2 me-2 text-muted"></i>{{ payment.get_payment_method_display }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Number of Days</div>
+                                <div class="info-value">
+                                    <i class="bi bi-calendar-check me-2 text-muted"></i>{{ payment.number_of_days }} day{{ payment.number_of_days|pluralize }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Reference Number</div>
+                                <div class="info-value">
+                                    <code class="bg-light px-2 py-1 rounded">{{ payment.reference_number|default:"N/A" }}</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Period Card -->
+            {% if payment.start_date %}
+            <div class="info-card-modern">
+                <div class="info-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-calendar-range me-2 text-primary"></i>Payment Period
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Start Date</div>
+                                <div class="info-value">
+                                    <i class="bi bi-play-circle me-2 text-success"></i>{{ payment.start_date|date:"F d, Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">End Date</div>
+                                <div class="info-value">
+                                    {% if payment.end_date %}
+                                        <i class="bi bi-stop-circle me-2 text-danger"></i>{{ payment.end_date|date:"F d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Contact & Transaction Details -->
+            {% if payment.phone_number or payment.transaction_id %}
+            <div class="info-card-modern">
+                <div class="info-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-telephone me-2 text-primary"></i>Contact & Transaction Details
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if payment.phone_number %}
+                    <div class="info-item-modern">
+                        <div class="info-label">Phone Number</div>
+                        <div class="info-value">
+                            <i class="bi bi-phone me-2 text-muted"></i>{{ payment.phone_number }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if payment.transaction_id %}
+                    <div class="info-item-modern">
+                        <div class="info-label">Transaction ID</div>
+                        <div class="info-value">
+                            <code class="bg-light px-2 py-1 rounded font-monospace">{{ payment.transaction_id }}</code>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Notes -->
+            {% if payment.notes %}
+            <div class="info-card-modern">
+                <div class="info-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-sticky me-2 text-primary"></i>Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ payment.notes }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Related Payments -->
+            {% if related_payments %}
+            <div class="info-card-modern">
+                <div class="info-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-link-45deg me-2 text-primary"></i>Related Payments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">This payment was part of a group payment. Other meals in the same transaction:</p>
+                    <div class="table-responsive">
+                        <table class="table table-modern-detail mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Meal Type</th>
+                                    <th>Amount</th>
+                                    <th>Days</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for related in related_payments %}
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-modern-detail meal-badge-detail">{{ related.get_meal_type_display }}</span>
+                                    </td>
+                                    <td class="fw-semibold">KES {{ related.amount|floatformat:2|intcomma }}</td>
+                                    <td>{{ related.number_of_days }}</td>
+                                    <td>
+                                        {% if related.status == 'COMPLETED' %}
+                                            <span class="badge badge-modern-detail status-badge-completed">
+                                                <i class="bi bi-check-circle me-1"></i>Completed
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-modern-detail status-badge-pending">
+                                                <i class="bi bi-clock me-1"></i>{{ related.get_status_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'meal_payment_detail' pk=related.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Metadata -->
+            <div class="info-card-modern">
+                <div class="info-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-clock-history me-2 text-primary"></i>Record Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Created</div>
+                                <div class="info-value">
+                                    <small>{{ payment.created_at|date:"F d, Y g:i A" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item-modern">
+                                <div class="info-label">Last Updated</div>
+                                <div class="info-value">
+                                    <small>{{ payment.updated_at|date:"F d, Y g:i A" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="col-lg-4">
+            <div class="action-card">
+                <div class="action-card-header">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="bi bi-lightning-charge me-2 text-primary"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'meal_payment_list' %}" class="btn btn-action-modern btn-outline-primary w-100">
+                        <i class="bi bi-arrow-left me-2"></i>Back to List
+                    </a>
+                    <a href="{% url 'meal_payment_edit' pk=payment.pk %}" class="btn btn-action-modern btn-outline-secondary w-100">
+                        <i class="bi bi-pencil me-2"></i>Edit Payment
+                    </a>
+                    <a href="{% url 'student_detail' pk=payment.student.pk %}" class="btn btn-action-modern btn-outline-info w-100">
+                        <i class="bi bi-person me-2"></i>View Student Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

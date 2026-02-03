@@ -1,0 +1,441 @@
+{% load school_filters %}
+
+<!-- Finance Tab -->
+<div class="tab-pane fade" id="finance">
+    <div class="row g-4">
+        <!-- Fee Summary -->
+        <div class="col-md-4">
+            <div class="info-card">
+                <h6 class="card-title">
+                    <i class="bi bi-cash-stack me-2"></i>Fee Summary
+                </h6>
+                <div class="fee-summary">
+                    <div class="summary-item">
+                        <span class="label">Term Fees</span>
+                        <span class="value">KES {{ student.term_fees|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Amount Paid</span>
+                        <span class="value text-success">KES {{ student.get_total_paid|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Balance</span>
+                        <span class="value text-danger">KES {{ student.get_balance|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Payment Status</span>
+                        <span class="badge bg-{{ student.get_payment_status|payment_status_color }}">
+                            {{ student.get_payment_status }}
+                        </span>
+                    </div>
+                </div>
+                {% if user|is_accountant %}
+                    <div class="mt-4">
+                        <a href="{% url 'record_payment' student.pk %}" class="btn btn-primary w-100">
+                            <i class="bi bi-plus-circle me-2"></i>Record Payment
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="col-md-8">
+            <div class="info-card">
+                <h6 class="card-title">
+                    <i class="bi bi-clock-history me-2"></i>Payment History
+                </h6>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in student.payments.all %}
+                            <tr class="payment-row-tab {% if forloop.counter > 5 %}payment-row-hidden-tab{% endif %}">
+                                <td>{{ payment.date|date:"M d, Y" }}</td>
+                                <td>KES {{ payment.amount|floatformat:2 }}</td>
+                                <td>
+                                    <span class="payment-method">
+                                        {% if payment.method == 'CASH' %}
+                                            <i class="bi bi-cash text-success"></i>
+                                        {% elif payment.method == 'MPESA' %}
+                                            <i class="bi bi-phone text-primary"></i>
+                                        {% elif payment.method == 'BANK' %}
+                                            <i class="bi bi-bank text-info"></i>
+                                        {% else %}
+                                            <i class="bi bi-credit-card text-secondary"></i>
+                                        {% endif %}
+                                        {{ payment.get_method_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if payment.status == 'COMPLETED' %}bg-success{% elif payment.status == 'PENDING' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'payment_detail' payment.id %}" class="btn btn-outline-primary" data-bs-toggle="tooltip" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if user|is_accountant %}
+                                        <a href="#" class="btn btn-outline-secondary" data-bs-toggle="tooltip" title="Print Receipt">
+                                            <i class="bi bi-printer"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                        No payment records found
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if student.payments.all|length > 5 %}
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="togglePaymentHistoryTab">
+                        <i class="bi bi-chevron-down" id="togglePaymentIconTab"></i>
+                        <span id="togglePaymentTextTab">View More</span>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Fee Structure -->
+        <div class="col-md-12">
+            <div class="info-card">
+                <h6 class="card-title">
+                    <i class="bi bi-list-check me-2"></i>Fee Structure
+                </h6>
+                <div class="fee-breakdown mb-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="fee-category">
+                                <h6 class="category-title">Tuition Fees</h6>
+                                <ul class="fee-list">
+                                    <li>
+                                        <span>School Fees</span>
+                                        <span>KES {{ student.term_fees|floatformat:2 }}</span>
+                                    </li>
+                                    <li>
+                                        <span>Learning Materials</span>
+                                        <span>KES 5,000.00</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="fee-category">
+                                <h6 class="category-title">Other Charges</h6>
+                                <ul class="fee-list">
+                                    <li>
+                                        <span>Activity Fee</span>
+                                        <span>KES 2,000.00</span>
+                                    </li>
+                                    <li>
+                                        <span>Development Fee</span>
+                                        <span>KES 3,000.00</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Schedule -->
+                    <div class="payment-schedule mt-4">
+                        <h6 class="schedule-title">Payment Schedule</h6>
+                        <div class="schedule-timeline">
+                            <div class="timeline-item {% if student.get_payment_percentage >= 40 %}completed{% endif %}">
+                                <div class="milestone">
+                                    <span class="date">Beginning of Term</span>
+                                    <span class="amount">40% (KES {{ student.term_fees|multiply:0.4|floatformat:2 }})</span>
+                                </div>
+                            </div>
+                            <div class="timeline-item {% if student.get_payment_percentage >= 70 %}completed{% endif %}">
+                                <div class="milestone">
+                                    <span class="date">Mid-Term</span>
+                                    <span class="amount">30% (KES {{ student.term_fees|multiply:0.3|floatformat:2 }})</span>
+                                </div>
+                            </div>
+                            <div class="timeline-item {% if student.get_payment_percentage >= 100 %}completed{% endif %}">
+                                <div class="milestone">
+                                    <span class="date">End of Term</span>
+                                    <span class="amount">30% (KES {{ student.term_fees|multiply:0.3|floatformat:2 }})</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fee-summary {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-radius: 8px;
+    }
+
+    .summary-item .label {
+        color: #64748b;
+        font-size: 0.875rem;
+    }
+
+    .summary-item .value {
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .payment-method {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--bs-gray-100);
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+    }
+
+    .payment-method i {
+        font-size: 1rem;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-group .btn i {
+        font-size: 0.875rem;
+    }
+
+    @media (max-width: 768px) {
+        .summary-item {
+            padding: 0.5rem;
+        }
+
+        .summary-item .value {
+            font-size: 0.875rem;
+        }
+    }
+
+    .fee-breakdown {
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+    }
+
+    .fee-category {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .category-title {
+        color: var(--ransomed-blue);
+        margin-bottom: 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .fee-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .fee-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+
+    .fee-list li:last-child {
+        border-bottom: none;
+    }
+
+    .fee-list li span:last-child {
+        font-weight: 600;
+        color: var(--ransomed-blue);
+    }
+
+    .payment-schedule {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .schedule-title {
+        color: var(--ransomed-blue);
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .schedule-timeline {
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+        padding-top: 20px;
+    }
+
+    .schedule-timeline::before {
+        content: '';
+        position: absolute;
+        top: 30px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #e2e8f0;
+        z-index: 1;
+    }
+
+    .timeline-item {
+        position: relative;
+        z-index: 2;
+        flex: 1;
+        text-align: center;
+    }
+
+    .timeline-item::before {
+        content: '';
+        width: 12px;
+        height: 12px;
+        background: #e2e8f0;
+        border: 2px solid white;
+        border-radius: 50%;
+        position: absolute;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+    }
+
+    .timeline-item.completed::before {
+        background: var(--ransomed-blue);
+    }
+
+    .milestone {
+        padding-top: 30px;
+    }
+
+    .milestone .date {
+        display: block;
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-bottom: 0.25rem;
+    }
+
+    .milestone .amount {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--ransomed-blue);
+    }
+
+    .payment-row-hidden-tab {
+        display: none !important;
+    }
+
+    .payment-row-tab.fade-in-tab {
+        animation: fadeInRowTab 0.3s ease-in;
+    }
+
+    @keyframes fadeInRowTab {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Payment History Toggle Functionality for Tab
+    const togglePaymentHistoryTab = document.getElementById('togglePaymentHistoryTab');
+    if (togglePaymentHistoryTab) {
+        // Get all payment rows and filter to get only those beyond the first 5
+        const allPaymentRows = Array.from(document.querySelectorAll('.payment-row-tab'));
+        const paymentRows = allPaymentRows.slice(5); // Get rows starting from index 5
+        const toggleIcon = document.getElementById('togglePaymentIconTab');
+        const toggleText = document.getElementById('togglePaymentTextTab');
+        let isExpanded = false;
+
+        togglePaymentHistoryTab.addEventListener('click', function() {
+            isExpanded = !isExpanded;
+            
+            paymentRows.forEach((row, index) => {
+                if (isExpanded) {
+                    // Show the row by removing the hidden class and inline styles
+                    row.classList.remove('payment-row-hidden-tab');
+                    row.style.removeProperty('display');
+                    // Add fade-in animation with delay
+                    setTimeout(() => {
+                        row.classList.add('fade-in-tab');
+                    }, index * 50);
+                } else {
+                    // Hide the row by adding the hidden class
+                    row.classList.add('payment-row-hidden-tab');
+                    row.classList.remove('fade-in-tab');
+                    row.style.removeProperty('display');
+                }
+            });
+
+            if (isExpanded) {
+                toggleIcon.classList.remove('bi-chevron-down');
+                toggleIcon.classList.add('bi-chevron-up');
+                toggleText.textContent = 'Show Less';
+            } else {
+                toggleIcon.classList.remove('bi-chevron-up');
+                toggleIcon.classList.add('bi-chevron-down');
+                const hiddenCount = paymentRows.length;
+                if (hiddenCount > 0) {
+                    toggleText.textContent = `View More (${hiddenCount} more)`;
+                } else {
+                    toggleText.textContent = 'View More';
+                }
+            }
+        });
+    }
+});
+</script>

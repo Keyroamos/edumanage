@@ -1,0 +1,1127 @@
+{% load static %}
+{% load school_filters %}
+
+<!-- Academics Tab -->
+<div class="tab-pane fade" id="academics">
+    <!-- Filters Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form id="academicFilterForm" class="mb-0">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Term</label>
+                        <select id="termFilter" name="term" class="form-select">
+                            {% for term in terms %}
+                                <option value="{{ term.value }}" 
+                                        {% if selected_term == term.value %}selected{% endif %}>
+                                    {{ term.label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Assessment Type</label>
+                        <select id="assessmentTypeFilter" name="type" class="form-select">
+                            <option value="all" {% if selected_type == 'all' %}selected{% endif %}>All Types</option>
+                            <option value="opener" {% if selected_type == 'opener' %}selected{% endif %}>Opener Exam</option>
+                            <option value="mid-term" {% if selected_type == 'mid-term' %}selected{% endif %}>Mid-Term Exam</option>
+                            <option value="end-term" {% if selected_type == 'end-term' %}selected{% endif %}>End-Term Exam</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-funnel me-2"></i>Apply Filters
+                        </button>
+                    </div>
+                    {% if not user|is_student %}
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#assessmentTypeModal">
+                            <i class="bi bi-plus-lg me-2"></i>Record Assessment
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+
+            <!-- Filter Status -->
+            <div class="mt-3 text-muted small">
+                <i class="bi bi-funnel me-1"></i>
+                {% if selected_term != 'all' or selected_type != 'all' %}
+                    Showing {{ filtered_assessments|length }} assessment(s)
+                    {% if selected_term != 'all' %}for Term {{ selected_term }}{% endif %}
+                    {% if selected_type != 'all' %}
+                        {% if selected_term != 'all' %}and {% endif %}
+                        {{ selected_type|get_assessment_type_display }}
+                    {% endif %}
+                {% else %}
+                    Showing all assessments
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Overview -->
+    <div class="performance-overview mb-4">
+        <div class="row g-3">
+        <!-- Overall Performance -->
+            <div class="col-md-3">
+                <div class="performance-card">
+                    <div class="d-flex align-items-center">
+                        <div class="performance-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Overall Performance</h6>
+                            <div class="performance-level">
+                                <span class="level-badge bg-{{ academic_overview.most_common_level|performance_label|lower }}-soft">
+                                    Level {{ academic_overview.most_common_level }}
+                                </span>
+                                <span class="level-text">
+                                    {{ academic_overview.most_common_level|performance_label }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Subject -->
+            <div class="col-md-3">
+                <div class="performance-card">
+                    <div class="d-flex align-items-center">
+                        <div class="performance-icon bg-success-soft">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Best Subject</h6>
+                            <div class="performance-text">
+                                {{ academic_overview.best_subject }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area for Improvement -->
+            <div class="col-md-3">
+                <div class="performance-card">
+                    <div class="d-flex align-items-center">
+                        <div class="performance-icon bg-warning-soft">
+                            <i class="bi bi-lightning"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Needs Improvement</h6>
+                            <div class="performance-text">
+                                {{ academic_overview.improvement_area }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Learning Trend -->
+            <div class="col-md-3">
+                <div class="performance-card">
+                    <div class="d-flex align-items-center">
+                        <div class="performance-icon {% if academic_overview.trend > 0 %}bg-success-soft{% else %}bg-danger-soft{% endif %}">
+                            <i class="bi {% if academic_overview.trend > 0 %}bi-arrow-up{% else %}bi-arrow-down{% endif %}"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="text-muted mb-1">Learning Trend</h6>
+                            <div class="performance-text">
+                                {% if academic_overview.trend > 0 %}
+                                    Improving
+                                {% elif academic_overview.trend < 0 %}
+                                    Needs Support
+                                {% else %}
+                                    Stable
+                                {% endif %}
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <div class="row g-4">
+        <!-- Term Progress Card -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="card-title mb-0">Term {{ student.current_term }} Progress</h6>
+                        <span class="badge bg-{{ term_progress.term_progress|progress_badge_class }}">
+                            {{ term_progress.term_progress|floatformat:0 }}%
+                        </span>
+                    </div>
+                    
+                    <div class="progress-tracker">
+                        <div class="progress-item {% if term_progress.opener_completed %}completed{% endif %}">
+                            <div class="progress-icon">
+                                <i class="bi bi-1-circle{% if term_progress.opener_completed %}-fill{% endif %}"></i>
+                            </div>
+                            <div class="progress-label">Opener Assessment</div>
+                        </div>
+                        
+                        <div class="progress-item {% if term_progress.midterm_completed %}completed{% endif %}">
+                            <div class="progress-icon">
+                                <i class="bi bi-2-circle{% if term_progress.midterm_completed %}-fill{% endif %}"></i>
+                                </div>
+                            <div class="progress-label">Mid-Term Assessment</div>
+                                </div>
+                        
+                        <div class="progress-item {% if term_progress.endterm_completed %}completed{% endif %}">
+                            <div class="progress-icon">
+                                <i class="bi bi-3-circle{% if term_progress.endterm_completed %}-fill{% endif %}"></i>
+                            </div>
+                            <div class="progress-label">End-Term Assessment</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment History -->
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h6 class="card-title mb-0">Assessment History</h6>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                Term {{ selected_term }}
+                            </button>
+                            <ul class="dropdown-menu">
+                                {% for term in terms %}
+                                <li>
+                                    <a class="dropdown-item {% if term.value == selected_term %}active{% endif %}" 
+                                       href="?term={{ term.value }}">
+                                        {{ term.label }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+        </div>
+    </div>
+
+                    {% include "schools/includes/assessment_history.html" %}
+        </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weekly Assessments Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-calendar-week me-2 text-warning"></i>Weekly Assessments
+                        </h5>
+                        {% if user|is_class_teacher and user.teacher.grade == student.grade or user|is_staff_or_admin %}
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#assessmentTypeModal">
+                                <i class="bi bi-plus-lg me-1"></i>Add Assessment
+                            </button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    Filter by Week
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="?week=all">All Weeks</a></li>
+                                    <li><a class="dropdown-item" href="?week=current">Current Week</a></li>
+                                    <li><a class="dropdown-item" href="?week=last">Last Week</a></li>
+                                    <li><a class="dropdown-item" href="?week=month">This Month</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if weekly_assessments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Week</th>
+                                    <th>Date</th>
+                                    <th>Subjects</th>
+                                    <th>Average Score</th>
+                                    <th>Performance</th>
+                                    <th>Remarks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assessment in weekly_assessments %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="week-icon me-2">
+                                                <i class="bi bi-calendar-week text-warning"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">Week {{ assessment.week_number }}</div>
+                                                <small class="text-muted">{{ assessment.term }} Term</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="assessment-date-icon me-2">
+                                                <i class="bi bi-calendar3 text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ assessment.date|date:"M d, Y" }}</div>
+                                                <small class="text-muted">{{ assessment.date|date:"l" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="subjects-list">
+                                            {% for result in assessment.results.all|slice:":3" %}
+                                            <span class="badge bg-light text-dark me-1 mb-1">
+                                                <i class="bi bi-book me-1"></i>{{ result.subject.name }}
+                                                {% if result.marks is not None %}
+                                                    ({{ result.marks|floatformat:1 }})
+                                                {% endif %}
+                                            </span>
+                                            {% endfor %}
+                                            {% if assessment.results.count > 3 %}
+                                            <span class="badge bg-secondary">+{{ assessment.results.count|add:"-3" }} more</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% with avg_score=assessment.get_average_score %}
+                                        {% if avg_score %}
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-{{ avg_score|performance_color }}" 
+                                                         style="width: {{ avg_score|multiply:10 }}%"></div>
+                                                </div>
+                                                <span class="fw-medium">{{ avg_score|floatformat:1 }}%</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% with avg_score=assessment.get_average_score %}
+                                        {% if avg_score %}
+                                            {% if avg_score >= 80 %}
+                                                <span class="badge bg-success-soft text-success">
+                                                    <i class="bi bi-star-fill me-1"></i>Exceeding
+                                                </span>
+                                            {% elif avg_score >= 60 %}
+                                                <span class="badge bg-primary-soft text-primary">
+                                                    <i class="bi bi-star-half me-1"></i>Meeting
+                                                </span>
+                                            {% elif avg_score >= 40 %}
+                                                <span class="badge bg-warning-soft text-warning">
+                                                    <i class="bi bi-arrow-up me-1"></i>Approaching
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger-soft text-danger">
+                                                    <i class="bi bi-arrow-down me-1"></i>Below
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if assessment.remarks %}
+                                            <span class="text-muted small" data-bs-toggle="tooltip" title="{{ assessment.remarks }}">
+                                                {{ assessment.remarks|truncatechars:30 }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'weekly_assessment_detail' student.id assessment.id %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if user|is_class_teacher and user.teacher.grade == student.grade or user|is_staff_or_admin %}
+                                            <a href="{% url 'weekly_assessment_record' student.id %}?assessment_id={{ assessment.id }}" 
+                                               class="btn btn-sm btn-outline-secondary" 
+                                               title="Edit Assessment">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Delete Assessment" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteWeeklyAssessmentModal"
+                                                    data-assessment-id="{{ assessment.id }}"
+                                                    data-assessment-date="{{ assessment.date|date:'M d, Y' }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-calendar-week fs-1 text-muted"></i>
+                        </div>
+                        <h6 class="text-muted">No weekly assessments recorded</h6>
+                        <p class="text-muted small mb-0">
+                            {% if user|is_class_teacher and user.teacher.grade == student.grade or user|is_staff_or_admin %}
+                                Start recording weekly assessments to track student progress
+                            {% else %}
+                                Weekly assessments will appear here when recorded by the class teacher
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Assessments Section -->
+    <div class="row mt-4" id="all-assessments">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-list-ul me-2 text-primary"></i>All Assessments
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    Filter by Type
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="?type=all">All Types</a></li>
+                                    <li><a class="dropdown-item" href="?type=opener">Opener</a></li>
+                                    <li><a class="dropdown-item" href="?type=mid-term">Mid-Term</a></li>
+                                    <li><a class="dropdown-item" href="?type=end-term">End-Term</a></li>
+                                </ul>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                    Sort by
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="?sort=date_desc">Date (Newest)</a></li>
+                                    <li><a class="dropdown-item" href="?sort=date_asc">Date (Oldest)</a></li>
+                                    <li><a class="dropdown-item" href="?sort=type">Type</a></li>
+                                    <li><a class="dropdown-item" href="?sort=performance">Performance</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if filtered_assessments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Term</th>
+                                    <th>Subjects</th>
+                                    <th>Average Score</th>
+                                    <th>Performance</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assessment in filtered_assessments %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="assessment-date-icon me-2">
+                                                <i class="bi bi-calendar3 text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ assessment.date|date:"M d, Y" }}</div>
+                                                <small class="text-muted">{{ assessment.date|date:"l" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ assessment.assessment_type|assessment_type_color }}-soft text-{{ assessment.assessment_type|assessment_type_color }}">
+                                            {{ assessment.get_assessment_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info-soft text-info">Term {{ assessment.term }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="subjects-list">
+                                            {% for result in assessment.results.all|slice:":3" %}
+                                            <span class="badge bg-light text-dark me-1 mb-1">
+                                                <i class="bi bi-book me-1"></i>{{ result.subject.name }}
+                                                {% if result.marks is not None %}
+                                                    ({{ result.marks|floatformat:1 }})
+                                                {% endif %}
+                                            </span>
+                                            {% endfor %}
+                                            {% if assessment.results.count > 3 %}
+                                            <span class="badge bg-secondary">+{{ assessment.results.count|add:"-3" }} more</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% with avg_score=assessment.get_average_score %}
+                                        {% if avg_score %}
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress me-2" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-{{ avg_score|performance_color }}" 
+                                                         style="width: {{ avg_score|multiply:10 }}%"></div>
+                                                </div>
+                                                <span class="fw-medium">{{ avg_score|floatformat:1 }}%</span>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% with avg_score=assessment.get_average_score %}
+                                        {% if avg_score %}
+                                            {% if avg_score >= 80 %}
+                                                <span class="badge bg-success-soft text-success">
+                                                    <i class="bi bi-star-fill me-1"></i>Exceeding
+                                                </span>
+                                            {% elif avg_score >= 60 %}
+                                                <span class="badge bg-primary-soft text-primary">
+                                                    <i class="bi bi-star-half me-1"></i>Meeting
+                                                </span>
+                                            {% elif avg_score >= 40 %}
+                                                <span class="badge bg-warning-soft text-warning">
+                                                    <i class="bi bi-arrow-up me-1"></i>Approaching
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger-soft text-danger">
+                                                    <i class="bi bi-arrow-down me-1"></i>Below
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'assessment_detail' assessment.id %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'assessment_record_student' student.id %}?assessment_id={{ assessment.id }}" 
+                                               class="btn btn-sm btn-outline-secondary" 
+                                               title="Edit Assessment">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% if user|is_class_teacher and user.teacher.grade == student.grade or user.is_superuser %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    title="Delete Assessment" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#deleteAssessmentModal"
+                                                    data-assessment-id="{{ assessment.id }}"
+                                                    data-assessment-date="{{ assessment.date|date:'M d, Y' }}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-3">
+                            <i class="bi bi-clipboard-x fs-1 text-muted"></i>
+                        </div>
+                        <h6 class="text-muted">No assessments found</h6>
+                        <p class="text-muted small mb-0">Record new assessments to see them here</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark Attendance Modal -->
+    <div class="modal fade" id="markAttendanceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Mark Attendance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+                <form id="attendanceForm" action="{% url 'mark_attendance' student.id %}" method="POST">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" name="date" class="form-control" 
+                                   value="{{ today|date:'Y-m-d' }}" required>
+                                </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status</label>
+                            <select name="status" class="form-select" required>
+                                <option value="PRESENT">Present</option>
+                                <option value="ABSENT">Absent</option>
+                                <option value="LATE">Late</option>
+                                <option value="EXCUSED">Excused</option>
+                            </select>
+                            </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks (Optional)</label>
+                            <textarea name="remarks" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check2 me-2"></i>Mark Attendance
+                        </button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.performance-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.performance-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    font-size: 1.25rem;
+}
+
+.level-badge {
+    display: inline-flex;
+    padding: 0.25rem 0.5rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+}
+
+.level-text {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.subject {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.trend-info {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+.trend-direction {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Color variations remain the same */
+    .bg-exceeding-soft { 
+    background: linear-gradient(135deg, rgba(4, 120, 87, 0.08) 0%, rgba(4, 120, 87, 0.12) 100%);
+        color: #047857;
+    }
+
+    .bg-meeting-soft { 
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(30, 64, 175, 0.12) 100%);
+        color: #1e40af;
+    }
+
+    .bg-approaching-soft { 
+    background: linear-gradient(135deg, rgba(180, 83, 9, 0.08) 0%, rgba(180, 83, 9, 0.12) 100%);
+        color: #b45309;
+    }
+
+    .bg-below-soft { 
+    background: linear-gradient(135deg, rgba(185, 28, 28, 0.08) 0%, rgba(185, 28, 28, 0.12) 100%);
+        color: #b91c1c;
+    }
+
+.progress-stats {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.progress-stats > div {
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 1.125rem;
+        font-weight: 600;
+    color: #1e293b;
+}
+
+.stat-label {
+        font-size: 0.75rem;
+    color: #64748b;
+}
+
+.progress-timeline {
+    position: relative;
+    padding-top: 2rem;
+}
+
+.timeline-track {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 1;
+}
+
+.milestone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: #94a3b8;
+    transition: all 0.3s ease;
+}
+
+.milestone.completed {
+    color: #1e40af;
+}
+
+.milestone-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.milestone.completed .milestone-icon {
+    background: #1e40af;
+    border-color: #1e40af;
+    color: white;
+}
+
+.milestone-label {
+    font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+.progress {
+    background-color: #e2e8f0;
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #1e40af, #3b82f6);
+    transition: width 0.6s ease;
+}
+
+/* Add hover effects */
+.milestone:hover .milestone-icon {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+.progress-tracker {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.progress-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--bs-gray-100);
+    transition: all 0.3s ease;
+}
+
+.progress-item.completed {
+    background: var(--bs-success-bg-subtle);
+}
+
+.progress-icon {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.progress-item.completed .progress-icon {
+    color: var(--bs-success);
+}
+
+.progress-label {
+    font-size: 0.875rem;
+    color: var(--bs-gray-700);
+}
+
+.progress-item.completed .progress-label {
+    color: var(--bs-success);
+    font-weight: 500;
+    }
+
+.btn-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+    }
+}
+</style>
+
+<!-- Assessment Type Selection Modal -->
+<div class="modal fade" id="assessmentTypeModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>Choose Assessment Type
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm assessment-type-card" 
+                             onclick="selectAssessmentType('weekly')" 
+                             style="cursor: pointer; transition: all 0.3s ease;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-calendar-week fs-1 text-warning"></i>
+                                </div>
+                                <h6 class="card-title mb-2">Weekly Assessment</h6>
+                                <p class="card-text text-muted small mb-0">
+                                    Record weekly progress tracking for regular monitoring
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm assessment-type-card" 
+                             onclick="selectAssessmentType('main')" 
+                             style="cursor: pointer; transition: all 0.3s ease;">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-clipboard-data fs-1 text-primary"></i>
+                                </div>
+                                <h6 class="card-title mb-2">Main Assessment</h6>
+                                <p class="card-text text-muted small mb-0">
+                                    Record formal assessments (Opener, Mid-Term, End-Term)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Assessment Modal -->
+<div class="modal fade" id="weeklyAssessmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-calendar-week me-2 text-warning"></i>Add Weekly Assessment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'assessment_record_student' student.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="weekly_assessment_type" class="form-label">Assessment Type</label>
+                            <select name="assessment_type" id="weekly_assessment_type" class="form-select" required>
+                                <option value="">Select Type</option>
+                                <option value="weekly" selected>Weekly Assessment</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="weekly_term" class="form-label">Term</label>
+                            <select name="term" id="weekly_term" class="form-select" required>
+                                <option value="">Select Term</option>
+                                <option value="1">Term 1</option>
+                                <option value="2">Term 2</option>
+                                <option value="3">Term 3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="weekly_date" class="form-label">Date</label>
+                            <input type="date" name="date" id="weekly_date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="weekly_week" class="form-label">Week Number</label>
+                            <input type="number" name="week_number" id="weekly_week" class="form-control" min="1" max="14" required>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6 class="mb-3">Subject Marks (out of 10)</h6>
+                    <div class="row g-3">
+                        {% for subject in subjects %}
+                        <div class="col-md-6">
+                            <div class="card border">
+                                <div class="card-body p-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label mb-0 fw-medium">{{ subject.name }}</label>
+                                        <span class="badge bg-light text-dark">/10</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-8">
+                                            <input type="number" 
+                                                   name="marks_{{ subject.id }}" 
+                                                   class="form-control" 
+                                                   min="0" 
+                                                   max="10" 
+                                                   step="0.5"
+                                                   placeholder="Marks">
+                                        </div>
+                                        <div class="col-4">
+                                            <input type="text" 
+                                                   name="remarks_{{ subject.id }}" 
+                                                   class="form-control" 
+                                                   placeholder="Remarks">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="weekly_remarks" class="form-label">Overall Remarks</label>
+                        <textarea name="remarks" id="weekly_remarks" class="form-control" rows="3" placeholder="Enter overall remarks (optional)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x me-2"></i>Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Save Weekly Assessment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Weekly Assessment Modal -->
+<div class="modal fade" id="deleteWeeklyAssessmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-confirm">
+        <div class="modal-content">
+            <div class="modal-header flex-column border-0">
+                <div class="icon-box bg-danger mb-3">
+                    <i class="bi bi-trash"></i>
+                </div>
+                <h5 class="modal-title mb-2">Delete Weekly Assessment</h5>
+                <p class="text-muted mb-0" id="deleteWeeklyAssessmentModalMessage"></p>
+            </div>
+            <div class="modal-body text-center">
+                <p class="text-muted">This action cannot be undone and will permanently delete the weekly assessment.</p>
+            </div>
+            <div class="modal-footer justify-content-center border-0">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">
+                    <i class="bi bi-x me-2"></i>Cancel
+                </button>
+                <form id="deleteWeeklyAssessmentForm" method="POST" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    tooltipTriggerList.forEach(function(tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    const filterForm = document.getElementById('academicFilterForm');
+    const termFilter = document.getElementById('termFilter');
+    const typeFilter = document.getElementById('assessmentTypeFilter');
+
+    // Function to update URL parameters
+    function updateUrlParams(params) {
+        const url = new URL(window.location.href);
+        Object.keys(params).forEach(key => {
+            if (params[key]) {
+                url.searchParams.set(key, params[key]);
+            } else {
+                url.searchParams.delete(key);
+            }
+        });
+        return url.toString();
+    }
+
+    // Handle form submission
+    filterForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const term = termFilter.value;
+        const type = typeFilter.value;
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Applying...';
+        submitBtn.disabled = true;
+
+        // Update URL and reload page
+        const newUrl = updateUrlParams({
+            term: term !== 'all' ? term : '',
+            type: type !== 'all' ? type : ''
+        });
+
+        window.location.href = newUrl;
+    });
+
+    // Handle individual filter changes
+    [termFilter, typeFilter].forEach(filter => {
+        filter.addEventListener('change', function() {
+            const submitBtn = filterForm.querySelector('button[type="submit"]');
+            submitBtn.classList.add('btn-pulse'); // Add a visual indicator
+        });
+    });
+
+    // Handle weekly assessment delete modal
+    const deleteWeeklyAssessmentModal = document.getElementById('deleteWeeklyAssessmentModal');
+    if (deleteWeeklyAssessmentModal) {
+        deleteWeeklyAssessmentModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const assessmentId = button.getAttribute('data-assessment-id');
+            const assessmentDate = button.getAttribute('data-assessment-date');
+            
+            const modalMessage = document.getElementById('deleteWeeklyAssessmentModalMessage');
+            modalMessage.textContent = `Are you sure you want to delete the weekly assessment from ${assessmentDate}?`;
+            
+            const deleteForm = document.getElementById('deleteWeeklyAssessmentForm');
+            deleteForm.action = `/assessments/${assessmentId}/delete/`;
+        });
+    }
+
+    // Set current date for weekly assessment modal
+    const weeklyDateInput = document.getElementById('weekly_date');
+    if (weeklyDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        weeklyDateInput.value = today;
+    }
+
+    // Auto-calculate week number based on current date
+    const weeklyWeekInput = document.getElementById('weekly_week');
+    if (weeklyWeekInput) {
+        const today = new Date();
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        const days = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+        const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+        weeklyWeekInput.value = Math.min(weekNumber, 14); // Cap at 14 weeks
+    }
+
+    // Add hover effects for assessment type cards
+    const assessmentTypeCards = document.querySelectorAll('.assessment-type-card');
+    assessmentTypeCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        });
+    });
+});
+
+// Function to handle assessment type selection
+function selectAssessmentType(type) {
+    const studentId = '{{ student.id }}';
+    
+    if (type === 'weekly') {
+        // Redirect to the weekly assessment record page
+        window.location.href = `/assessments/weekly/${studentId}/`;
+    } else if (type === 'main') {
+        // Redirect to the main assessment record page
+        window.location.href = `/assessments/record/${studentId}/`;
+    }
+}
+</script>

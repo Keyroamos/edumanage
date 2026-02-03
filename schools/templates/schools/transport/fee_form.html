@@ -1,0 +1,799 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .form-header h3 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.75rem;
+    }
+    
+    .form-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+    }
+    
+    .form-body {
+        padding: 2.5rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    
+    .section-title i {
+        color: #667eea;
+        font-size: 1.3rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-label i {
+        color: #667eea;
+        font-size: 0.9rem;
+    }
+    
+    .form-label .required {
+        color: #dc3545;
+        margin-left: 0.25rem;
+    }
+    
+    .form-control,
+    .form-select {
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.1);
+    }
+    
+    .input-group-icon {
+        position: relative;
+    }
+    
+    .input-group-icon i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        z-index: 10;
+    }
+    
+    .input-group-icon .form-control {
+        padding-left: 2.5rem;
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 2rem;
+        margin-top: 2rem;
+        border-top: 2px solid #f0f0f0;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        color: white;
+    }
+    
+    .btn-cancel {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        color: #6c757d;
+        padding: 0.75rem 2rem;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background: #e9ecef;
+        border-color: #dee2e6;
+        color: #495057;
+    }
+    
+    .info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .info-card-title {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .info-card-text {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0;
+    }
+    
+    .payment-method-card {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+    }
+    
+    .payment-method-card:hover {
+        border-color: #667eea;
+        background: #f8f9fa;
+    }
+    
+    .payment-method-card.selected {
+        border-color: #667eea;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    }
+    
+    .status-badge-preview {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    
+    .status-badge-preview.completed {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        color: #155724;
+    }
+    
+    .status-badge-preview.pending {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        color: #856404;
+    }
+    
+    .status-badge-preview.failed {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        color: #721c24;
+    }
+    
+    .list-group-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .list-group-item:hover {
+        background: #f8f9fa;
+        border-color: #667eea;
+    }
+    
+    @media (max-width: 768px) {
+        .form-body {
+            padding: 1.5rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-submit,
+        .btn-cancel {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-10 col-xl-8 mx-auto">
+            <div class="form-container">
+                <div class="form-header">
+                    <h3>
+                        <i class="bi bi-cash-stack me-2"></i>
+                        {{ page_title }}
+                    </h3>
+                    <p>Record a new transport fee payment</p>
+                </div>
+                
+                <div class="form-body">
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Error:</strong>
+                            {% for error in form.non_field_errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post" id="feeForm">
+                        {% csrf_token %}
+                        
+                        <!-- Student & Route Information -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="bi bi-person-circle"></i>
+                                Student & Route Information
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.student.id_for_label }}">
+                                            <i class="bi bi-person"></i>
+                                            Student
+                                            <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-person-badge"></i>
+                                            {{ form.student }}
+                                        </div>
+                                        {% if form.student.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.student.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.route.id_for_label }}">
+                                            <i class="bi bi-signpost-2"></i>
+                                            Route
+                                            <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-route"></i>
+                                            {{ form.route }}
+                                        </div>
+                                        {% if form.route.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.route.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Student Transport Info Card -->
+                            <div id="studentTransportInfo" class="info-card" style="display: none;">
+                                <div class="info-card-title">
+                                    <i class="bi bi-info-circle"></i>
+                                    Student Transport Information
+                                </div>
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-signpost-2 text-primary"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Route</small>
+                                                <strong id="infoRouteName">-</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-cash-stack text-success"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Term Fee</small>
+                                                <strong id="infoTermFee">KES 0.00</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <i class="bi bi-wallet2 text-warning"></i>
+                                            <div>
+                                                <small class="text-muted d-block">Total Paid</small>
+                                                <strong id="infoTotalPaid">KES 0.00</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="d-flex align-items-center gap-2 p-3 rounded" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                                            <i class="bi bi-calculator text-danger fs-4"></i>
+                                            <div class="flex-grow-1">
+                                                <small class="text-muted d-block">Outstanding Balance</small>
+                                                <strong id="infoBalance" class="fs-5">KES 0.00</strong>
+                                            </div>
+                                            <div id="balanceStatus" class="badge"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Payment History -->
+                                <div id="paymentHistory" class="mt-3" style="display: none;">
+                                    <hr>
+                                    <h6 class="mb-2">
+                                        <i class="bi bi-clock-history me-2"></i>
+                                        Payment History (Term <span id="historyTerm">-</span>)
+                                    </h6>
+                                    <div id="historyList" class="list-group"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Assignment Message -->
+                            <div id="noAssignmentMessage" class="alert alert-warning" style="display: none;">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                This student does not have an active transport assignment. Please assign them to a route first.
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Details -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="bi bi-credit-card"></i>
+                                Payment Details
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.term.id_for_label }}">
+                                            <i class="bi bi-calendar3"></i>
+                                            Term
+                                            <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-calendar-check"></i>
+                                            {{ form.term }}
+                                        </div>
+                                        {% if form.term.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.term.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.amount.id_for_label }}">
+                                            <i class="bi bi-currency-exchange"></i>
+                                            Amount (KES)
+                                            <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-cash"></i>
+                                            {{ form.amount }}
+                                        </div>
+                                        {% if form.amount.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.amount.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="form-text">Enter the payment amount in Kenyan Shillings</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.payment_method.id_for_label }}">
+                                            <i class="bi bi-wallet2"></i>
+                                            Payment Method
+                                            <span class="required">*</span>
+                                        </label>
+                                        {{ form.payment_method }}
+                                        {% if form.payment_method.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.payment_method.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.status.id_for_label }}">
+                                            <i class="bi bi-check-circle"></i>
+                                            Payment Status
+                                            <span class="required">*</span>
+                                        </label>
+                                        {{ form.status }}
+                                        {% if form.status.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.status.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <div id="statusPreview" class="mt-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Transaction Information -->
+                        <div class="form-section" id="transactionSection">
+                            <div class="section-title">
+                                <i class="bi bi-receipt"></i>
+                                Transaction Information
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-card-title">
+                                    <i class="bi bi-info-circle"></i>
+                                    Transaction Details
+                                </div>
+                                <p class="info-card-text">
+                                    Fill in transaction details if payment was made via M-Pesa or Bank Transfer. 
+                                    These fields are optional for cash payments.
+                                </p>
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.phone_number.id_for_label }}">
+                                            <i class="bi bi-telephone"></i>
+                                            Phone Number
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-phone"></i>
+                                            {{ form.phone_number }}
+                                        </div>
+                                        <div class="form-text">M-Pesa phone number (e.g., 254712345678)</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.transaction_id.id_for_label }}">
+                                            <i class="bi bi-hash"></i>
+                                            Transaction ID
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-receipt-cutoff"></i>
+                                            {{ form.transaction_id }}
+                                        </div>
+                                        <div class="form-text">M-Pesa transaction code or bank reference</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label" for="{{ form.reference_number.id_for_label }}">
+                                            <i class="bi bi-tag"></i>
+                                            Reference Number
+                                            <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group-icon">
+                                            <i class="bi bi-upc-scan"></i>
+                                            {{ form.reference_number }}
+                                        </div>
+                                        {% if form.reference_number.errors %}
+                                            <div class="error-message">
+                                                <i class="bi bi-exclamation-circle"></i>
+                                                {{ form.reference_number.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <div class="form-text">Unique reference number for this payment (auto-generated if left empty)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Notes -->
+                        <div class="form-section">
+                            <div class="section-title">
+                                <i class="bi bi-sticky"></i>
+                                Additional Information
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="{{ form.notes.id_for_label }}">
+                                    <i class="bi bi-file-text"></i>
+                                    Notes
+                                </label>
+                                {{ form.notes }}
+                                <div class="form-text">Any additional notes or comments about this payment</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <a href="{% url 'transport_fee_list' %}" class="btn btn-cancel">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-submit">
+                                <i class="bi bi-check-circle me-2"></i>Save Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const studentSelect = document.getElementById('{{ form.student.id_for_label }}');
+        const routeSelect = document.getElementById('{{ form.route.id_for_label }}');
+        const amountInput = document.getElementById('{{ form.amount.id_for_label }}');
+        const termSelect = document.getElementById('{{ form.term.id_for_label }}');
+        const studentTransportInfo = document.getElementById('studentTransportInfo');
+        const noAssignmentMessage = document.getElementById('noAssignmentMessage');
+        const statusSelect = document.getElementById('{{ form.status.id_for_label }}');
+        const statusPreview = document.getElementById('statusPreview');
+        const paymentMethodSelect = document.getElementById('{{ form.payment_method.id_for_label }}');
+        const transactionSection = document.getElementById('transactionSection');
+        
+        // Format currency
+        function formatCurrency(amount) {
+            return 'KES ' + parseFloat(amount).toLocaleString('en-KE', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        // Fetch student transport information
+        function fetchStudentTransportInfo(studentId, term) {
+            if (!studentId) {
+                studentTransportInfo.style.display = 'none';
+                noAssignmentMessage.style.display = 'none';
+                return;
+            }
+            
+            const url = `{% url 'get_student_transport_info' student_id=0 %}`.replace('0', studentId);
+            const params = term ? `?term=${term}` : '';
+            
+            fetch(url + params)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        if (data.has_assignment === false) {
+                            studentTransportInfo.style.display = 'none';
+                            noAssignmentMessage.style.display = 'block';
+                            routeSelect.value = '';
+                            amountInput.value = '';
+                        } else {
+                            console.error('Error:', data.error);
+                            studentTransportInfo.style.display = 'none';
+                            noAssignmentMessage.style.display = 'none';
+                        }
+                        return;
+                    }
+                    
+                    // Show info card
+                    studentTransportInfo.style.display = 'block';
+                    noAssignmentMessage.style.display = 'none';
+                    
+                    // Auto-populate route
+                    if (data.route_id) {
+                        routeSelect.value = data.route_id;
+                    }
+                    
+                    // Update info display
+                    document.getElementById('infoRouteName').textContent = data.route_name || '-';
+                    document.getElementById('infoTermFee').textContent = formatCurrency(data.route_fee || 0);
+                    document.getElementById('infoTotalPaid').textContent = formatCurrency(data.total_paid || 0);
+                    document.getElementById('infoBalance').textContent = formatCurrency(data.balance || 0);
+                    document.getElementById('historyTerm').textContent = data.term || '-';
+                    
+                    // Update balance status badge
+                    const balanceStatus = document.getElementById('balanceStatus');
+                    if (data.balance > 0) {
+                        balanceStatus.className = 'badge bg-warning text-dark';
+                        balanceStatus.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>Outstanding';
+                    } else if (data.balance < 0) {
+                        balanceStatus.className = 'badge bg-info';
+                        balanceStatus.innerHTML = '<i class="bi bi-info-circle me-1"></i>Overpaid';
+                    } else {
+                        balanceStatus.className = 'badge bg-success';
+                        balanceStatus.innerHTML = '<i class="bi bi-check-circle me-1"></i>Paid';
+                    }
+                    
+                    // Auto-populate amount with balance (if balance > 0)
+                    if (data.balance > 0) {
+                        amountInput.value = parseFloat(data.balance).toFixed(2);
+                    } else {
+                        amountInput.value = '';
+                    }
+                    
+                    // Show payment history
+                    const paymentHistory = document.getElementById('paymentHistory');
+                    const historyList = document.getElementById('historyList');
+                    
+                    if (data.payment_history && data.payment_history.length > 0) {
+                        paymentHistory.style.display = 'block';
+                        historyList.innerHTML = '';
+                        
+                        data.payment_history.forEach(payment => {
+                            const statusClass = payment.status === 'Completed' ? 'success' : 
+                                               payment.status === 'Pending' ? 'warning' : 'danger';
+                            const item = document.createElement('div');
+                            item.className = 'list-group-item';
+                            item.innerHTML = `
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>${formatCurrency(payment.amount)}</strong>
+                                        <small class="text-muted d-block">${payment.date} • ${payment.method}</small>
+                                    </div>
+                                    <span class="badge bg-${statusClass}">${payment.status}</span>
+                                </div>
+                            `;
+                            historyList.appendChild(item);
+                        });
+                    } else {
+                        paymentHistory.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching student transport info:', error);
+                    studentTransportInfo.style.display = 'none';
+                    noAssignmentMessage.style.display = 'none';
+                });
+        }
+        
+        // Student selection handler
+        if (studentSelect) {
+            studentSelect.addEventListener('change', function() {
+                const studentId = this.value;
+                const term = termSelect ? termSelect.value : null;
+                fetchStudentTransportInfo(studentId, term);
+            });
+            
+            // Fetch on page load if student is already selected
+            if (studentSelect.value) {
+                const term = termSelect ? termSelect.value : null;
+                fetchStudentTransportInfo(studentSelect.value, term);
+            }
+        }
+        
+        // Term selection handler (refresh info when term changes)
+        if (termSelect && studentSelect) {
+            termSelect.addEventListener('change', function() {
+                if (studentSelect.value) {
+                    fetchStudentTransportInfo(studentSelect.value, this.value);
+                }
+            });
+        }
+        
+        // Status preview
+        function updateStatusPreview() {
+            const status = statusSelect.value;
+            const statusText = statusSelect.options[statusSelect.selectedIndex].text;
+            
+            if (status) {
+                let badgeClass = '';
+                if (status === 'COMPLETED') badgeClass = 'completed';
+                else if (status === 'PENDING') badgeClass = 'pending';
+                else if (status === 'FAILED') badgeClass = 'failed';
+                
+                statusPreview.innerHTML = `
+                    <span class="status-badge-preview ${badgeClass}">
+                        <span class="status-dot ${badgeClass}"></span>
+                        ${statusText}
+                    </span>
+                `;
+            } else {
+                statusPreview.innerHTML = '';
+            }
+        }
+        
+        if (statusSelect) {
+            statusSelect.addEventListener('change', updateStatusPreview);
+            updateStatusPreview();
+        }
+        
+        // Payment method change handler
+        function toggleTransactionFields() {
+            const method = paymentMethodSelect.value;
+            if (method === 'CASH') {
+                transactionSection.style.opacity = '0.6';
+            } else {
+                transactionSection.style.opacity = '1';
+            }
+        }
+        
+        if (paymentMethodSelect) {
+            paymentMethodSelect.addEventListener('change', toggleTransactionFields);
+            toggleTransactionFields();
+        }
+        
+        // Form validation feedback
+        const form = document.getElementById('feeForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Add loading state to submit button
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+                    submitBtn.disabled = true;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

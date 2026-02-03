@@ -1,0 +1,142 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load school_filters %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="assessment-type-badge bg-{{ assessment.get_assessment_type_display|lower }}-soft">
+                                <i class="bi bi-graph-up fs-4"></i>
+                            </div>
+        <div>
+                                <h4 class="mb-1">{{ assessment.get_assessment_type_display }} Assessment Results</h4>
+                                <p class="text-muted mb-0">
+                                    <i class="bi bi-calendar3 me-2"></i>{{ assessment.date|date:"F d, Y" }}
+                                    <span class="mx-2">•</span>
+                                    <i class="bi bi-clock me-2"></i>Term {{ assessment.term }}
+                                </p>
+        </div>
+    </div>
+                        <a href="{% url 'student_detail' assessment.student.id %}" class="btn btn-light">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Student
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+        <!-- Results Table -->
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent">
+                    <h5 class="mb-0">Detailed Results</h5>
+                </div>
+                <div class="card-body">
+                    {% include "schools/includes/assessment_results_table.html" with results=assessment.results.all %}
+                </div>
+                </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    
+    // Assessment data from backend
+    const assessmentData = {{ assessment_data|safe }};
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: assessmentData.map(item => item.subject),
+            datasets: [{
+                label: 'Score',
+                data: assessmentData.map(item => item.score),
+                backgroundColor: assessmentData.map(item => `${item.color}33`), // 20% opacity
+                borderColor: assessmentData.map(item => item.color),
+                borderWidth: 2,
+                borderRadius: 6,
+                maxBarThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        display: true,
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const data = assessmentData[context.dataIndex];
+                            return [
+                                `Score: ${data.score}%`,
+                                `Level: ${data.performance_level}`
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.performance-stats {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.stat-item {
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+</style>
+{% endblock %} 

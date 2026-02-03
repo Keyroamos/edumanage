@@ -1,0 +1,180 @@
+{% extends 'schools/base.html' %}
+{% load humanize %}
+
+{% block extra_css %}
+<style>
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .progress {
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        transition: width 0.6s ease;
+    }
+
+    .card-footer .row {
+        margin-right: -0.5rem;
+        margin-left: -0.5rem;
+    }
+
+    .card-footer .col-6 {
+        padding-right: 0.5rem;
+        padding-left: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Stats Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Employees Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-people-fill text-white"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-subtitle text-muted mb-1">Total Staff</h6>
+                        <h3 class="card-title mb-0">{{ employee_stats.total }}</h3>
+                        <small class="text-muted">
+                            Active employees across all departments
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-light py-2">
+                    <div class="row text-center g-2">
+                        <div class="col-6 col-md-3">
+                            <div class="small text-muted mb-1">Teachers</div>
+                            <div class="fw-bold">{{ employee_stats.teachers }}</div>
+                            <small class="text-muted">{{ employee_stats.teachers_percent|floatformat:1 }}%</small>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="small text-muted mb-1">Admin</div>
+                            <div class="fw-bold">{{ employee_stats.admin_staff }}</div>
+                            <small class="text-muted">{{ employee_stats.admin_percent|floatformat:1 }}%</small>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="small text-muted mb-1">Support</div>
+                            <div class="fw-bold">{{ employee_stats.support_staff }}</div>
+                            <small class="text-muted">{{ employee_stats.support_percent|floatformat:1 }}%</small>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="small text-muted mb-1">Other</div>
+                            <div class="fw-bold">{{ employee_stats.other_staff }}</div>
+                            <small class="text-muted">{{ employee_stats.other_percent|floatformat:1 }}%</small>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 4px;">
+                        <div class="progress-bar bg-info" style="width: {{ employee_stats.teachers_percent }}%" title="Teachers"></div>
+                        <div class="progress-bar bg-primary" style="width: {{ employee_stats.admin_percent }}%" title="Admin"></div>
+                        <div class="progress-bar bg-success" style="width: {{ employee_stats.support_percent }}%" title="Support"></div>
+                        <div class="progress-bar bg-warning" style="width: {{ employee_stats.other_percent }}%" title="Other"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Leaves Card -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-calendar2-check text-white"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h6 class="card-subtitle text-muted mb-1">Pending Leaves</h6>
+                        <h3 class="card-title mb-0">{{ active_leaves }}</h3>
+                        <small class="text-muted">Awaiting approval</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="row mt-4">
+            <!-- Recent Leaves -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-calendar2-week text-primary me-2"></i>
+                            Recent Leave Requests
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_leaves %}
+                        <div class="list-group list-group-flush">
+                            {% for leave in recent_leaves %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ leave.employee.get_full_name }}</h6>
+                                        <small class="text-muted">
+                                            {{ leave.get_leave_type_display }} • 
+                                            {{ leave.start_date|date:"M d" }} - {{ leave.end_date|date:"M d" }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-{{ leave.status|lower }}-subtle text-{{ leave.status|lower }}">
+                                        {{ leave.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted mb-0">No recent leave requests</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Salaries -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-cash-stack text-success me-2"></i>
+                            Recent Salary Payments
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recent_salaries %}
+                        <div class="list-group list-group-flush">
+                            {% for salary in recent_salaries %}
+                            <div class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ salary.employee.get_full_name }}</h6>
+                                        <small class="text-muted">
+                                            {{ salary.get_month_display }} {{ salary.year }}
+                                        </small>
+                                    </div>
+                                    <span class="text-success fw-bold">
+                                        KES {{ salary.net_salary|floatformat:2|intcomma }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted mb-0">No recent salary payments</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

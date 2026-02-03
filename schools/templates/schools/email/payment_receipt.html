@@ -1,0 +1,188 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Receipt - {{ payment.reference_number }}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f7fa; padding: 40px 20px;">
+        <tr>
+            <td align="center">
+                <!-- Main Container -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff; border-radius: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); overflow: hidden;">
+                    
+                    <!-- Header with Gradient Background -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center; position: relative;">
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background: url('data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'0.08\'/%3E%3C/svg%3E');"></div>
+                            <div style="position: relative; z-index: 1;">
+                                <h1 style="margin: 0 0 10px 0; color: #ffffff; font-size: 28px; font-weight: 700; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                                    Bishop Dr Mando International School
+                                </h1>
+                                <p style="margin: 8px 0 0 0; color: #ffffff; font-size: 14px; opacity: 0.95;">
+                                    <span style="display: inline-block; margin-right: 15px;">
+                                        📍 P.O. Box 6675-00100, Nairobi
+                                    </span>
+                                    <span style="display: inline-block;">
+                                        📞 Tel: +254 724 581 824
+                                    </span>
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Receipt Title Section -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 30px 30px 25px 30px; text-align: center; border-bottom: 3px solid #667eea;">
+                            <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+                                <span style="color: white; font-size: 24px;">📄</span>
+                            </div>
+                            <h2 style="margin: 0 0 15px 0; color: #2d3748; font-size: 24px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;">
+                                Payment Receipt
+                            </h2>
+                            <div style="display: inline-block; background: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); border: 2px solid #667eea;">
+                                <span style="font-size: 11px; color: #718096; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px;">Receipt No.</span>
+                                <span style="font-size: 14px; color: #667eea; font-weight: 700; font-family: 'Courier New', monospace;">{{ payment.reference_number }}</span>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Receipt Number and Date -->
+                    <tr>
+                        <td style="padding: 30px 30px 20px 30px; background-color: #ffffff;">
+                            <div style="background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%); padding: 20px; border-radius: 16px; border-left: 4px solid #667eea; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                        <td style="width: 50%;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">📅</div>
+                                                <div>
+                                                    <p style="margin: 0 0 5px 0; color: #718096; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">
+                                                        Payment Date
+                                                    </p>
+                                                    <p style="margin: 0; color: #2d3748; font-size: 16px; font-weight: 600;">
+                                                        {{ payment.date|date:"F d, Y" }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Student Information -->
+                    <tr>
+                        <td style="padding: 0 30px 25px 30px; background-color: #ffffff;">
+                            <div style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); border-left: 4px solid #48bb78;">
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0;">
+                                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">👤</div>
+                                    <h3 style="margin: 0; color: #2d3748; font-size: 18px; font-weight: 700;">Student Information</h3>
+                                </div>
+                                <div style="padding: 15px; background: #f7fafc; border-radius: 8px; margin-bottom: 15px;">
+                                    <p style="margin: 0 0 15px 0; color: #2d3748; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                                        👨‍🎓 {{ student.get_full_name }}
+                                    </p>
+                                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                        <span style="display: inline-block; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%); color: #667eea; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid rgba(102, 126, 234, 0.2);">
+                                            🆔 {{ student.admission_number }}
+                                        </span>
+                                        <span style="display: inline-block; background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.1) 100%); color: #ed8936; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid rgba(237, 137, 54, 0.2);">
+                                            🎓 {{ student.grade }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Payment Details -->
+                    <tr>
+                        <td style="padding: 0 30px 25px 30px; background-color: #ffffff;">
+                            <div style="background: white; border-radius: 16px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08); border-left: 4px solid #ed8936;">
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0;">
+                                    <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">💰</div>
+                                    <h3 style="margin: 0; color: #2d3748; font-size: 18px; font-weight: 700;">Payment Details</h3>
+                                </div>
+                                <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%); padding: 20px; border-radius: 12px; margin-bottom: 15px;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                        <tr>
+                                            <td style="padding-bottom: 15px;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <span style="color: #4a5568; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;">💵 Amount Paid</span>
+                                                    <span style="color: #667eea; font-size: 24px; font-weight: 700; font-family: 'Courier New', monospace;">KES {{ payment.amount|floatformat:2|intcomma }}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div style="padding: 15px 0; border-top: 1px solid #e2e8f0;">
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                        <tr>
+                                            <td style="padding-bottom: 12px;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <span style="color: #4a5568; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;">💳 Payment Method</span>
+                                                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                                        {{ payment.get_payment_method_display }}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% if payment.term %}
+                                        <tr>
+                                            <td style="padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <span style="color: #4a5568; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px;">📚 Term</span>
+                                                    <span style="color: #2d3748; font-size: 14px; font-weight: 600;">Term {{ payment.term }}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Important Notice -->
+                    <tr>
+                        <td style="padding: 0 30px 25px 30px; background-color: #ffffff;">
+                            <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); border-left: 4px solid #667eea; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);">
+                                <p style="margin: 0; color: #4a5568; font-size: 13px; line-height: 1.6; display: flex; align-items: flex-start; gap: 10px;">
+                                    <span style="font-size: 18px;">ℹ️</span>
+                                    <span>
+                                        <strong style="color: #2d3748;">Important:</strong> This is an official receipt. Please retain this email for your records. 
+                                        A PDF copy of this receipt has been attached to this email.
+                                    </span>
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 30px; text-align: center; border-top: 3px solid #e2e8f0;">
+                            <p style="margin: 0 0 10px 0; color: #2d3748; font-size: 15px; font-weight: 700;">
+                                Bishop Dr Mando International School
+                            </p>
+                            <p style="margin: 0 0 5px 0; color: #718096; font-size: 13px;">
+                                📍 P.O. Box 6675-00100, Nairobi, Kenya
+                            </p>
+                            <p style="margin: 0 0 20px 0; color: #718096; font-size: 13px;">
+                                📞 Tel: +254 724 581 824 | ✉️ Email: info@bishopdrmandointernationalschool.org
+                            </p>
+                            <p style="margin: 0; color: #a0aec0; font-size: 11px; font-style: italic;">
+                                This is an automated email. Please do not reply to this message.
+                            </p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

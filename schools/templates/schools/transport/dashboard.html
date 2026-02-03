@@ -1,0 +1,628 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Transport Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    .stat-card.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-card.info { background: linear-gradient(135deg, #3494E6 0%, #EC6EAD 100%); }
+    .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-card.danger { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    .stat-card.dark { background: linear-gradient(135deg, #434343 0%, #000000 100%); }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+        height: 100%;
+    }
+    
+    .chart-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .progress-ring {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+    
+    .progress-ring svg {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring circle {
+        fill: none;
+        stroke-width: 8;
+        transition: stroke-dashoffset 0.35s;
+    }
+    
+    .progress-ring .bg {
+        stroke: #e0e0e0;
+    }
+    
+    .progress-ring .progress {
+        stroke: #667eea;
+        stroke-dasharray: 283;
+        stroke-dashoffset: 283;
+        stroke-linecap: round;
+    }
+    
+    .recent-activity {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        padding: 1rem;
+        border-left: 3px solid #667eea;
+        margin-bottom: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+    }
+    
+    .activity-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .metric-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .metric-badge.success {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .metric-badge.warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+    
+    .metric-badge.danger {
+        background: #f8d7da;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">Transport Dashboard</h1>
+            <p class="text-muted mb-0">Comprehensive overview of transport operations and analytics</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'vehicle_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Add Vehicle
+            </a>
+            <a href="{% url 'route_create' %}" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle me-2"></i>Add Route
+            </a>
+        </div>
+    </div>
+
+    <!-- Key Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Total Vehicles</h6>
+                        <h2 class="mb-1">{{ stats.total_vehicles }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-check-circle me-1"></i>{{ stats.active_vehicles }} Active
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Total Revenue</h6>
+                        <h2 class="mb-1">KES {{ stats.total_revenue|floatformat:0|intcomma }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-currency-exchange me-1"></i>{{ stats.completed_payments }} Payments
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Active Routes</h6>
+                        <h2 class="mb-1">{{ stats.total_routes }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-people me-1"></i>{{ stats.total_students }} Students
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-signpost-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Capacity Usage</h6>
+                        <h2 class="mb-1">{{ stats.used_capacity }}/{{ stats.total_capacity }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-percent me-1"></i>{{ stats.capacity_percentage }}% Utilized
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-bar-chart-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Vehicle Status Distribution</h5>
+                <canvas id="vehicleStatusChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Vehicle Types</h5>
+                <canvas id="vehicleTypeChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Payment Status</h5>
+                <canvas id="paymentStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="chart-container">
+                <h5 class="chart-title">Monthly Revenue Trend</h5>
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="chart-container">
+                <h5 class="chart-title">Payment Methods</h5>
+                <canvas id="paymentMethodChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3 -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="chart-container">
+                <h5 class="chart-title">Top Routes by Students</h5>
+                <canvas id="routePopularityChart"></canvas>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="chart-container">
+                <h5 class="chart-title">Vehicle Capacity Utilization</h5>
+                <canvas id="capacityUtilizationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats and Recent Activity -->
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pb-0 pt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Recent Transport Assignments</h5>
+                        <a href="{% url 'transport_assignment_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if assignments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Route</th>
+                                        <th>Vehicle</th>
+                                        <th>Status</th>
+                                        <th>Start Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assignment in assignments %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ assignment.student.get_full_name }}</strong>
+                                            <br>
+                                            <small class="text-muted">{{ assignment.student.admission_number }}</small>
+                                        </td>
+                                        <td>{{ assignment.route.name }}</td>
+                                        <td>
+                                            {% if assignment.vehicle %}
+                                                <span class="badge bg-info">{{ assignment.vehicle.vehicle_number }}</span>
+                                            {% else %}
+                                                <span class="text-muted">Not Assigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if assignment.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ assignment.start_date|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-4">No transport assignments yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pb-0 pt-3">
+                    <h5 class="mb-0">Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Inactive Vehicles</span>
+                            <strong>{{ stats.inactive_vehicles }}</strong>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-secondary" role="progressbar" 
+                                 style="width: {% widthratio stats.inactive_vehicles stats.total_vehicles 100 %}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Maintenance</span>
+                            <strong>{{ stats.maintenance_vehicles }}</strong>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" 
+                                 style="width: {% widthratio stats.maintenance_vehicles stats.total_vehicles 100 %}%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Pending Payments</span>
+                            <strong>KES {{ stats.pending_payments|floatformat:0|intcomma }}</strong>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-danger" role="progressbar" 
+                                 style="width: {% if stats.total_revenue > 0 %}{% widthratio stats.pending_payments stats.total_revenue 100 %}{% else %}0{% endif %}%"></div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'vehicle_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-truck me-2"></i>Manage Vehicles
+                        </a>
+                        <a href="{% url 'route_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-signpost-2 me-2"></i>Manage Routes
+                        </a>
+                        <a href="{% url 'transport_fee_list' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-cash-stack me-2"></i>View Payments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    // Chart colors
+    const colors = {
+        primary: '#667eea',
+        secondary: '#764ba2',
+        success: '#11998e',
+        info: '#3494E6',
+        warning: '#f093fb',
+        danger: '#f5576c',
+        light: '#e0e0e0',
+        dark: '#2c3e50'
+    };
+
+    // Vehicle Status Chart (Doughnut)
+    const vehicleStatusData = {{ vehicle_status_data|safe }};
+    const vehicleStatusLabels = ['Active', 'Inactive', 'Maintenance'];
+    new Chart(document.getElementById('vehicleStatusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: vehicleStatusLabels,
+            datasets: [{
+                data: [
+                    vehicleStatusData.ACTIVE || 0,
+                    vehicleStatusData.INACTIVE || 0,
+                    vehicleStatusData.MAINTENANCE || 0
+                ],
+                backgroundColor: [
+                    colors.success,
+                    colors.warning,
+                    colors.danger
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Vehicle Type Chart (Bar)
+    const vehicleTypeData = {{ vehicle_type_data|safe }};
+    new Chart(document.getElementById('vehicleTypeChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(vehicleTypeData),
+            datasets: [{
+                label: 'Count',
+                data: Object.values(vehicleTypeData),
+                backgroundColor: colors.primary,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Status Chart (Pie)
+    const paymentStatusData = {{ payment_status_data|safe }};
+    const paymentStatusLabels = ['Completed', 'Pending', 'Failed'];
+    new Chart(document.getElementById('paymentStatusChart'), {
+        type: 'pie',
+        data: {
+            labels: paymentStatusLabels,
+            datasets: [{
+                data: [
+                    paymentStatusData.COMPLETED || 0,
+                    paymentStatusData.PENDING || 0,
+                    paymentStatusData.FAILED || 0
+                ],
+                backgroundColor: [
+                    colors.success,
+                    colors.warning,
+                    colors.danger
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Monthly Revenue Chart (Line)
+    const monthlyRevenueData = {{ monthly_revenue|safe }};
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'line',
+        data: {
+            labels: monthlyRevenueData.map(d => d.month),
+            datasets: [{
+                label: 'Revenue (KES)',
+                data: monthlyRevenueData.map(d => d.revenue),
+                borderColor: colors.primary,
+                backgroundColor: colors.primary + '20',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'KES ' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Method Chart (Doughnut)
+    const paymentMethodData = {{ payment_method_data|safe }};
+    new Chart(document.getElementById('paymentMethodChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(paymentMethodData),
+            datasets: [{
+                data: Object.values(paymentMethodData),
+                backgroundColor: [
+                    colors.primary,
+                    colors.success,
+                    colors.info
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Route Popularity Chart (Horizontal Bar)
+    const routePopularityData = {{ route_popularity|safe }};
+    if (routePopularityData && routePopularityData.length > 0) {
+        new Chart(document.getElementById('routePopularityChart'), {
+            type: 'bar',
+            data: {
+                labels: routePopularityData.map(r => r.name),
+                datasets: [{
+                    label: 'Students',
+                    data: routePopularityData.map(r => r.students),
+                    backgroundColor: colors.info,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Capacity Utilization Chart (Bar)
+    const capacityUtilizationData = {{ vehicle_utilization|safe }};
+    if (capacityUtilizationData && capacityUtilizationData.length > 0) {
+        new Chart(document.getElementById('capacityUtilizationChart'), {
+            type: 'bar',
+            data: {
+                labels: capacityUtilizationData.map(v => v.name),
+                datasets: [{
+                    label: 'Used',
+                    data: capacityUtilizationData.map(v => v.used),
+                    backgroundColor: colors.warning,
+                    borderRadius: 8
+                }, {
+                    label: 'Available',
+                    data: capacityUtilizationData.map(v => v.capacity - v.used),
+                    backgroundColor: colors.light,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+INSTRUCTIONS TO FIX ACADEMICS.JSX:
+=====================================
+
+Find lines 181-194 in Academics.jsx (the wait loop section):
+
+REMOVE THESE LINES:
+-------------------
+            // Wait a bit for subjects to load if they haven't yet
+            let attempts = 0;
+            const maxAttempts = 10;
+            while (subjects.length === 0 && attempts < maxAttempts) {
+                console.log(`Waiting for subjects to load... (attempt ${attempts + 1}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (subjects.length === 0) {
+                console.error('Subjects failed to load after waiting');
+                setMessage({ type: 'error', text: 'Failed to load subjects. Please refresh the page.' });
+                return;
+            }
+
+
+REPLACE WITH THESE LINES:
+-------------------------
+            // Ensure subjects are loaded - fetch if not available
+            let availableSubjects = subjects;
+            if (availableSubjects.length === 0) {
+                console.log('Subjects not loaded yet, fetching...');
+                try {
+                    const subjectRes = await axios.get('/api/subjects/');
+                    availableSubjects = subjectRes.data.subjects || [];
+                    setSubjects(availableSubjects);
+                    console.log('Fetched subjects:', availableSubjects);
+                } catch (err) {
+                    console.error('Failed to fetch subjects:', err);
+                    setMessage({ type: 'error', text: 'Failed to load subjects. Please refresh the page.' });
+                    return;
+                }
+            }
+
+
+THAT'S IT! The previous scores will now load when you click Edit.

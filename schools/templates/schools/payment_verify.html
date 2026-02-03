@@ -1,0 +1,121 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Verification Status -->
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-center">
+                        <div class="verification-icon mb-3">
+                            <i class="bi bi-shield-check text-success display-1"></i>
+                        </div>
+                        <h4 class="mb-2">Payment Verified</h4>
+                        <p class="text-muted">
+                            Verified on {{ verification_date|date:"F d, Y H:i" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Receipt -->
+            <div class="card receipt-card">
+                <!-- Receipt Header -->
+                <div class="receipt-header text-center py-3">
+                    <img src="{% static 'logo.png' %}" alt="Bishop Dr Mando International School" class="receipt-logo mb-2">
+                    <h5 class="school-name mb-1">Bishop Dr Mando International School</h5>
+                    <div class="school-details text-muted small">
+                        <div>P.O. Box 6675-00100, Nairobi</div>
+                        <div>Tel: +254 724 581 824</div>
+                    </div>
+                </div>
+
+                <div class="receipt-divider"></div>
+
+                <!-- Payment Details -->
+                <div class="receipt-body p-4">
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="text-muted small">Receipt No.</div>
+                            <div class="fw-medium">{{ payment.reference_number }}</div>
+                        </div>
+                        <div class="col-6 text-end">
+                            <div class="text-muted small">Date</div>
+                            <div class="fw-medium">{{ payment.date|date:"M d, Y" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="student-info mb-4">
+                        <div class="text-muted small mb-1">Student Details</div>
+                        <div class="fw-medium">{{ payment.student.get_full_name }}</div>
+                        <div class="text-muted small">
+                            {{ payment.student.admission_number }} | {{ payment.student.grade }}
+                        </div>
+                    </div>
+
+                    <div class="payment-details">
+                        <div class="d-flex justify-content-between mb-2">
+                            <div class="text-muted">Amount Paid</div>
+                            <div class="fw-medium">KES {{ payment.amount|intcomma }}</div>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <div class="text-muted">Payment Method</div>
+                            <div>{{ payment.get_payment_method_display }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Footer -->
+                <div class="receipt-footer bg-light p-3">
+                    <div class="text-center">
+                        <div class="qr-code d-inline-block">
+                            <img src="data:image/png;base64,{{ qr_code }}" 
+                                 alt="Verification QR Code"
+                                 style="width: 64px; height: 64px;">
+                        </div>
+                        <div class="verify-text mt-2">
+                            <small class="text-muted">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Verified Payment
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.verification-icon {
+    color: #10b981;
+}
+
+.receipt-card {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+    border-radius: 1rem;
+}
+
+.receipt-logo {
+    height: 60px;
+    width: auto;
+}
+
+.receipt-divider {
+    height: 2px;
+    background: linear-gradient(to right, #fbbf24, #1e40af);
+    opacity: 0.7;
+}
+
+.qr-code {
+    padding: 0.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+</style>
+{% endblock %} 

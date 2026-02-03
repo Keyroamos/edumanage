@@ -1,0 +1,226 @@
+{% load humanize %}
+
+<style>
+.salary-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.salary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.salary-item .label {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.salary-item .amount {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.salary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.5rem;
+    margin-top: 0.5rem;
+    border-top: 2px solid #e9ecef;
+    font-weight: 600;
+}
+
+.salary-total.red .amount {
+    color: #e74a3b;
+}
+
+.net-salary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.net-salary .label {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.net-salary .amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+.badge.bg-paid-subtle {
+    background: rgba(28, 200, 138, 0.1);
+    color: #1cc88a;
+}
+
+.badge.bg-pending-subtle {
+    background: rgba(246, 194, 62, 0.1);
+    color: #f6c23e;
+}
+
+.salary-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.salary-stat-card {
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.salary-stat-card .label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.salary-stat-card .value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.salary-table {
+    width: 100%;
+    margin-top: 1.5rem;
+}
+
+.salary-table th {
+    background: #f8fafc;
+    padding: 0.75rem;
+    font-weight: 600;
+    color: #2c3e50;
+    border-bottom: 2px solid #e9ecef;
+    font-size: 0.9rem;
+}
+
+.salary-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    color: #6e6e6e;
+}
+
+.salary-table tr:hover td {
+    background: #f8fafc;
+}
+</style>
+
+<div class="salary-tab-content">
+    <!-- Salary Statistics -->
+    <div class="salary-stats-grid">
+        <div class="salary-stat-card">
+            <div class="label">Total Earnings</div>
+            <div class="value">KSh {{ salary_stats.total_earnings|floatformat:2|intcomma }}</div>
+        </div>
+        <div class="salary-stat-card">
+            <div class="label">Average Salary</div>
+            <div class="value">KSh {{ salary_stats.avg_salary|floatformat:2|intcomma }}</div>
+        </div>
+        <div class="salary-stat-card">
+            <div class="label">Total Allowances</div>
+            <div class="value">KSh {{ salary_stats.total_allowances|floatformat:2|intcomma }}</div>
+        </div>
+        <div class="salary-stat-card">
+            <div class="label">Total Deductions</div>
+            <div class="value">KSh {{ salary_stats.total_deductions|floatformat:2|intcomma }}</div>
+        </div>
+    </div>
+
+    <!-- Salary History Table -->
+    {% if salaries_with_net %}
+    <div class="table-responsive">
+        <table class="salary-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Basic Salary</th>
+                    <th>Allowances</th>
+                    <th>Deductions</th>
+                    <th>Net Salary</th>
+                    <th>Status</th>
+                    <th>Payment Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for salary_data in salaries_with_net %}
+                {% with salary=salary_data.salary %}
+                <tr>
+                    <td>{{ salary.month|date:"F Y" }}</td>
+                    <td>KSh {{ salary.amount|floatformat:2|intcomma }}</td>
+                    <td>
+                        {% if salary.allowance_items.exists %}
+                            <ul class="list-unstyled mb-0">
+                                {% for allowance in salary.allowance_items.all %}
+                                <li class="small">
+                                    {{ allowance.get_type_display }}: KSh {{ allowance.amount|floatformat:2|intcomma }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <strong class="text-success">Total: KSh {{ salary_data.total_allowances|floatformat:2|intcomma }}</strong>
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if salary.deduction_items.exists %}
+                            <ul class="list-unstyled mb-0">
+                                {% for deduction in salary.deduction_items.all %}
+                                <li class="small">
+                                    {{ deduction.get_type_display }}: KSh {{ deduction.amount|floatformat:2|intcomma }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            <strong class="text-danger">Total: KSh {{ salary_data.total_deductions|floatformat:2|intcomma }}</strong>
+                        {% else %}
+                            <span class="text-muted">None</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>KSh {{ salary_data.net_salary|floatformat:2|intcomma }}</strong>
+                    </td>
+                    <td>
+                        {% if salary.status == 'PAID' %}
+                        <span class="badge bg-paid-subtle">{{ salary.get_status_display }}</span>
+                        {% elif salary.status == 'PENDING' %}
+                        <span class="badge bg-pending-subtle">{{ salary.get_status_display }}</span>
+                        {% else %}
+                        <span class="badge bg-danger-subtle">{{ salary.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if salary.payment_date %}
+                        {{ salary.payment_date|date:"M d, Y" }}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+        <i class="bi bi-cash-stack display-4 text-muted"></i>
+        <p class="text-muted mt-3">No salary records available</p>
+    </div>
+    {% endif %}
+</div>
+

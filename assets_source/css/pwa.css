@@ -1,0 +1,262 @@
+/* PWA-specific styles */
+
+/* Install button animations */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+#pwa-install-section {
+    animation: pulse 2s infinite;
+}
+
+#install-app {
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+#install-app:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.3);
+}
+
+/* PWA status indicators */
+.pwa-status {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 9999;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pwa-status.online {
+    background: #28a745;
+    color: white;
+}
+
+.pwa-status.offline {
+    background: #dc3545;
+    color: white;
+}
+
+.pwa-status.installing {
+    background: #ffc107;
+    color: #212529;
+}
+
+/* PWA splash screen */
+.pwa-splash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1e3a8a, #1e40af);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    transition: opacity 0.5s ease;
+}
+
+.pwa-splash.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pwa-splash-content {
+    text-align: center;
+    color: white;
+}
+
+.pwa-splash-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+}
+
+.pwa-splash-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.pwa-splash-subtitle {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+/* PWA loading spinner */
+.pwa-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 20px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* PWA notification styles */
+.pwa-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 15px 20px;
+    max-width: 300px;
+    z-index: 9999;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.pwa-notification.show {
+    transform: translateX(0);
+}
+
+.pwa-notification-title {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.pwa-notification-message {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.pwa-notification-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.pwa-notification-btn {
+    padding: 5px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pwa-notification-btn.primary {
+    background: #1e3a8a;
+    color: white;
+}
+
+.pwa-notification-btn.secondary {
+    background: #f8f9fa;
+    color: #333;
+}
+
+/* PWA offline indicator */
+.offline-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
+    text-align: center;
+    padding: 8px;
+    font-size: 14px;
+    z-index: 9998;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.offline-indicator.show {
+    transform: translateY(0);
+}
+
+/* PWA update notification */
+.update-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #17a2b8;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.update-notification.show {
+    transform: translateY(0);
+}
+
+.update-notification-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.update-notification-btn {
+    padding: 5px 15px;
+    border: 1px solid white;
+    background: transparent;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.update-notification-btn:hover {
+    background: white;
+    color: #17a2b8;
+}
+
+/* PWA responsive adjustments */
+@media (max-width: 768px) {
+    .pwa-notification {
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+    
+    .update-notification {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+    }
+    
+    .pwa-status {
+        top: 5px;
+        right: 5px;
+        font-size: 10px;
+        padding: 6px 10px;
+    }
+} 

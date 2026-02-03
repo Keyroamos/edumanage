@@ -1,0 +1,397 @@
+{% extends 'schools/base.html' %}
+{% load widget_tweaks school_filters %}
+
+{% block title %}Record Payment - {{ student.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Main Payment Card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-cash-coin text-primary me-2"></i>Record Payment
+                    </h5>
+                    <a href="{% url 'student_detail' student.pk %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i>Back to Student
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Student Info Card -->
+                    <div class="student-info mb-4">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="info-item">
+                                    <label>Student Name</label>
+                                    <p class="fw-medium">{{ student.get_full_name }}</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-item">
+                                    <label>Grade</label>
+                                    <p>{{ student.grade.name }}</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-item">
+                                    <label>Term Fees</label>
+                                    <p>KES {{ student.term_fees|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="info-item">
+                                    <label>Outstanding Balance</label>
+                                    <p class="text-danger fw-bold">KES {{ balance|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Form -->
+                    <form method="post" id="paymentForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label class="form-label required">Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">KES</span>
+                                {% render_field form.amount class="form-control" placeholder="Enter amount" %}
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.amount.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label required">Payment Method</label>
+                            {% render_field form.method class="form-select" %}
+                            {% if form.method.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.method.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Reference Number</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                {% render_field form.reference_number class="form-control" placeholder="e.g., Transaction ID, Receipt Number" %}
+                            </div>
+                            {% if form.reference_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reference_number.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Remarks</label>
+                            {% render_field form.remarks class="form-control" rows="3" placeholder="Add any additional notes" %}
+                            {% if form.remarks.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.remarks.errors|join:", " }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{% url 'student_detail' student.pk %}" class="btn btn-light px-4">
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="bi bi-save me-2"></i>Save Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recent Payments Card -->
+            {% if recent_payments %}
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-white py-3">
+                    <h6 class="card-title mb-0">
+                        <i class="bi bi-clock-history text-primary me-2"></i>Recent Payments
+                    </h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in recent_payments %}
+                            <tr>
+                                <td>{{ payment.created_at|date:"M d, Y" }}</td>
+                                <td class="fw-medium">KES {{ payment.amount|floatformat:2 }}</td>
+                                <td>
+                                    <span class="payment-method">
+                                        <i class="bi bi-{{ payment.get_payment_icon }}"></i>
+                                        {{ payment.get_method_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ payment.status|payment_status_color }}">
+                                        {{ payment.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Form Styles */
+    .required::after {
+        content: "*";
+        color: #dc3545;
+        margin-left: 4px;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #344767;
+    }
+    
+    .form-control, .form-select {
+        border-color: #e9ecef;
+        padding: 0.6rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.15);
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #e9ecef;
+    }
+    
+    /* Student Info Styles */
+    .student-info {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+    }
+    
+    .info-item {
+        background: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.375rem;
+        height: 100%;
+    }
+    
+    .info-item label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+    
+    .info-item p {
+        margin-bottom: 0;
+        line-height: 1.2;
+    }
+    
+    /* Payment Method Styles */
+    .payment-method {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #495057;
+    }
+    
+    .payment-method i {
+        font-size: 1.1rem;
+        color: #6c757d;
+    }
+    
+    /* Table Styles */
+    .table > :not(caption) > * > * {
+        padding: 1rem;
+    }
+    
+    .table-light th {
+        font-weight: 600;
+        color: #344767;
+        font-size: 0.875rem;
+    }
+    
+    /* Card Styles */
+    .card {
+        border: none;
+        border-radius: 0.75rem;
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0,0,0,.05);
+    }
+    
+    /* Button Styles */
+    .btn {
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+    }
+    
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .btn-light {
+        background-color: #f8f9fa;
+        border-color: #f8f9fa;
+    }
+</style>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentForm = document.getElementById('paymentForm');
+    const amountInput = document.querySelector('input[name="amount"]');
+    const methodSelect = document.querySelector('select[name="method"]');
+    const referenceInput = document.querySelector('input[name="reference_number"]');
+    const outstandingBalance = {{ balance|floatformat:2 }};
+
+    // Format amount with commas as user types
+    amountInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^\d.]/g, '');
+        if (value) {
+            // Ensure only two decimal places
+            const parts = value.split('.');
+            if (parts.length > 1) {
+                parts[1] = parts[1].slice(0, 2);
+                value = parts.join('.');
+            }
+            // Format with commas
+            const formatted = new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+            
+            // Update display value but keep raw value for form submission
+            e.target.value = value;
+            
+            // Validate amount
+            validateAmount(value);
+        }
+    });
+
+    // Show/hide reference number field based on payment method
+    methodSelect.addEventListener('change', function(e) {
+        const method = e.target.value;
+        const referenceGroup = referenceInput.closest('.mb-3');
+        
+        // Methods that typically require reference numbers
+        const requiresReference = ['MPESA', 'BANK', 'CHEQUE'];
+        
+        if (requiresReference.includes(method)) {
+            referenceGroup.style.display = 'block';
+            referenceInput.setAttribute('required', 'required');
+        } else {
+            referenceGroup.style.display = 'none';
+            referenceInput.removeAttribute('required');
+        }
+    });
+
+    // Validate amount
+    function validateAmount(value) {
+        const amount = parseFloat(value) || 0;
+        const feedback = amountInput.nextElementSibling;
+        
+        if (amount <= 0) {
+            setInvalid('Amount must be greater than 0');
+        } else if (amount > outstandingBalance) {
+            setInvalid('Amount cannot exceed the outstanding balance');
+        } else {
+            setValid();
+        }
+    }
+
+    function setInvalid(message) {
+        amountInput.classList.add('is-invalid');
+        const feedback = amountInput.closest('.mb-3').querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.textContent = message;
+        } else {
+            const div = document.createElement('div');
+            div.className = 'invalid-feedback d-block';
+            div.textContent = message;
+            amountInput.closest('.mb-3').appendChild(div);
+        }
+    }
+
+    function setValid() {
+        amountInput.classList.remove('is-invalid');
+        const feedback = amountInput.closest('.mb-3').querySelector('.invalid-feedback');
+        if (feedback) {
+            feedback.remove();
+        }
+    }
+
+    // Form submission handling
+    paymentForm.addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value) || 0;
+        
+        if (amount <= 0 || amount > outstandingBalance) {
+            e.preventDefault();
+            validateAmount(amountInput.value);
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Add these styles to your existing styles */
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 0.75rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+
+    .invalid-feedback {
+        font-size: 0.875em;
+        color: #dc3545;
+        margin-top: 0.25rem;
+    }
+
+    /* Animation for processing state */
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .bi-hourglass-split {
+        animation: spin 2s linear infinite;
+    }
+</style>
+{% endblock %}
+{% endblock %} 

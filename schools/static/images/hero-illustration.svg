@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- School Building -->
+    <rect x="200" y="200" width="400" height="300" fill="#4361ee" />
+    <path d="M150 200 L400 50 L650 200" fill="#3f37c9" />
+    <rect x="350" y="400" width="100" height="100" fill="#ffffff" />
+    
+    <!-- Windows -->
+    <rect x="250" y="250" width="60" height="60" fill="#ffffff" />
+    <rect x="350" y="250" width="60" height="60" fill="#ffffff" />
+    <rect x="450" y="250" width="60" height="60" fill="#ffffff" />
+    <rect x="250" y="350" width="60" height="60" fill="#ffffff" />
+    <rect x="450" y="350" width="60" height="60" fill="#ffffff" />
+    
+    <!-- Decorative Elements -->
+    <circle cx="400" cy="150" r="30" fill="#4cc9f0" />
+    <rect x="380" y="400" width="40" height="100" fill="#f72585" />
+</svg> 

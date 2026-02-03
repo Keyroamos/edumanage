@@ -1,0 +1,320 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Meal Payment Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+    .stat-card.primary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    .stat-card.info { background: linear-gradient(135deg, #3494E6 0%, #EC6EAD 100%); }
+    .stat-card.warning { background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%); }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">Food Management Dashboard</h1>
+            <p class="text-muted mb-0">Overview of meal payments and analytics</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'meal_payment_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Record Payment
+            </a>
+            <a href="{% url 'meal_pricing_list' %}" class="btn btn-outline-primary">
+                <i class="bi bi-currency-dollar me-2"></i>Manage Pricing
+            </a>
+        </div>
+    </div>
+
+    <!-- Key Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Today's Revenue</h6>
+                        <h2 class="mb-1">KES {{ today_revenue|floatformat:0|intcomma }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-calendar-day me-1"></i>{{ today_meals_served }} meals served
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Total Revenue</h6>
+                        <h2 class="mb-1">KES {{ total_revenue|floatformat:0|intcomma }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-currency-exchange me-1"></i>All Time
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Total Payments</h6>
+                        <h2 class="mb-1">{{ total_payments }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-check-circle me-1"></i>{{ completed_payments }} Completed
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-receipt"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h6 class="text-white-50 mb-2">Students</h6>
+                        <h2 class="mb-1">{{ students_with_payments }}</h2>
+                        <small class="text-white-50">
+                            <i class="bi bi-people me-1"></i>With Payments
+                        </small>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Secondary Statistics Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Today's Payments</h6>
+                    <h3 class="mb-0 text-primary">KES {{ today_payment_revenue|floatformat:0|intcomma }}</h3>
+                    <small class="text-muted">Payments received today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Pending Payments</h6>
+                    <h3 class="mb-0 text-warning">{{ pending_payments }}</h3>
+                    <small class="text-muted">KES {{ pending_revenue|floatformat:0|intcomma }} pending</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">Failed Payments</h6>
+                    <h3 class="mb-0 text-danger">{{ failed_payments }}</h3>
+                    <small class="text-muted">KES {{ failed_revenue|floatformat:0|intcomma }} failed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="chart-title">Revenue by Meal Type</h5>
+                <canvas id="mealTypeChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="chart-title">Payment Methods</h5>
+                <canvas id="paymentMethodChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly and Daily Revenue -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="chart-title">Monthly Revenue (Last 12 Months)</h5>
+                <canvas id="monthlyRevenueChart"></canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h5 class="chart-title">Daily Revenue (Last 30 Days)</h5>
+                <canvas id="dailyRevenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meal Pricing Overview -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Current Meal Pricing</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Meal Type</th>
+                                    <th>Price Per Day</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pricing in meal_pricing %}
+                                <tr>
+                                    <td>{{ pricing.get_meal_type_display }}</td>
+                                    <td>KES {{ pricing.price_per_day|floatformat:2|intcomma }}</td>
+                                    <td>
+                                        {% if pricing.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">No meal pricing configured</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Meal Type Chart
+    const mealTypeData = {{ meal_type_data|safe }};
+    const mealTypeLabels = Object.keys(mealTypeData);
+    const mealTypeRevenue = mealTypeLabels.map(key => mealTypeData[key].revenue);
+    
+    new Chart(document.getElementById('mealTypeChart'), {
+        type: 'doughnut',
+        data: {
+            labels: mealTypeLabels,
+            datasets: [{
+                data: mealTypeRevenue,
+                backgroundColor: [
+                    '#f093fb',
+                    '#f5576c',
+                    '#4facfe'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+
+    // Payment Method Chart
+    const paymentMethodData = {{ payment_method_data|safe }};
+    new Chart(document.getElementById('paymentMethodChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(paymentMethodData),
+            datasets: [{
+                label: 'Payments',
+                data: Object.values(paymentMethodData),
+                backgroundColor: '#f093fb'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+
+    // Monthly Revenue Chart
+    const monthlyData = {{ monthly_revenue|safe }};
+    new Chart(document.getElementById('monthlyRevenueChart'), {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(d => d.month),
+            datasets: [{
+                label: 'Revenue (KES)',
+                data: monthlyData.map(d => d.revenue),
+                borderColor: '#f5576c',
+                backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+
+    // Daily Revenue Chart
+    const dailyData = {{ daily_revenue|safe }};
+    new Chart(document.getElementById('dailyRevenueChart'), {
+        type: 'line',
+        data: {
+            labels: dailyData.map(d => d.day),
+            datasets: [{
+                label: 'Revenue (KES)',
+                data: dailyData.map(d => d.revenue),
+                borderColor: '#4facfe',
+                backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true
+        }
+    });
+</script>
+{% endblock %}
+

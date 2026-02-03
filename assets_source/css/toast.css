@@ -1,0 +1,40 @@
+.toast-container {
+    z-index: 1100;
+}
+
+.toast {
+    min-width: 300px;
+    backdrop-filter: blur(10px);
+    opacity: 1 !important;
+}
+
+.toast-header {
+    padding: 0.75rem 1rem;
+    border: none;
+}
+
+.toast-header.bg-success {
+    background-color: #10b981 !important;
+}
+
+.toast-header.bg-danger {
+    background-color: #ef4444 !important;
+}
+
+.toast-header.bg-warning {
+    background-color: #f59e0b !important;
+}
+
+.toast-header.bg-info {
+    background-color: #3b82f6 !important;
+}
+
+.toast-body {
+    padding: 1rem;
+    background: white;
+    border-radius: 0 0 0.375rem 0.375rem;
+}
+
+.btn-close-white {
+    filter: brightness(0) invert(1);
+} 

@@ -1,0 +1,988 @@
+{% extends 'schools/base.html' %}
+{% load static school_filters humanize %}
+
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Enhanced Page Header -->
+    <div class="position-relative mb-5">
+        <!-- Background Header Card -->
+        <div class="card bg-gradient-primary border-0 rounded-3 shadow-sm">
+            <div class="card-body px-4 py-5">
+                <div class="row align-items-center">
+                    <!-- Header Title and Breadcrumb -->
+                    <div class="col-lg-6 col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="position-relative me-3">
+                                <div class="bg-white bg-opacity-25 rounded-circle p-2">
+                                    <i class="bi bi-mortarboard-fill text-white fs-4"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-white mb-1">Student Management</h3>
+                                <nav aria-label="breadcrumb">
+                                    <ol class="breadcrumb mb-0">
+                                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-white text-opacity-75">Dashboard</a></li>
+                                        <li class="breadcrumb-item active text-white" aria-current="page">Students</li>
+                                    </ol>
+                                </nav>
+                            </div>
+                        </div>
+                        <p class="text-white text-opacity-75 mb-0">
+                            Manage and monitor all students in one place. View detailed information, track progress, and handle student records efficiently.
+                        </p>
+                    </div>
+                    <!-- Action Buttons -->
+                    <div class="col-lg-6 col-md-4">
+                        <div class="d-flex gap-2 justify-content-md-end mt-3 mt-md-0">
+                            {% if user.is_superuser or user.groups.all.0.name in 'Admin,Teacher,Accountant'|split:',' %}
+                            <div class="btn-group shadow-sm">
+                                <button type="button" class="btn btn-light px-3" data-bs-toggle="modal" data-bs-target="#importModal">
+                                    <i class="bi bi-file-earmark-arrow-up text-primary me-2"></i>Import
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Decorative Shape -->
+            <div class="position-absolute end-0 bottom-0 me-4 mb-4 d-none d-lg-block">
+                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="60" cy="60" r="60" fill="white" fill-opacity="0.1"/>
+                    <path d="M80 40H40V80H80V40Z" stroke="white" stroke-opacity="0.2" stroke-width="2"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-5">
+        <!-- Total Students Card -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-hover h-100 stat-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon-lg bg-primary bg-opacity-10 rounded-4 me-3">
+                            <i class="bi bi-people-fill text-primary"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-0 fs-sm">Total Students</p>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <h3 class="mb-0 fw-bold">{{ total_students|intcomma }}</h3>
+                                <span class="badge bg-success-subtle text-success rounded-pill fs-xs">
+                                    <i class="bi bi-arrow-up-short"></i> Active
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted fs-xs">Enrollment Status</span>
+                            <span class="fs-xs fw-medium">100%</span>
+                        </div>
+                        <div class="progress rounded-pill" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Male Students Card -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-hover h-100 stat-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon-lg bg-info bg-opacity-10 rounded-4 me-3">
+                            <i class="bi bi-gender-male text-info"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-0 fs-sm">Male Students</p>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <h3 class="mb-0 fw-bold">{{ male_count|intcomma }}</h3>
+                                <span class="text-muted fs-xs">
+                                    {{ male_percentage|floatformat:1 }}% of total
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted fs-xs">Gender Distribution</span>
+                            <span class="fs-xs fw-medium">{{ male_percentage|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress rounded-pill progress-slim">
+                            <div class="progress-bar bg-info" data-width="{{ male_percentage }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Female Students Card -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-hover h-100 stat-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon-lg bg-pink bg-opacity-10 rounded-4 me-3">
+                            <i class="bi bi-gender-female text-pink"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-0 fs-sm">Female Students</p>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <h3 class="mb-0 fw-bold">{{ female_count|intcomma }}</h3>
+                                <span class="text-muted fs-xs">
+                                    {{ female_percentage|floatformat:1 }}% of total
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted fs-xs">Gender Distribution</span>
+                            <span class="fs-xs fw-medium">{{ female_percentage|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress rounded-pill progress-slim">
+                            <div class="progress-bar bg-pink" data-width="{{ female_percentage }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Grades Card -->
+        <div class="col-md-3">
+            <div class="card border-0 shadow-hover h-100 stat-card">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon-lg bg-success bg-opacity-10 rounded-4 me-3">
+                            <i class="bi bi-mortarboard-fill text-success"></i>
+                        </div>
+                        <div>
+                            <p class="text-muted mb-0 fs-sm">Active Grades</p>
+                            <div class="d-flex align-items-baseline gap-2">
+                                <h3 class="mb-0 fw-bold">{{ total_grades }}</h3>
+                                <span class="text-muted fs-xs">
+                                    {{ total_students|intcomma }} enrolled
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-muted fs-xs">Grade Utilization</span>
+                            <span class="fs-xs fw-medium">{{ grade_utilization_percentage|floatformat:1 }}%</span>
+                        </div>
+                        <div class="progress rounded-pill progress-slim">
+                            <div class="progress-bar bg-success" data-width="{{ grade_utilization_percentage }}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="get" id="filterForm" class="row g-3">
+                <!-- Search Input -->
+                <div class="col-md-4">
+                    <label class="form-label text-muted fs-sm mb-2">
+                        <i class="bi bi-search me-1"></i>Search Students
+                    </label>
+                    <div class="input-group input-group-merge">
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Name or admission number..." 
+                               value="{{ filters.search }}">
+                        {% if filters.search %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Grade Filter -->
+                <div class="col-md-2">
+                    <label class="form-label text-muted fs-sm mb-2">
+                        <i class="bi bi-mortarboard me-1"></i>Grade
+                    </label>
+                    <select name="grade" class="form-select" data-filter="grade">
+                        <option value="">All Grades</option>
+                        {% for grade in grades %}
+                        <option value="{{ grade.id }}" {% if filters.grade == grade.id|stringformat:"s" %}selected{% endif %}>
+                            {{ grade.name }} ({{ grade.student_count }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Gender Filter -->
+                <div class="col-md-2">
+                    <label class="form-label text-muted fs-sm mb-2">
+                        <i class="bi bi-gender-ambiguous me-1"></i>Gender
+                    </label>
+                    <select name="gender" class="form-select" data-filter="gender">
+                        <option value="">All Genders</option>
+                        <option value="M" {% if filters.gender == 'M' %}selected{% endif %}>Male</option>
+                        <option value="F" {% if filters.gender == 'F' %}selected{% endif %}>Female</option>
+                    </select>
+                </div>
+
+                <!-- Location Filter -->
+                <div class="col-md-2">
+                    <label class="form-label text-muted fs-sm mb-2">
+                        <i class="bi bi-geo-alt me-1"></i>Location
+                    </label>
+                    <select name="location" class="form-select" data-filter="location">
+                        <option value="">All Locations</option>
+                        <option value="MAIN" {% if filters.location == 'MAIN' %}selected{% endif %}>Main School</option>
+                        <option value="ANNEX" {% if filters.location == 'ANNEX' %}selected{% endif %}>Annex School</option>
+                    </select>
+                </div>
+
+                <!-- Fee Status Filter -->
+                <div class="col-md-2">
+                    <label class="form-label text-muted fs-sm mb-2">
+                        <i class="bi bi-cash-coin me-1"></i>Fee Status
+                    </label>
+                    <select name="fee_status" class="form-select" data-filter="fee_status">
+                        <option value="">All Fee Status</option>
+                        <option value="paid" {% if filters.fee_status == 'paid' %}selected{% endif %}>Paid</option>
+                        <option value="partial" {% if filters.fee_status == 'partial' %}selected{% endif %}>Partial</option>
+                        <option value="unpaid" {% if filters.fee_status == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                    </select>
+                </div>
+
+                <!-- Filter Actions -->
+                <div class="col-md-2 d-flex align-items-end">
+                    <div class="btn-group w-100">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-funnel-fill me-1"></i>Apply
+                        </button>
+                        {% if filters.search or filters.grade or filters.gender or filters.fee_status %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="bi bi-x-circle-fill"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Export Button -->
+                {% if user.is_superuser or user.groups.all.0.name in 'Admin,Teacher,Accountant'|split:',' %}
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{% url 'export_students' %}?{% if filters.grade %}grade={{ filters.grade }}{% endif %}{% if filters.gender %}&gender={{ filters.gender }}{% endif %}{% if filters.fee_status %}&fee_status={{ filters.fee_status }}{% endif %}{% if filters.search %}&search={{ filters.search }}{% endif %}" 
+                       class="btn btn-success w-100">
+                        <i class="bi bi-file-earmark-arrow-down me-2"></i>Export List
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- Add Student Button -->
+                {% if user.is_superuser or user.groups.all.0.name in 'Admin,Teacher,Accountant'|split:',' %}
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{% url 'student_create' %}" class="btn btn-primary w-100 btn-add">
+                        <i class="bi bi-plus-lg me-2"></i>Add Student
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    <!-- Students by Grade -->
+    {% regroup students by grade as grade_list %}
+    {% for grade in grade_list %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ grade.grouper.name }} 
+                    <span class="text-muted fs-6">({{ grade.list|length }} students)</span>
+                </h5>
+                <div>
+                    <span class="badge bg-primary me-2">Term Fees: KES {{ grade.grouper.term_fees|intcomma }}</span>
+                    {% if grade.list|length > 3 %}
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="toggleStudents('grade-{{ grade.grouper.id }}')">
+                        <span class="show-more">View All</span>
+                        <span class="show-less d-none">Show Less</span>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Student</th>
+                            <th scope="col">Admission No.</th>
+                            <th scope="col">Gender</th>
+                            <th scope="col">Location</th>
+                            <th scope="col">Parent Contact</th>
+                            <th scope="col">Term</th>
+                            <th scope="col">Fee Balance</th>
+                            <th scope="col" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in grade.list %}
+                        <tr class="{% if forloop.counter > 3 %}d-none extra-student grade-{{ grade.grouper.id }}{% endif %}">
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center">
+                                    <div class="student-avatar me-3">
+                                        {% if student.photo %}
+                                            <img src="{{ student.photo.url }}" 
+                                                 alt="{{ student.get_full_name }}"
+                                                 class="rounded-circle"
+                                                 style="width: 40px; height: 40px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center"
+                                                 style="width: 40px; height: 40px;">
+                                                <i class="bi bi-person text-secondary"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0">{{ student.get_full_name }}</h6>
+                                        <small class="text-muted">{{ student.admission_number }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ student.admission_number }}</td>
+                            <td>{{ student.get_gender_display }}</td>
+                            <td>
+                                {% if student.location == 'MAIN' %}
+                                    <span class="badge bg-primary">Main</span>
+                                {% elif student.location == 'ANNEX' %}
+                                    <span class="badge bg-info">Annex</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ student.get_location_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ student.parent_phone }}</td>
+                            <td>Term {{ student.current_term }}</td>
+                            <td>
+                                {% with balance=student.get_balance %}
+                                {% if balance <= 0 %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% elif balance < student.term_fees %}
+                                    <span class="badge bg-warning">KES {{ balance|intcomma }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">KES {{ balance|intcomma }}</span>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-end">
+                                {% if next_url == 'assessment_create' %}
+                                <a href="{% url 'assessment_create' %}?student={{ student.id }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="bi bi-plus-lg me-2"></i>Record Assessment
+                                </a>
+                                {% else %}
+                                <div class="btn-group">
+                                    <a href="{% url 'student_detail' student.id %}" 
+                                       class="btn btn-light btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if user.is_superuser or user|is_accountant %}
+                                    <a href="{% url 'payment_add' student.pk %}" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-cash"></i>
+                                    </a>
+                                    {% if not user|is_teacher %}
+                                    <a href="{% url 'student_edit' student.pk %}" 
+                                       class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% endif %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal"
+                                            data-student-id="{{ student.pk }}"
+                                            data-student-name="{{ student.get_full_name|escapejs }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="card shadow-sm">
+        <div class="card-body text-center py-5">
+            <img src="{% static 'images/empty.svg' %}" alt="No students found" class="mb-3" style="max-width: 200px;">
+            <h5>No Students Found</h5>
+            <p class="text-muted">Try adjusting your search or filters</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Import Students</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" action="{% url 'import_students' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Excel File</label>
+                        <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                        <small class="text-muted">Download the <a href="{% url 'download_student_template' %}">template file</a></small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="studentName"></strong>?</p>
+                <p class="text-danger mb-0">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Header Background Styles */
+    .page-header {
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #2937f0 0%, #9f1ae2 100%) !important;
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(255,255,255,0.05)' fill-rule='evenodd'/%3E%3C/svg%3E"),
+            linear-gradient(135deg, rgba(41, 55, 240, 0.95) 0%, rgba(159, 26, 226, 0.95) 100%);
+        background-size: 40px 40px, 100% 100%;
+        opacity: 1;
+        z-index: -1;
+    }
+
+    .page-header::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 60%);
+        transform: rotate(30deg);
+        z-index: -1;
+    }
+
+    .card.bg-gradient-primary {
+        box-shadow: 0 10px 20px rgba(41, 55, 240, 0.15);
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .icon-box i {
+        font-size: 24px;
+    }
+
+    .avatar-placeholder {
+        width: 40px;
+        height: 40px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #6c757d;
+    }
+
+    .table th {
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .table td {
+        font-size: 0.875rem;
+    }
+
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+
+    .btn-group .btn i {
+        font-size: 1rem;
+    }
+
+    .badge {
+        font-weight: 500;
+    }
+
+    .form-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .card {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .progress {
+        background-color: #f8f9fa;
+    }
+
+    .card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .card h6 {
+        font-size: 0.875rem;
+    }
+
+    .card small {
+        font-size: 0.75rem;
+    }
+
+    .btn-outline-primary:hover {
+        color: #fff;
+    }
+    
+    .table tr:last-child td {
+        border-bottom: 0;
+    }
+    
+    .show-more, .show-less {
+        transition: all 0.3s ease;
+    }
+
+    .bg-primary-subtle {
+        background-color: rgba(var(--bs-primary-rgb), 0.1) !important;
+    }
+    
+    .breadcrumb-item a {
+        color: var(--bs-primary);
+    }
+    
+    .breadcrumb-item.active {
+        color: var(--bs-gray-600);
+    }
+    
+    .btn-group {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .btn-light {
+        background-color: #fff;
+        border-color: #e9ecef;
+    }
+    
+    .btn-light:hover {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+    
+    @media (max-width: 767.98px) {
+        .d-flex.gap-2 {
+            justify-content: flex-start !important;
+        }
+    }
+
+    .stat-card {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .progress {
+        background-color: #f8f9fa;
+    }
+
+    .bg-pink {
+        background-color: #e83e8c !important;
+    }
+
+    .text-pink {
+        color: #e83e8c !important;
+    }
+
+    .bg-pink.bg-opacity-10 {
+        background-color: rgba(232, 62, 140, 0.1) !important;
+    }
+
+    .badge {
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+    }
+
+    .bg-success-subtle {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+    }
+
+    .shadow-hover {
+        transition: all 0.3s ease;
+        box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+    }
+
+    .shadow-hover:hover {
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .stats-icon-lg {
+        width: 52px;
+        height: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stats-icon-lg i {
+        font-size: 1.5rem;
+    }
+
+    .fs-xs {
+        font-size: 0.75rem;
+    }
+
+    .fs-sm {
+        font-size: 0.875rem;
+    }
+
+    .rounded-4 {
+        border-radius: 1rem;
+    }
+
+    .card h3 {
+        font-size: 1.75rem;
+        line-height: 1.2;
+    }
+
+    .progress {
+        overflow: hidden;
+        background-color: #f0f2f5;
+    }
+
+    .bg-pink {
+        background-color: #e83e8c !important;
+    }
+
+    .text-pink {
+        color: #e83e8c !important;
+    }
+
+    .bg-pink.bg-opacity-10 {
+        background-color: rgba(232, 62, 140, 0.1) !important;
+    }
+
+    .bg-success-subtle {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+    }
+
+    .badge {
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+    }
+
+    .gap-2 {
+        gap: 0.5rem !important;
+    }
+
+    .input-group-merge input:not(:last-child) {
+        border-right: 0;
+    }
+
+    .input-group-merge .btn {
+        border-left: 0;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .form-select:focus, .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+
+    .badge i[role="button"] {
+        cursor: pointer;
+    }
+
+    .badge i[role="button"]:hover {
+        opacity: 0.8;
+    }
+
+    .progress-slim {
+        height: 6px;
+    }
+
+    /* View More Animation Styles */
+    .extra-student {
+        transition: opacity 0.3s ease-in-out;
+        opacity: 0;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .extra-student:not(.d-none) {
+        opacity: 1;
+        height: auto;
+    }
+
+    .show-more, .show-less {
+        transition: opacity 0.2s ease-in-out;
+    }
+
+    .dropdown-menu {
+        border-radius: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .dropdown-item {
+        border-radius: 0.375rem;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: rgba(var(--bs-primary-rgb), 0.1);
+        transform: translateX(4px);
+    }
+
+    .dropdown-item i {
+        font-size: 1.25rem;
+    }
+
+    .dropdown-divider {
+        margin: 0.5rem 0;
+    }
+
+    .dropdown-item small {
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    /* Enhanced Add Button Styles */
+    .btn-add {
+        background: linear-gradient(135deg, #2937f0 0%, #9f1ae2 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(41, 55, 240, 0.25);
+        background: linear-gradient(135deg, #2230d5 0%, #8f17cc 100%);
+        color: white;
+    }
+
+    .btn-add:active {
+        transform: translateY(0);
+    }
+
+    .btn-add i {
+        transition: transform 0.3s ease;
+    }
+
+    .btn-add:hover i {
+        transform: rotate(90deg);
+    }
+
+    @media (max-width: 768px) {
+        .btn-add {
+            padding: 0.625rem 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap components
+    const dropdowns = document.querySelectorAll('.dropdown-toggle');
+    dropdowns.forEach(dropdown => {
+        new bootstrap.Dropdown(dropdown);
+    });
+
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        new bootstrap.Modal(modal);
+    });
+
+    // Setup delete modal
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const studentId = button.getAttribute('data-student-id');
+            const studentName = button.getAttribute('data-student-name');
+            
+            const modalStudentName = this.querySelector('#studentName');
+            const deleteForm = this.querySelector('#deleteForm');
+            
+            modalStudentName.textContent = studentName;
+            deleteForm.action = `/students/${studentId}/delete/`;
+        });
+    }
+
+    // Setup import modal
+    const importModal = document.getElementById('importModal');
+    if (importModal) {
+        const importForm = importModal.querySelector('form');
+        const fileInput = importForm.querySelector('input[type="file"]');
+        const submitBtn = importForm.querySelector('button[type="submit"]');
+        
+        // Initially disable submit button
+        submitBtn.disabled = true;
+        
+        fileInput.addEventListener('change', function() {
+            submitBtn.disabled = !this.files.length;
+        });
+
+        importForm.addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select a file to import');
+            }
+        });
+    }
+
+    // Handle Add Student button click
+    const addStudentBtn = document.querySelector('.dropdown-toggle[data-bs-toggle="dropdown"]');
+    if (addStudentBtn) {
+        addStudentBtn.addEventListener('click', function(e) {
+            const dropdown = new bootstrap.Dropdown(this);
+            dropdown.show();
+        });
+    }
+
+    // Handle filter form submission
+    const filterForm = document.getElementById('filterForm');
+    if (filterForm) {
+        document.querySelectorAll('select[data-filter]').forEach(select => {
+            select.addEventListener('change', () => {
+                filterForm.submit();
+            });
+        });
+    }
+});
+
+function toggleStudents(gradeId) {
+    const extraStudents = document.querySelectorAll(`.extra-student.${gradeId}`);
+    const button = document.querySelector(`button[onclick="toggleStudents('${gradeId}')"]`);
+    const showMore = button.querySelector('.show-more');
+    const showLess = button.querySelector('.show-less');
+    
+    extraStudents.forEach(row => {
+        row.classList.toggle('d-none');
+    });
+    
+    showMore.classList.toggle('d-none');
+    showLess.classList.toggle('d-none');
+}
+
+function clearSearch() {
+    document.querySelector('input[name="search"]').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+function clearFilters() {
+    // Reset all filter inputs
+    document.querySelector('input[name="search"]').value = '';
+    document.querySelector('select[name="grade"]').value = '';
+    document.querySelector('select[name="gender"]').value = '';
+    document.querySelector('select[name="fee_status"]').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+function removeFilter(filterName) {
+    const input = document.querySelector(`[name="${filterName}"]`);
+    if (input) {
+        input.value = '';
+        document.getElementById('filterForm').submit();
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,715 @@
+{% extends 'schools/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Enhanced Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-gradient-primary border-0 text-white">
+                <div class="card-body py-4">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="bg-white rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 64px; height: 64px;">
+                                <i class="bi {% if student.id %}bi-pencil-square{% else %}bi-person-plus{% endif %} text-primary fs-3"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h4 class="mb-1">
+                                {% if student.id %}
+                                Edit Student Details
+                                {% else %}
+                                New Student Registration
+                                {% endif %}
+                            </h4>
+                            <nav aria-label="breadcrumb">
+                                <ol class="breadcrumb mb-0">
+                                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-white text-decoration-none">Dashboard</a></li>
+                                    <li class="breadcrumb-item"><a href="{% url 'student_list' %}" class="text-white text-decoration-none">Students</a></li>
+                                    <li class="breadcrumb-item text-white active" aria-current="page">
+                                        {% if student.id %}Edit{% else %}Register{% endif %}
+                                    </li>
+                                </ol>
+                            </nav>
+                        </div>
+                        <div class="col-auto ms-auto">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'student_list' %}" class="btn btn-light">
+                                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                                </a>
+                                {% if student and student.id %}
+                                <div class="dropdown">
+                                    <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                                <i class="bi bi-trash me-2"></i>Delete Student
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Progress Indicator -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between position-relative">
+                        <div class="progress position-absolute" style="width: 100%; height: 2px; top: 50%; transform: translateY(-50%);">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="formProgress"></div>
+                        </div>
+                        <div class="step active text-center position-relative bg-white px-3">
+                            <div class="step-icon bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 32px; height: 32px;">
+                                <i class="bi bi-person-vcard"></i>
+                            </div>
+                            <small class="step-text">Basic Info</small>
+                        </div>
+                        <div class="step text-center position-relative bg-white px-3">
+                            <div class="step-icon bg-light text-muted rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 32px; height: 32px;">
+                                <i class="bi bi-mortarboard"></i>
+                            </div>
+                            <small class="step-text">Academic</small>
+                        </div>
+                        <div class="step text-center position-relative bg-white px-3">
+                            <div class="step-icon bg-light text-muted rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 32px; height: 32px;">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <small class="step-text">Parent Info</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Form -->
+        <div class="col-lg-8">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Basic Information Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-person-vcard me-2 text-primary"></i>Basic Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- Profile Photo Section -->
+                        <div class="row mb-4">
+                            <div class="col-12 text-center">
+                                <div class="position-relative d-inline-block">
+                                    <!-- Profile Photo Preview -->
+                                    <div class="profile-photo-preview rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 150px; height: 150px; overflow: hidden;">
+                                        {% if student.photo %}
+                                            <img src="{{ student.photo.url }}" 
+                                                 alt="{{ student.get_full_name }}" 
+                                                 class="w-100 h-100 object-fit-cover" 
+                                                 id="photoPreview">
+                                        {% else %}
+                                            <div class="placeholder-wrapper" id="photoPlaceholder">
+                                                <i class="bi bi-person display-4 text-secondary"></i>
+                                                <small class="d-block text-muted mt-2">No Photo</small>
+                                            </div>
+                                            <img src="" 
+                                                 alt="Profile Preview" 
+                                                 class="w-100 h-100 object-fit-cover d-none" 
+                                                 id="photoPreview">
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Upload Button -->
+                                    <label for="id_photo" class="position-absolute bottom-0 end-0 upload-trigger">
+                                        <div class="bg-primary rounded-circle p-2 cursor-pointer shadow-sm d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px;">
+                                            <i class="bi bi-camera text-white"></i>
+                                        </div>
+                                        <input type="file" 
+                                               name="photo" 
+                                               id="id_photo" 
+                                               class="d-none" 
+                                               accept="image/*" 
+                                               data-max-size="2">
+                                    </label>
+
+                                    <!-- Remove Photo Button -->
+                                    {% if student.photo %}
+                                    <button type="button" 
+                                            class="position-absolute top-0 end-0 btn btn-sm btn-danger rounded-circle p-0 d-flex align-items-center justify-content-center remove-photo" 
+                                            style="width: 24px; height: 24px;"
+                                            id="removePhoto">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Upload Feedback -->
+                                <div class="mt-3">
+                                    <small class="text-muted d-block" id="photoHelp">
+                                        Click the camera icon to upload a profile photo
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        Maximum file size: 2MB
+                                    </small>
+                                    {% if form.photo.errors %}
+                                    <div class="invalid-feedback d-block mt-2">
+                                        {{ form.photo.errors|join:", " }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Admission Number</label>
+                                {% if student.id %}
+                                    {% render_field form.admission_number class="form-control" readonly="readonly" %}
+                                {% else %}
+                                    {% render_field form.admission_number class="form-control" %}
+                                {% endif %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.admission_number.errors|join:", " }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender *</label>
+                                {% render_field form.gender class="form-select" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.gender.errors|join:", " }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Location *</label>
+                                {% render_field form.location class="form-select" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.location.errors|join:", " }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">First Name *</label>
+                                {% render_field form.first_name class="form-control" placeholder="Enter first name" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.first_name.errors|join:", " }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name *</label>
+                                {% render_field form.last_name class="form-control" placeholder="Enter last name" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.last_name.errors|join:", " }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth *</label>
+                                {% render_field form.date_of_birth class="form-control" type="date" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.date_of_birth.errors|join:", " }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.birth_certificate_no.id_for_label }}" class="form-label">Birth Certificate Number</label>
+                            {{ form.birth_certificate_no|add_class:"form-control" }}
+                            <div class="invalid-feedback d-block">
+                                {{ form.birth_certificate_no.errors.0 }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-mortarboard me-2 text-primary"></i>Academic Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Grade *</label>
+                                {% render_field form.grade class="form-select" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.grade.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Academic Year *</label>
+                                {% render_field form.academic_year class="form-control" placeholder="YYYY-YYYY" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.academic_year.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Current Term *</label>
+                                {% render_field form.current_term class="form-select" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.current_term.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Term Fees</label>
+                                {% render_field form.term_fees class="form-control" placeholder="Enter term fees" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.term_fees.errors|join:", " }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parent Information Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-person me-2 text-info"></i>Parent Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <small>Fill in parent information (optional - at least one parent or guardian is required)</small>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Parent Name</label>
+                                {% render_field form.parent_name class="form-control" placeholder="Enter parent name" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.parent_name.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                {% render_field form.parent_phone class="form-control" placeholder="Enter phone number" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.parent_phone.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address</label>
+                                {% render_field form.parent_email class="form-control" placeholder="Enter email address" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.parent_email.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Occupation</label>
+                                {% render_field form.parent_occupation class="form-control" placeholder="Enter occupation" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.parent_occupation.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">ID Number</label>
+                                {% render_field form.parent_id_number class="form-control" placeholder="Enter parent ID number" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.parent_id_number.errors|join:", " }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guardian Information Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="card-title mb-0">
+                            <i class="bi bi-shield-check me-2 text-success"></i>Guardian Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <small>Fill in guardian information (optional - at least one parent or guardian is required)</small>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Guardian Name</label>
+                                {% render_field form.guardian_name class="form-control" placeholder="Enter guardian name" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.guardian_name.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                {% render_field form.guardian_phone class="form-control" placeholder="Enter phone number" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.guardian_phone.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address</label>
+                                {% render_field form.guardian_email class="form-control" placeholder="Enter email address" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.guardian_email.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Occupation</label>
+                                {% render_field form.guardian_occupation class="form-control" placeholder="Enter occupation" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.guardian_occupation.errors|join:", " }}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">ID Number</label>
+                                {% render_field form.guardian_id_number class="form-control" placeholder="Enter guardian ID number" %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.guardian_id_number.errors|join:", " }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">* Required fields</small>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'student_list' %}" class="btn btn-light">Cancel</a>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    {% if student.id %}
+                                    <i class="bi bi-check-lg me-2"></i>Update Student
+                                    {% else %}
+                                    <i class="bi bi-person-plus me-2"></i>Register Student
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Section -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 bg-light sticky-top" style="top: 1rem;">
+                <div class="card-body">
+                    <h5 class="card-title d-flex align-items-center mb-4">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        {% if student.id %}Update{% else %}Registration{% endif %} Guide
+                    </h5>
+
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-primary mb-3">Required Information</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Student's full name</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Admission number</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Date of birth</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Gender</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Grade assignment</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Current term</li>
+                            <li class="mb-2"><i class="bi bi-check2-circle text-success me-2"></i>Parent details</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h6 class="fw-bold text-primary mb-3">Tips</h6>
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-1-circle me-2"></i>
+                                Double-check the admission number
+                            </div>
+                            <div class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-2-circle me-2"></i>
+                                Verify parent contact information
+                            </div>
+                            <div class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-3-circle me-2"></i>
+                                Ensure correct grade selection
+                            </div>
+                            <div class="list-group-item bg-transparent px-0">
+                                <i class="bi bi-4-circle me-2"></i>
+                                Confirm current term
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if student and student.id %}
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="mb-4">
+                    <i class="bi bi-exclamation-circle text-danger display-4"></i>
+                </div>
+                <h5 class="mb-3">Delete Student Record?</h5>
+                <p class="text-muted mb-4">
+                    Are you sure you want to delete this student's record? This action cannot be undone.
+                </p>
+                <div class="d-flex justify-content-center gap-2">
+                    <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+                    <form action="{% url 'student_delete' student.pk %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger px-4">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Success Toast -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+    <div class="toast align-items-center text-white bg-success border-0" role="alert" id="successToast">
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="bi bi-check-circle me-2"></i>
+                <span id="toastMessage">Changes saved successfully!</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .bg-gradient-primary {
+        background: linear-gradient(45deg, var(--bs-primary), #2f5cff) !important;
+    }
+    
+    .card {
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .form-control, .form-select {
+        border-color: #e9ecef;
+        padding: 0.6rem 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .step.active .step-icon {
+        box-shadow: 0 0 0 5px rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .step-text {
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    
+    .progress {
+        z-index: 0;
+    }
+    
+    .step {
+        z-index: 1;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .dropdown-item.text-danger:hover {
+        background-color: #dc3545;
+        color: white !important;
+    }
+    
+    @media (max-width: 768px) {
+        .step-text {
+            display: none;
+        }
+    }
+    
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    
+    .profile-photo-preview {
+        border: 2px dashed #dee2e6;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+    }
+    
+    .profile-photo-preview:hover {
+        border-color: var(--bs-primary);
+    }
+    
+    .profile-photo-preview img {
+        transition: all 0.3s ease;
+    }
+    
+    .profile-photo-preview:hover img {
+        opacity: 0.8;
+    }
+    
+    label[for="id_photo"] {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    label[for="id_photo"]:hover {
+        transform: scale(1.1);
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .is-invalid {
+        border-color: var(--bs-danger) !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .is-valid {
+        border-color: var(--bs-success) !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .modal-content {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .upload-trigger {
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+    
+    .upload-trigger:hover {
+        transform: scale(1.1);
+    }
+    
+    .remove-photo {
+        opacity: 0;
+        transition: all 0.3s ease;
+        z-index: 2;
+    }
+    
+    .profile-photo-preview:hover .remove-photo,
+    .remove-photo:hover {
+        opacity: 1;
+    }
+    
+    .placeholder-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+    }
+    
+    .photo-upload-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: rgba(var(--bs-primary-rgb), 0.1);
+    }
+    
+    .photo-upload-progress .progress-bar {
+        height: 100%;
+        background: var(--bs-primary);
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/student-form.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            
+            // Create FormData object
+            const formData = new FormData(form);
+            
+            // Submit form using fetch
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Redirect to success URL
+                    window.location.href = "{% url 'student_detail' pk=student.id %}";
+                } else {
+                    throw new Error('Form submission failed');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %} 

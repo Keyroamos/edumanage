@@ -1,0 +1,356 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load humanize %}
+{% load school_filters %}
+
+{% block content %}
+<!-- Action Buttons -->
+<div class="d-print-none text-center mb-4">
+    <div class="btn-group">
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer me-2"></i>Print Receipt
+        </button>
+        <a href="{% url 'download_payment_pdf' pk=payment.id %}" class="btn btn-outline-primary">
+            <i class="bi bi-download me-2"></i>Download PDF
+        </a>
+    </div>
+</div>
+
+<!-- PDF Container -->
+<div class="pdf-container">
+    <!-- Receipt Content -->
+    <div class="receipt-wrapper">
+        <!-- Receipt Header -->
+        <div class="receipt-header">
+            <div class="school-info">
+                <img src="{% static 'images/logo.png' %}" alt="Bishop Dr Mando International School" class="receipt-logo">
+                <div class="school-details">
+                    <h4 class="school-name">Bishop Dr Mando International School</h4>
+                    <div class="contact-info">
+                        <p>P.O. Box 6675-00100, Nairobi</p>
+                        <p>Tel: 0746228826 | Email: info@bishopdrmandointernationalschool.org</p>
+                    </div>
+                </div>
+            </div>
+            <div class="qr-section">
+                <img src="data:image/png;base64,{{ qr_code }}" 
+                     alt="Payment QR" 
+                     class="qr-code">
+            </div>
+        </div>
+
+        <!-- Receipt Title -->
+        <div class="receipt-title">
+            <h2>OFFICIAL RECEIPT</h2>
+            <div class="receipt-number">No. {{ payment.reference_number }}</div>
+        </div>
+
+        <!-- Student Information -->
+        <div class="student-section">
+            <div class="info-row">
+                <div class="info-group">
+                    <label>Student Name:</label>
+                    <span>{{ payment.student.get_full_name }}</span>
+                </div>
+                <div class="info-group">
+                    <label>Admission No:</label>
+                    <span>{{ payment.student.admission_number }}</span>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-group">
+                    <label>Grade:</label>
+                    <span>{{ payment.student.grade }}</span>
+                </div>
+                <div class="info-group">
+                    <label>Term:</label>
+                    <span>Term {{ payment.term }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="payment-details">
+            <div class="info-row">
+                <div class="info-group">
+                    <label>Payment Date:</label>
+                    <span>{{ payment.date|date:"F d, Y" }}</span>
+                </div>
+                <div class="info-group">
+                    <label>Payment Method:</label>
+                    <span>{{ payment.get_payment_method_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Amount Section -->
+        <div class="amount-section">
+            <table class="amount-table">
+                <tr>
+                    <td>Term {{ payment.term }} Fees:</td>
+                    <td class="amount">KES {{ payment.student.get_term_fees|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td>Previous Balance:</td>
+                    <td class="amount">KES {{ payment.student.get_previous_balance|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td>Total Due:</td>
+                    <td class="amount">KES {{ payment.student.get_total_due|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td>Amount Paid:</td>
+                    <td class="amount positive">KES {{ payment.amount|intcomma }}</td>
+                </tr>
+                <tr class="balance-row">
+                    <td>Current Balance:</td>
+                    <td class="amount {% if payment.student.get_balance > 0 %}negative{% else %}positive{% endif %}">
+                        KES {{ payment.student.get_balance|intcomma }}
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Receipt Footer -->
+        <div class="receipt-footer">
+            <div class="signature-section">
+                <div class="signature">
+                    <div class="sign-line"></div>
+                    <p>Authorized Signature</p>
+                </div>
+                <div class="school-stamp">
+                    <img src="{% static 'images/sig.png' %}" alt="Official Stamp" class="stamp-image">
+                </div>
+            </div>
+            <div class="footer-note">
+                <p>This is a computer generated receipt </p>
+                <p class="receipt-id">Receipt ID: {{ payment.id }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* PDF-optimized styles */
+.pdf-container {
+    width: 210mm;  /* A4 width */
+    min-height: 297mm;  /* A4 height */
+    margin: 0 auto;
+    background: white;
+    padding: 20mm;  /* Standard margin */
+    box-sizing: border-box;
+}
+
+.receipt-wrapper {
+    width: 100%;
+    background: white;
+    padding: 5mm;
+    border: 1px solid #ddd;
+}
+
+.receipt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 5mm;
+    border-bottom: 2px solid #1e40af;
+}
+
+.school-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.receipt-logo {
+    width: 60px;
+    height: auto;
+}
+
+.school-name {
+    color: #1e40af;
+    margin: 0;
+    font-size: 24px;
+}
+
+.contact-info p {
+    margin: 2px 0;
+    color: #666;
+    font-size: 12px;
+}
+
+.qr-section {
+    background: white;
+    padding: 2mm;
+    border-radius: 1mm;
+    box-shadow: 0 0 2mm rgba(0,0,0,0.1);
+}
+
+.qr-code {
+    width: 25mm;  /* Standard size for most QR code scanners */
+    height: 25mm;
+    display: block;
+}
+
+.receipt-title {
+    text-align: center;
+    margin: 5mm 0;
+    padding: 3mm 0;
+    border-bottom: 1px solid #eee;
+}
+
+.receipt-title h2 {
+    margin: 0;
+    color: #1e40af;
+    font-size: 20px;
+}
+
+.receipt-number {
+    color: #666;
+    font-size: 14px;
+}
+
+.student-section,
+.payment-details {
+    margin: 5mm 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3mm;
+}
+
+.info-group {
+    flex: 1;
+    margin-right: 5mm;
+}
+
+.info-group label {
+    display: block;
+    color: #666;
+    font-size: 12px;
+    margin-bottom: 2px;
+}
+
+.info-group span {
+    font-weight: 500;
+    color: #333;
+    font-size: 14px;
+}
+
+.amount-section {
+    margin: 10mm 0;
+    padding: 5mm;
+    background: #f8fafc;
+}
+
+.amount-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.amount-table tr {
+    border-bottom: 1px solid #eee;
+}
+
+.amount-table td {
+    padding: 2mm 0;
+    font-size: 14px;
+}
+
+.amount-table .amount {
+    text-align: right;
+    font-weight: 500;
+}
+
+.amount-table .amount.positive {
+    color: #047857;  /* Green for positive amounts */
+}
+
+.amount-table .amount.negative {
+    color: #dc2626;  /* Red for negative amounts */
+}
+
+.amount-table tr.total-row {
+    border-top: 2px solid #ddd;
+    font-weight: bold;
+}
+
+.balance-row {
+    font-weight: bold;
+    color: #1e40af;
+}
+
+.receipt-footer {
+    margin-top: 10mm;
+    padding-top: 5mm;
+    border-top: 1px solid #eee;
+}
+
+.signature-section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5mm;
+}
+
+.signature,
+.school-stamp {
+    flex: 1;
+    text-align: center;
+}
+
+.sign-line {
+    width: 60mm;
+    height: 0.5mm;
+    background: #ccc;
+    margin: 10mm auto 2mm;
+}
+
+.stamp-image {
+    width: 100mm;
+    height: 100mm;
+    object-fit: contain;
+}
+
+.footer-note {
+    text-align: center;
+    color: #666;
+    font-size: 12px;
+    margin-top: 5mm;
+}
+
+.receipt-id {
+    color: #999;
+    font-size: 10px;
+}
+
+@media print {
+    .d-print-none {
+        display: none !important;
+    }
+    
+    .pdf-container {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .receipt-wrapper {
+        border: none;
+    }
+}
+
+/* Add specific styles for PDF generation */
+{% if pdf_mode %}
+.pdf-container {
+    margin: 0;
+    padding: 10mm;
+}
+
+.receipt-wrapper {
+    border: none;
+}
+{% endif %}
+</style>
+
+{% endblock %}

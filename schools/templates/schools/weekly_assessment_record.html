@@ -1,0 +1,452 @@
+{% extends 'schools/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+{% load school_extras %}
+{% load custom_filters %}
+
+{% block title %}Record Weekly Assessment{% endblock %}
+
+{% block content %}
+<style>
+  /* Weekly Assessment Specific Styles */
+  .weekly-header {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+    color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.3);
+  }
+  
+  .weekly-stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  
+  .weekly-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    color: #ffc107;
+    font-weight: 600;
+  }
+  
+  .weekly-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #ffc107 60%, #e9ecef 100%);
+    z-index: 0;
+    transform: translateY(-50%);
+  }
+  
+  .weekly-step .step-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffc107;
+    color: #fff;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+    z-index: 1;
+    position: relative;
+  }
+  
+  .weekly-step.active .step-circle {
+    background: #28a745;
+    box-shadow: 0 2px 12px rgba(40, 167, 69, 0.3);
+  }
+  
+  .weekly-card {
+    border-radius: 1rem;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    border: none;
+    background: #fff;
+    margin-bottom: 2rem;
+    transition: box-shadow 0.2s;
+  }
+  
+  .weekly-card:focus-within {
+    box-shadow: 0 4px 24px rgba(255, 193, 7, 0.15);
+  }
+  
+  .weekly-card-header {
+    background: linear-gradient(90deg, #ffc107 80%, #ff8f00 100%);
+    color: #fff;
+    border-radius: 1rem 1rem 0 0;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  
+  .subject-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .subject-card {
+    background: #f8f9fa;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+  }
+  
+  .subject-card:hover {
+    border-color: #ffc107;
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
+  }
+  
+  .subject-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .subject-icon {
+    width: 40px;
+    height: 40px;
+    background: #ffc107;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+  }
+  
+  .subject-name {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+  }
+  
+  .marks-input {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .marks-input .form-control {
+    max-width: 120px;
+  }
+  
+  .marks-label {
+    font-weight: 500;
+    color: #6c757d;
+    min-width: 80px;
+  }
+  
+  .remarks-input {
+    margin-top: 1rem;
+  }
+  
+  .weekly-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    gap: 1rem;
+  }
+  
+  .weekly-actions .btn {
+    border-radius: 2rem;
+    font-weight: 600;
+    padding: 0.75rem 2.5rem;
+    font-size: 1.1rem;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+    transition: all 0.2s;
+  }
+  
+  .weekly-actions .btn-primary {
+    background: linear-gradient(90deg, #ffc107 80%, #ff8f00 100%);
+    border: none;
+  }
+  
+  .weekly-actions .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+  }
+  
+  .weekly-actions .btn-outline-secondary {
+    border: 2px solid #ffc107;
+    color: #ffc107;
+    background: #fff;
+  }
+  
+  .weekly-actions .btn-outline-secondary:hover {
+    background: #ffc107;
+    color: #fff;
+  }
+  
+  .week-badge {
+    background: linear-gradient(45deg, #ffc107, #ff8f00);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 2rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    .weekly-stepper {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .subject-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .weekly-actions {
+      flex-direction: column;
+    }
+    
+    .marks-input {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-12">
+            <!-- Weekly Assessment Header -->
+            <div class="weekly-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h3 class="mb-2">
+                            <i class="bi bi-calendar-week me-3"></i>Weekly Assessment Record
+                        </h3>
+                        <p class="mb-0 opacity-75">Track weekly progress for {{ student.get_full_name }}</p>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="week-badge">
+                            <i class="bi bi-calendar-week"></i>
+                            Week {{ current_week }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress Stepper -->
+            <div class="weekly-stepper mb-4">
+                <div class="weekly-step completed">
+                    <span class="step-circle"><i class="fas fa-user-graduate"></i></span>
+                    <span class="step-label">Student</span>
+                </div>
+                <div class="weekly-step completed">
+                    <span class="step-circle"><i class="fas fa-calendar-week"></i></span>
+                    <span class="step-label">Week Details</span>
+                </div>
+                <div class="weekly-step active">
+                    <span class="step-circle"><i class="fas fa-book"></i></span>
+                    <span class="step-label">Subject Marks</span>
+                </div>
+                <div class="weekly-step">
+                    <span class="step-circle"><i class="fas fa-check"></i></span>
+                    <span class="step-label">Complete</span>
+                </div>
+            </div>
+
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <!-- Week Details Card -->
+                <div class="weekly-card">
+                    <div class="weekly-card-header">
+                        <i class="fas fa-calendar-week me-2"></i>Week Details
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="weekly_term" class="form-label fw-bold">Term</label>
+                                <select name="term" id="weekly_term" class="form-select" required>
+                                    <option value="">Select Term</option>
+                                    <option value="1" {% if existing_assessment.term == '1' %}selected{% endif %}>Term 1</option>
+                                    <option value="2" {% if existing_assessment.term == '2' %}selected{% endif %}>Term 2</option>
+                                    <option value="3" {% if existing_assessment.term == '3' %}selected{% endif %}>Term 3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="weekly_date" class="form-label fw-bold">Assessment Date</label>
+                                <input type="date" 
+                                       name="date" 
+                                       id="weekly_date" 
+                                       class="form-control" 
+                                       value="{{ existing_assessment.date|date:'Y-m-d'|default:current_date }}"
+                                       required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="weekly_week_number" class="form-label fw-bold">Week Number</label>
+                                <input type="number" 
+                                       name="week_number" 
+                                       id="weekly_week_number" 
+                                       class="form-control" 
+                                       min="1" 
+                                       max="14" 
+                                       value="{{ current_week }}"
+                                       required>
+                                <small class="text-muted">Week 1-14 of the term</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="weekly_remarks" class="form-label fw-bold">Overall Remarks</label>
+                                <textarea name="remarks" 
+                                          id="weekly_remarks" 
+                                          class="form-control" 
+                                          rows="3" 
+                                          placeholder="Enter overall remarks for this week's assessment">{{ existing_assessment.remarks }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Marks Card -->
+                <div class="weekly-card">
+                    <div class="weekly-card-header">
+                        <i class="fas fa-book me-2"></i>Subject Marks
+                        <small class="text-white-50 ms-2">Enter marks out of 10 for each subject</small>
+                    </div>
+                    <div class="card-body">
+                        <div class="subject-grid">
+                            {% for subject in subjects %}
+                            <div class="subject-card">
+                                <div class="subject-header">
+                                    <div class="subject-icon">
+                                        <i class="fas fa-book-open"></i>
+                                    </div>
+                                    <h6 class="subject-name">{{ subject.name }}</h6>
+                                </div>
+                                
+                                <div class="marks-input">
+                                    <label class="marks-label">Marks:</label>
+                                    <div class="input-group">
+                                        <input type="number" 
+                                               name="marks_{{ subject.id }}" 
+                                               class="form-control" 
+                                               min="0" 
+                                               max="10" 
+                                               step="0.5"
+                                               placeholder="0-10"
+                                               value="{{ existing_results|get_item:subject.id|get_item:'marks' }}"
+                                               aria-label="Marks for {{ subject.name }}">
+                                        <span class="input-group-text">/10</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="remarks-input">
+                                    <label class="form-label small text-muted">Subject Remarks</label>
+                                    <input type="text" 
+                                           name="remarks_{{ subject.id }}" 
+                                           class="form-control" 
+                                           placeholder="Optional remarks for {{ subject.name }}"
+                                           value="{{ existing_results|get_item:subject.id|get_item:'remarks' }}">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="weekly-actions">
+                    <a href="{% url 'student_detail' student.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Student
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if existing_assessment %}
+                            <i class="fas fa-save me-2"></i>Update Weekly Assessment
+                        {% else %}
+                            <i class="fas fa-save me-2"></i>Save Weekly Assessment
+                        {% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Auto-calculate week number based on current date
+    const weeklyDateInput = document.getElementById('weekly_date');
+    const weeklyWeekInput = document.getElementById('weekly_week_number');
+    
+    if (weeklyDateInput && weeklyWeekInput) {
+        weeklyDateInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const startOfYear = new Date(selectedDate.getFullYear(), 0, 1);
+            const days = Math.floor((selectedDate - startOfYear) / (24 * 60 * 60 * 1000));
+            const weekNumber = Math.ceil((days + startOfYear.getDay() + 1) / 7);
+            weeklyWeekInput.value = Math.min(weekNumber, 14); // Cap at 14 weeks
+        });
+    }
+
+    // Add visual feedback for subject cards
+    const subjectCards = document.querySelectorAll('.subject-card');
+    subjectCards.forEach(card => {
+        const marksInput = card.querySelector('input[type="number"]');
+        if (marksInput) {
+            marksInput.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (value >= 8) {
+                    card.style.borderColor = '#28a745';
+                    card.style.backgroundColor = '#d4edda';
+                } else if (value >= 6) {
+                    card.style.borderColor = '#17a2b8';
+                    card.style.backgroundColor = '#d1ecf1';
+                } else if (value >= 4) {
+                    card.style.borderColor = '#ffc107';
+                    card.style.backgroundColor = '#fff3cd';
+                } else if (value > 0) {
+                    card.style.borderColor = '#dc3545';
+                    card.style.backgroundColor = '#f8d7da';
+                } else {
+                    card.style.borderColor = 'transparent';
+                    card.style.backgroundColor = '#f8f9fa';
+                }
+            });
+        }
+    });
+
+    // Enable Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 
