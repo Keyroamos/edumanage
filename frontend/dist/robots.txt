@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Allow: /pricing
+Allow: /features
+Allow: /about
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /students/
+Disallow: /teachers/
+Disallow: /finance/
+Disallow: /academics/
+
+Sitemap: https://edumanage.keyroacademy.top/sitemap.xml

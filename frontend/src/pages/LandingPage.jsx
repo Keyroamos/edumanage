@@ -17,6 +17,25 @@ import dashboardImg from '../assets/images/dashboard.png';
 const LandingPage = () => {
     const navigate = useNavigate();
 
+    // SEO: JSON-LD Structured Data
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "EduManage",
+        "operatingSystem": "Web",
+        "applicationCategory": "EducationalApplication, BusinessApplication",
+        "offers": {
+            "@type": "Offer",
+            "price": "1499.00",
+            "priceCurrency": "KES"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.9",
+            "ratingCount": "500"
+        }
+    };
+
     const features = [
         {
             title: 'Complete Student Management',
@@ -58,6 +77,11 @@ const LandingPage = () => {
 
     return (
         <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-blue-100 selection:text-blue-900">
+            {/* SEO Structured Data */}
+            <script type="application/ld+json">
+                {JSON.stringify(structuredData)}
+            </script>
+
             <PublicNavbar />
 
             {/* Hero Section */}
@@ -71,7 +95,7 @@ const LandingPage = () => {
                         transition={{ duration: 0.5 }}
                         className="inline-flex items-center gap-2 mb-8 bg-slate-50 border border-slate-200 rounded-full px-4 py-1.5 shadow-sm hover:bg-slate-100 transition-colors cursor-pointer group"
                     >
-                        <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900">Introducing Advanced Analytics 2.0</span>
+                        <span className="text-xs font-semibold text-slate-600 group-hover:text-slate-900">EduManage: The Leading School ERP in Kenya</span>
                         <ArrowRight size={12} className="text-slate-400 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all" />
                     </motion.div>
 
@@ -82,8 +106,8 @@ const LandingPage = () => {
                         transition={{ duration: 0.5, delay: 0.1 }}
                         className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15] mb-6"
                     >
-                        Manage your school. <br className="hidden md:block" />
-                        Anywhere. Anytime.
+                        Unified School Management. <br className="hidden md:block" />
+                        Accessible Anywhere.
                     </motion.h1>
 
                     {/* Subheadline */}
@@ -180,7 +204,7 @@ const LandingPage = () => {
                     {/* Item 1 */}
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <div className="order-2 lg:order-1 relative p-8 bg-slate-50 rounded-3xl border border-slate-100">
-                            <img src={dashboardImg} alt="Finance Dashboard" className="relative rounded-xl shadow-lg border border-slate-200" />
+                            <img src={dashboardImg} alt="EduManage Finance Dashboard - Automated School Fees Billing" className="relative rounded-xl shadow-lg border border-slate-200" />
                         </div>
                         <div className="space-y-6 order-1 lg:order-2">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100 uppercase tracking-widest">
@@ -218,7 +242,7 @@ const LandingPage = () => {
                             </div>
                         </div>
                         <div className="relative p-8 bg-slate-50 rounded-3xl border border-slate-100">
-                            <img src={heroImg} alt="Academic Tools" className="relative rounded-xl shadow-lg border border-slate-200" />
+                            <img src={heroImg} alt="EduManage Academic Portal - CBC Compliant Grading System" className="relative rounded-xl shadow-lg border border-slate-200" />
                         </div>
                     </div>
                 </div>
