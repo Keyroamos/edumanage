@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
-  base: command === 'serve' ? '/' : '/static/',
+  base: '/', // Always use root path for cPanel deployment
   plugins: [
     react(),
     // VitePWA disabled to prevent stale cache issues on cPanel
