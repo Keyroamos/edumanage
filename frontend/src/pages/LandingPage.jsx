@@ -137,7 +137,7 @@ const LandingPage = () => {
                         <Button
                             variant="outline"
                             size="lg"
-                            onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
+                            onClick={() => document.getElementById('contact').scrollIntoView({ behavior: 'smooth' })}
                             className="border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 w-full sm:w-auto px-8 h-12 rounded-lg font-semibold text-base flex items-center gap-2"
                         >
                             <Play size={16} fill="currentColor" className="text-slate-400" />
@@ -259,6 +259,34 @@ const LandingPage = () => {
                         <Button size="lg" onClick={() => navigate('/pricing')} className="bg-white text-slate-900 hover:bg-slate-100 h-12 px-8 font-semibold text-base border-transparent">
                             Get Started Now
                         </Button>
+                    </div>
+                </div>
+            </section>
+
+            {/* Contact / Demo Section */}
+            <section id="contact" className="py-24 bg-slate-50 border-t border-slate-100">
+                <div className="max-w-4xl mx-auto px-6 text-center">
+                    <h2 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Book a Personal Demo</h2>
+                    <p className="text-lg text-slate-500 mb-12">
+                        Get a detailed walkthrough of how EduManage can transform your institution. Contact our team directly to schedule your demo.
+                    </p>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+                        <a href="tel:+254720990929" className="flex flex-col items-center p-8 bg-white rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-lg transition-all group">
+                            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+                                <Phone size={24} />
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Call Us</h3>
+                            <p className="text-xl font-black text-slate-900">+254 720 990 929</p>
+                        </a>
+
+                        <a href="mailto:systemedumanage@gmail.com" className="flex flex-col items-center p-8 bg-white rounded-2xl border border-slate-200 hover:border-blue-400 hover:shadow-lg transition-all group">
+                            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform">
+                                <Mail size={24} />
+                            </div>
+                            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Email Us</h3>
+                            <p className="text-xl font-black text-slate-900">systemedumanage@gmail.com</p>
+                        </a>
                     </div>
                 </div>
             </section>
