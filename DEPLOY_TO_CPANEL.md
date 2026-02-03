@@ -135,7 +135,8 @@ git push origin main
 cd /home/keyroacd/system.keyroacademy.top
 git pull origin main
 
-# 2. Collect static files
+# 2. Cleanup and collect (Wait for git pull to finish first!)
+rm -rf static
 python manage.py collectstatic --noinput
 
 # 3. Restart app
@@ -151,7 +152,7 @@ touch passenger_wsgi.py
 **Check:**
 1. Did you run `python manage.py collectstatic`?
 2. Verify `static/assets` folder exists on server.
-3. Check permissions of `static` folder (should be 755).
+3. Check permissions: `chmod -R 755 static`
 
 ### Issue: Blank page or errors
 
