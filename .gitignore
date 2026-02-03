@@ -55,7 +55,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Frontend build
-frontend/dist/
+# frontend/dist/
 frontend/.vite/
 
 # public_html contains React build - DO NOT IGNORE

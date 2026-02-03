@@ -43,6 +43,8 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',') if os.environ.ge
     'www.edumanage.bdmis.co.ke',
     'edumanage.keyroacademy.top',
     'www.edumanage.keyroacademy.top',
+    'uniqo.top',
+    'www.uniqo.top',
     'localhost',
     '127.0.0.1',
     '*'
@@ -218,6 +220,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # Add production domain to CSRF trusted origins if not in DEBUG mode
+# Add production domain to CSRF trusted origins if not in DEBUG mode
 if not DEBUG:
     # Add your production domain
     CSRF_TRUSTED_ORIGINS.extend([
@@ -228,6 +231,8 @@ if not DEBUG:
     'http://auth-system.bdmis.co.ke',
     'https://edumanage.keyroacademy.top',
     'https://www.edumanage.keyroacademy.top',
+    'https://uniqo.top',
+    'https://www.uniqo.top',
     ])
 
 # CORS Configuration
