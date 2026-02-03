@@ -1,0 +1,21 @@
+RewriteEngine On
+RewriteBase /
+
+# 1. Handle the /static/ prefix from Vite
+# This maps /static/assets/foo.js -> public_html/assets/foo.js
+# and /static/registerSW.js -> public_html/registerSW.js
+RewriteRule ^static/(.*)$ $1 [L]
+
+# 2. Serve physical files if they exist
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 3. Cache manifest and other specific files
+<FilesMatch "\.(html|webmanifest)$">
+    Header set Cache-Control "max-age=0, no-cache, no-store, must-revalidate"
+</FilesMatch>
+
+# 4. Django catch-all (via Passenger)
+# If the file doesn't exist, let Django handle it
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ ../passenger_wsgi.py/$1 [QSA,L]
