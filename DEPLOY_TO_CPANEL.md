@@ -17,25 +17,30 @@ cd frontend
 npm run build
 ```
 
-This will create files in `public_html/` folder (not `dist/` anymore).
+This will create the production build in `frontend/dist`.
 
 ---
 
 ### 2️⃣ Commit and Push to GitHub
 
 ```bash
+# Go back to root
+cd ..
 git add .
-git commit -m "Update React build for cPanel"
+git commit -m "Update React build and static files"
 git push origin main
 ```
 
 ---
 
-### 3️⃣ Pull on cPanel Server (SSH or Terminal)
+### 3️⃣ Pull and Update on cPanel Server (SSH or Terminal)
 
 ```bash
 cd /home/keyroacd/system.keyroacademy.top
 git pull origin main
+
+# Update static files (CRITICAL for fixing 500 errors)
+python manage.py collectstatic --noinput
 ```
 
 ---
@@ -80,16 +85,18 @@ python manage.py createsuperuser
 
 ### 6️⃣ Verify Files
 
-Make sure these files exist in `public_html/`:
+Make sure `collectstatic` ran successfully. You should see a `static` folder in the root:
 
 ```
-/home/keyroacd/system.keyroacademy.top/public_html/
-├── index.html          ✅ MUST EXIST
-├── .htaccess           ✅ MUST EXIST
-├── assets/             ✅ Contains JS/CSS
-│   ├── index-xxxxx.js
-│   └── index-xxxxx.css
-└── favicon.png
+/home/keyroacd/system.keyroacademy.top/
+├── static/             ✅ MUST EXIST and contain assets
+│   ├── assets/
+│   │   ├── ui-xxxxx.js
+│   │   └── ...
+│   └── admin/
+├── frontend/
+│   └── dist/           ✅ Contains built React files
+└── public_html/        ✅ Document root (contains .htaccess)
 ```
 
 ---
@@ -112,7 +119,9 @@ Every time you make changes:
 ```bash
 # 1. Make changes to code
 # 2. Build React
-cd frontend && npm run build
+cd frontend
+npm run build
+cd ..
 
 # 3. Commit and push
 git add .
@@ -126,7 +135,10 @@ git push origin main
 cd /home/keyroacd/system.keyroacademy.top
 git pull origin main
 
-# 2. Restart app
+# 2. Collect static files
+python manage.py collectstatic --noinput
+
+# 3. Restart app
 touch passenger_wsgi.py
 ```
 
@@ -134,18 +146,18 @@ touch passenger_wsgi.py
 
 ## 🐛 TROUBLESHOOTING
 
-### Issue: Still getting 404
+### Issue: Still getting 404 or 500 on assets
 
 **Check:**
-1. Does `/home/keyroacd/system.keyroacademy.top/public_html/index.html` exist?
-2. Run `ls -la /home/keyroacd/system.keyroacademy.top/public_html/`
-3. Check file permissions: `chmod 644 public_html/index.html`
+1. Did you run `python manage.py collectstatic`?
+2. Verify `static/assets` folder exists on server.
+3. Check permissions of `static` folder (should be 755).
 
 ### Issue: Blank page or errors
 
 **Check browser console:**
 - If you see CORS errors → Update `ALLOWED_HOSTS` in `school/settings.py`
-- If you see 404 on assets → Rebuild React with `npm run build`
+- If you see 404 on assets → Re-run `collectstatic`
 
 ### Issue: API calls fail
 
@@ -175,13 +187,12 @@ After deployment, test:
 
 ```
 /home/keyroacd/system.keyroacademy.top/
-├── public_html/              # React build (auto-generated)
-│   ├── index.html
-│   ├── .htaccess
-│   └── assets/
-├── frontend/                 # React source
-│   ├── src/
-│   └── package.json
+├── static/                   # Collected static files (served by WhiteNoise)
+├── frontend/                 
+│   ├── dist/                 # React build output
+│   └── src/
+├── public_html/              # Web root
+│   └── .htaccess
 ├── school/                   # Django settings
 ├── students/                 # Django apps
 ├── manage.py

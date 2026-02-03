@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig(({ command }) => ({
-  base: '/', // Always use root path for cPanel deployment
+  base: '/static/', // Use static path for Django integration
   plugins: [
     react(),
     VitePWA({
@@ -38,7 +38,7 @@ export default defineConfig(({ command }) => ({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -52,7 +52,7 @@ export default defineConfig(({ command }) => ({
               cacheName: 'gstatic-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {
                 statuses: [0, 200]
@@ -84,7 +84,7 @@ export default defineConfig(({ command }) => ({
     }
   },
   build: {
-    outDir: '../public_html', // Build directly to public_html for cPanel
+    outDir: 'dist',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
