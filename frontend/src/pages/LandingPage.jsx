@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users, Shield, Zap, TrendingUp, CheckCircle2, ChevronRight,
     BookOpen, Calculator, Calendar, MessageSquare, Truck, BarChart3,
-    ArrowRight, Globe, Layers, Smartphone, Play, Star
+    ArrowRight, Globe, Layers, Smartphone, Play, Star, Phone, Mail
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Button from '../components/ui/Button';
