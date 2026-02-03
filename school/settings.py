@@ -76,6 +76,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.middleware.gzip.GZipMiddleware',  # Compress responses for faster loading
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -132,6 +133,19 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+# Cache Configuration
+# Using FileBasedCache for cPanel environments which might not support Redis/Memcached by default
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'django_cache'),
+        'TIMEOUT': 3600,  # 1 hour default timeout
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
+    }
+}
 
 
 # Password validation
@@ -347,11 +361,15 @@ if DEBUG:
     WHITENOISE_AUTOREFRESH = True
 else:
     # Production: Use compressed storage for better performance
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
     # Ensure WhiteNoise doesn't try to be too clever with missing files
     WHITENOISE_MANIFEST_STRICT = False
-    # Cache static files for a long time
+    # Cache static files for a long time (1 year)
     WHITENOISE_MAX_AGE = 31536000
+    # Enable immutable headers for fingerprinted files (Vite hashes filenames)
+    def is_immutable(src, url):
+        return "/assets/" in url
+    WHITENOISE_IMMUTABLE_FILE_TEST = is_immutable
 
 # Paystack Configuration
 PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', 'sk_test_default_key_replace_in_prod')
