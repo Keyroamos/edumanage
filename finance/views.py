@@ -306,6 +306,9 @@ def api_create_fee_structure(request):
                     is_mandatory=is_mandatory
                 )
             
+            # Sync students immediately
+            sync_student_fees(grade.id, term, academic_year, school)
+            
             return JsonResponse({
                 'success': True,
                 'fee_structure': {
@@ -332,12 +335,87 @@ def api_delete_fee_structure(request, fee_id):
             school = SchoolConfig.get_config(user=request.user, request=request)
             
             fee_structure = get_object_or_404(FeeStructure, id=fee_id, school=school)
+            grade_id = fee_structure.grade_id
+            term = fee_structure.term
+            year = fee_structure.academic_year
+            
             fee_structure.delete()
+            
+            # Sync students after deletion
+            sync_student_fees(grade_id, term, year, school)
             
             return JsonResponse({'success': True, 'message': 'Fee structure deleted successfully'})
         except Exception as e:
+            import traceback
+            print(traceback.format_exc())
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid method'}, status=405)
+
+def sync_student_fees(grade_id, term, year, school):
+    """Helper to synchronize student invoices/balances when fee structure changes"""
+    from django.db.models import Sum
+    from schools.models import Grade, Student
+    from .models import Transaction, StudentFinanceAccount, FeeStructure
+    
+    # 1. Calculate mandatory total
+    mandatory_total = FeeStructure.objects.filter(
+        grade_id=grade_id, 
+        term=term, 
+        academic_year=year,
+        is_mandatory=True
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # 2. Update Grade
+    grade = Grade.objects.get(id=grade_id)
+    if term == 1: 
+        grade.term1_fees = mandatory_total
+        grade.term_fees = mandatory_total
+    elif term == 2: grade.term2_fees = mandatory_total
+    elif term == 3: grade.term3_fees = mandatory_total
+    grade.save()
+
+    # 3. Update Students & Invoices
+    students = Student.objects.filter(grade_id=grade_id)
+    for student in students:
+        if term == 1: 
+            student.term1_fees = mandatory_total
+            if student.current_term == 1: student.term_fees = mandatory_total
+        elif term == 2: 
+            student.term2_fees = mandatory_total
+            if student.current_term == 2: student.term_fees = mandatory_total
+        elif term == 3: 
+            student.term3_fees = mandatory_total
+            if student.current_term == 3: student.term_fees = mandatory_total
+        student.save()
+
+        # Update/Create Invoice
+        account, _ = StudentFinanceAccount.objects.get_or_create(
+            student=student, 
+            defaults={'school': student.school}
+        )
+        
+        tx = Transaction.objects.filter(
+            account=account,
+            type='INVOICE',
+            term=term,
+            academic_year=year
+        ).first()
+        
+        if tx:
+            tx.amount = mandatory_total
+            tx.description = f"Term {term} {year} Fees (Synced)"
+            tx.save()
+        else:
+            Transaction.objects.create(
+                account=account,
+                school=student.school,
+                type='INVOICE',
+                amount=mandatory_total,
+                description=f"Term {term} {year} Fees",
+                term=term,
+                academic_year=year
+            )
+    return len(students)
 
 @csrf_exempt
 @login_required
@@ -363,82 +441,16 @@ def api_update_fee_structure(request):
                     affected_cohorts.add((fs.grade_id, fs.term, fs.academic_year))
             
             # Recalculate everything for affected cohorts
-            invoice_count = 0
             student_count = 0
+            from config.models import SchoolConfig
+            school = SchoolConfig.get_config(user=request.user, request=request)
+            
             for grade_id, term, year in affected_cohorts:
-                # 1. Calculate new total for mandatory fees in this cohort
-                mandatory_total = FeeStructure.objects.filter(
-                    grade_id=grade_id, 
-                    term=term, 
-                    academic_year=year,
-                    is_mandatory=True
-                ).aggregate(total=Sum('amount'))['total'] or 0
-                
-                # 2. Update Grade model
-                from schools.models import Grade, Student
-                grade = Grade.objects.get(id=grade_id)
-                if term == 1: 
-                    grade.term1_fees = mandatory_total
-                    # Also update the legacy term_fees field to match Term 1 as a baseline
-                    grade.term_fees = mandatory_total 
-                elif term == 2: 
-                    grade.term2_fees = mandatory_total
-                elif term == 3: 
-                    grade.term3_fees = mandatory_total
-                
-                # If we are updating the current term, update the legacy field too
-                # This helps with views that still use 'term_fees'
-                grade.save()
-
-                # 3. Update all Students in this grade
-                students = Student.objects.filter(grade_id=grade_id)
-                for student in students:
-                    if term == 1: 
-                        student.term1_fees = mandatory_total
-                        if student.current_term == 1: student.term_fees = mandatory_total
-                    elif term == 2: 
-                        student.term2_fees = mandatory_total
-                        if student.current_term == 2: student.term_fees = mandatory_total
-                    elif term == 3: 
-                        student.term3_fees = mandatory_total
-                        if student.current_term == 3: student.term_fees = mandatory_total
-                    
-                    student.save()
-                    student_count += 1
-
-                # 4. Update/Create Invoices in Transaction model
-                for student in students:
-                    account, _ = StudentFinanceAccount.objects.get_or_create(
-                        student=student, 
-                        defaults={'school': student.school}
-                    )
-                    
-                    tx = Transaction.objects.filter(
-                        account=account,
-                        type='INVOICE',
-                        term=term,
-                        academic_year=year
-                    ).first()
-                    
-                    if tx:
-                        tx.amount = mandatory_total
-                        tx.description = f"Term {term} {year} Fees (Updated)"
-                        invoice_count += 1
-                    else:
-                        Transaction.objects.create(
-                            account=account,
-                            school=student.school,
-                            type='INVOICE',
-                            amount=mandatory_total,
-                            description=f"Term {term} {year} Fees",
-                            term=term,
-                            academic_year=year
-                        )
-                        invoice_count += 1
+                student_count += sync_student_fees(grade_id, term, year, school)
             
             return JsonResponse({
                 'message': 'Fees updated successfully.',
-                'synced_invoices': invoice_count,
+                'synced_invoices': student_count, # Simplified
                 'updated_students': student_count
             })
         except Exception as e:
