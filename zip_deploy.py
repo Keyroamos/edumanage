@@ -62,17 +62,48 @@ def zip_platform():
                         rel_path = os.path.relpath(abs_path, project_root)
                         zipf.write(abs_path, rel_path)
         
-        # 3. Add Frontend Build (dist only)
-        frontend_dist_path = os.path.join(project_root, frontend_dist)
-        if os.path.exists(frontend_dist_path):
-            print(f"Adding frontend build artifact ({frontend_dist})...")
-            for root, dirs, files in os.walk(frontend_dist_path):
+        # 3. Add Frontend Build (from public_html)
+        # We use public_html because vite.config.js builds directly there
+        frontend_build_path = os.path.join(project_root, 'public_html')
+        
+        if os.path.exists(frontend_build_path):
+            print(f"Adding frontend build artifact ({frontend_build_path})...")
+            # We want to add the contents of public_html to the root of the zip (or appropriate location)
+            # Typically for cPanel, these go into public_html
+            for root, dirs, files in os.walk(frontend_build_path):
+                 # Skip the edumanage subdirectory if it exists inside public_html (recursive protection)
+                if 'edumanage' in dirs:
+                    dirs.remove('edumanage')
+
                 for file in files:
                     abs_path = os.path.join(root, file)
-                    rel_path = os.path.relpath(abs_path, project_root)
-                    zipf.write(abs_path, rel_path)
+                    rel_path = os.path.relpath(abs_path, frontend_build_path) # Relative to public_html, so they appear at root of zip?
+                    
+                    # If the user extracts this zip to public_html, we want files to be at root.
+                    # Previous script put frontend/dist files at frontend/dist path in zip?
+                    # Line 73: zipf.write(abs_path, rel_path) where rel_path was rel to project_root.
+                    # So it preserved frontend/dist folder.
+                    
+                    # BUT for cPanel deployment, we usually want the build files at the webroot.
+                    # Let's put them in the zip such that they are easy to deploy.
+                    # If we zip 'frontend/dist/x' as 'frontend/dist/x', user has to move them.
+                    # If we zip 'public_html/x' as 'x', user extracts to public_html and it works.
+                    
+                    # Let's try to preserve the structure the user expects.
+                    # If the user expects 'frontend/dist', I should probably zip it as such?
+                    # No, the user changed config to output to public_html.
+                    # So let's zip 'public_html' content.
+                    
+                    # Let's zip it into a folder named 'public_html_content' or just at root?
+                    # The previous script preserved paths relative to project_root.
+                    # e.g. 'schools/models.py' -> 'schools/models.py'.
+                    
+                    # I will add public_html folder itself to the zip.
+                    zip_rel_path = os.path.join('public_html', rel_path)
+                    print(f"  Adding {zip_rel_path}")
+                    zipf.write(abs_path, zip_rel_path)
         else:
-            print(f"Error: Frontend build directory not found at {frontend_dist}")
+            print(f"Error: Frontend build directory not found at {frontend_build_path}")
 
     print(f"\n[SUCCESS] Zip archive created successfully!")
     print(f"Size: {os.path.getsize(zip_filename) / (1024*1024):.2f} MB")
