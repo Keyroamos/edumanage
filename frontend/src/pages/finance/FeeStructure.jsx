@@ -34,6 +34,12 @@ const FeeStructure = () => {
     // Group fees by grade
     const groupedFees = React.useMemo(() => {
         const grouped = {};
+
+        // Initialize all grades from orderedGrades to ensure cards always show up
+        orderedGrades.forEach(gradeCode => {
+            grouped[gradeCode] = { 1: [], 2: [], 3: [] };
+        });
+
         feeStructures.forEach(fee => {
             const grade = fee.grade;
             if (!grouped[grade]) {
@@ -42,7 +48,7 @@ const FeeStructure = () => {
             grouped[grade][fee.term].push(fee);
         });
         return grouped;
-    }, [feeStructures]);
+    }, [feeStructures, orderedGrades]);
 
     useEffect(() => {
         fetchData();
@@ -60,19 +66,13 @@ const FeeStructure = () => {
             const fees = feesRes.data.fee_structures || [];
             setFeeStructures(fees);
 
-            // Extract grades in the order provided by the backend
-            const seen = new Set();
-            const ordered = [];
-            fees.forEach(f => {
-                if (!seen.has(f.grade)) {
-                    seen.add(f.grade);
-                    ordered.push(f.grade);
-                }
-            });
-            setOrderedGrades(ordered);
+            const fetchedGrades = gradesRes.data.grades || [];
+            setGrades(fetchedGrades);
+
+            // Use the grades list as the source for the cards to ensure they are always there
+            setOrderedGrades(fetchedGrades.map(g => g.code));
 
             setCategories(catsRes.data.categories || []);
-            setGrades(gradesRes.data.grades || []);
         } catch (error) {
             console.error('Error fetching data:', error);
             showMessage('error', 'Failed to load fee structures');
@@ -208,13 +208,6 @@ const FeeStructure = () => {
                         <option value="2025-2026">2025-2026</option>
                         <option value="2026-2027">2026-2027</option>
                     </select>
-                    <Button
-                        onClick={() => setShowAddModal(true)}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white border-none shadow-sm"
-                    >
-                        <Plus size={18} className="mr-2" />
-                        Add Fee Item
-                    </Button>
                 </div>
             </div>
 
