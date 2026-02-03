@@ -8908,7 +8908,7 @@ def api_school_config_update(request):
             'school_email': config.school_email,
             'school_phone': config.school_phone,
             'school_address': config.school_address,
-            'school_logo': config.school_logo.url if config.school_logo else None,
+            'school_logo': request.build_absolute_uri(config.school_logo.url) if config.school_logo else None,
             'portal_slug': config.portal_slug,
             'current_term': config.current_term,
             'current_year': config.current_year,

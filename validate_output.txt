@@ -1,0 +1,30 @@
+﻿School: Bishop Dr. Mando International School
+Logo Field: school_logos/logom.jpg
+Logo URL: /media/school_logos/logom.jpg
+File exists on disk: True (C:\Users\Admin\OneDrive\Desktop\edugit\edumanage\media\school_logos/logom.jpg)
+--------------------
+School: Casavilians Academy
+Logo Field: school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM.png
+Logo URL: /media/school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM.png
+File exists on disk: True (C:\Users\Admin\OneDrive\Desktop\edugit\edumanage\media\school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM.png)
+--------------------
+School: Casavilians Academy
+Logo Field: school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM_jxQ92Ss.png
+Logo URL: /media/school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM_jxQ92Ss.png
+File exists on disk: True (C:\Users\Admin\OneDrive\Desktop\edugit\edumanage\media\school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM_jxQ92Ss.png)
+--------------------
+School: Mount Kenya Academy
+Logo Field: school_logos/MKU_logo.jfif
+Logo URL: /media/school_logos/MKU_logo.jfif
+File exists on disk: True (C:\Users\Admin\OneDrive\Desktop\edugit\edumanage\media\school_logos/MKU_logo.jfif)
+--------------------
+School: Keyro Academy
+Logo Field: school_logos/ChatGPT_Image_Dec_7_2025_10_18_19_AM.png
+Logo URL: /media/school_logos/ChatGPT_Image_Dec_7_2025_10_18_19_AM.png
+File exists on disk: True (C:\Users\Admin\OneDrive\Desktop\edugit\edumanage\media\school_logos/ChatGPT_Image_Dec_7_2025_10_18_19_AM.png)
+--------------------
+School: Casavilian Academy
+Logo Field: school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM_eW0msaV.png
+Logo URL: /media/school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM_eW0msaV.png
+File exists on disk: True (C:\Users\Admin\OneDrive\Desktop\edugit\edumanage\media\school_logos/ChatGPT_Image_Jan_23_2026_02_20_37_PM_eW0msaV.png)
+--------------------
