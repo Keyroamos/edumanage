@@ -30,6 +30,8 @@ const FeeStructure = () => {
         amount: '',
         is_mandatory: true
     });
+    const [tuitionId, setTuitionId] = useState(null);
+    const [newTuitionValues, setNewTuitionValues] = useState({}); // { term: amount }
 
     // Group fees by grade
     const groupedFees = React.useMemo(() => {
@@ -72,7 +74,10 @@ const FeeStructure = () => {
             // Use the grades list as the source for the cards to ensure they are always there
             setOrderedGrades(fetchedGrades.map(g => g.code));
 
-            setCategories(catsRes.data.categories || []);
+            const cats = catsRes.data.categories || [];
+            setCategories(cats);
+            const tuitionCat = cats.find(c => c.name.toLowerCase().includes('tuition'));
+            if (tuitionCat) setTuitionId(tuitionCat.id);
         } catch (error) {
             console.error('Error fetching data:', error);
             showMessage('error', 'Failed to load fee structures');
@@ -119,11 +124,13 @@ const FeeStructure = () => {
             values[fee.id] = fee.amount;
         });
         setEditValues(values);
+        setNewTuitionValues({});
     };
 
     const handleCancelEdit = () => {
         setEditingGrade(null);
         setEditValues({});
+        setNewTuitionValues({});
     };
 
     const handleInputChange = (id, value) => {
@@ -133,16 +140,37 @@ const FeeStructure = () => {
     const handleSaveGrade = async (grade) => {
         setSaving(true);
         try {
+            // Update existing
             const updates = Object.entries(editValues).map(([id, amount]) => ({
                 id: parseInt(id),
                 amount: parseFloat(amount)
             }));
 
-            const response = await axios.post('/api/finance/fee-structures/update/', { updates });
+            if (updates.length > 0) {
+                await axios.post('/api/finance/fee-structures/update/', { updates });
+            }
 
-            showMessage('success', `Updated ${grade} fees. ${response.data.updated_students || 0} students synced.`);
+            // Create new tuition entries
+            const gradeObj = grades.find(g => g.code === grade);
+            const newCreations = Object.entries(newTuitionValues)
+                .filter(([_, amount]) => amount && parseFloat(amount) > 0)
+                .map(([term, amount]) => ({
+                    grade_id: gradeObj.id,
+                    term,
+                    category_id: tuitionId,
+                    amount: parseFloat(amount),
+                    is_mandatory: true,
+                    academic_year: selectedYear
+                }));
+
+            for (const item of newCreations) {
+                await axios.post('/api/finance/fee-structures/create/', item);
+            }
+
+            showMessage('success', `Updated ${grade} fees successfully`);
             await fetchData();
             setEditingGrade(null);
+            setNewTuitionValues({});
         } catch (error) {
             console.error('Failed to update fees', error);
             showMessage('error', 'Failed to update fees');
@@ -284,39 +312,61 @@ const FeeStructure = () => {
                                         <DollarSign size={12} className="text-slate-400" />
                                     </div>
                                     <div className="space-y-3 min-h-[60px]">
-                                        {groupedFees[grade][term] && groupedFees[grade][term].length > 0 ? (
-                                            groupedFees[grade][term].map(fee => (
-                                                <div key={fee.id} className="flex flex-col gap-1">
-                                                    <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">
-                                                        {fee.category}
-                                                    </span>
-                                                    {editingGrade === grade ? (
-                                                        <div className="relative group">
+                                        {((groupedFees[grade][term] && groupedFees[grade][term].length > 0) || editingGrade === grade) ? (
+                                            <>
+                                                {groupedFees[grade][term].map(fee => (
+                                                    <div key={fee.id} className="flex flex-col gap-1">
+                                                        <span className="text-[9px] font-bold text-slate-400 uppercase leading-none">
+                                                            {fee.category}
+                                                        </span>
+                                                        {editingGrade === grade ? (
+                                                            <div className="relative group">
+                                                                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
+                                                                    {config.currency}
+                                                                </span>
+                                                                <input
+                                                                    type="number"
+                                                                    value={editValues[fee.id] || 0}
+                                                                    onChange={(e) => handleInputChange(fee.id, e.target.value)}
+                                                                    className="w-full pl-8 pr-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+                                                                />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-between group/fee">
+                                                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                                    {config.currency} {fee.amount.toLocaleString()}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => handleDeleteFee(fee.id)}
+                                                                    className="opacity-0 group-hover/fee:opacity-100 p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-all"
+                                                                >
+                                                                    <Trash2 size={12} />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {/* Always show Tuition input if not present and editing */}
+                                                {editingGrade === grade && !groupedFees[grade][term].some(f => f.category.toLowerCase().includes('tuition')) && (
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-[9px] font-bold text-indigo-400 uppercase leading-none">
+                                                            Tuition (New)
+                                                        </span>
+                                                        <div className="relative">
                                                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">
                                                                 {config.currency}
                                                             </span>
                                                             <input
                                                                 type="number"
-                                                                value={editValues[fee.id] || 0}
-                                                                onChange={(e) => handleInputChange(fee.id, e.target.value)}
-                                                                className="w-full pl-8 pr-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 transition-all shadow-sm"
+                                                                placeholder="0.00"
+                                                                value={newTuitionValues[term] || ''}
+                                                                onChange={(e) => setNewTuitionValues(prev => ({ ...prev, [term]: e.target.value }))}
+                                                                className="w-full pl-8 pr-2 py-1.5 bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-200 dark:border-indigo-500/20 rounded text-xs font-bold outline-none focus:ring-1 focus:ring-indigo-500 transition-all"
                                                             />
                                                         </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-between group/fee">
-                                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                                                {config.currency} {fee.amount.toLocaleString()}
-                                                            </span>
-                                                            <button
-                                                                onClick={() => handleDeleteFee(fee.id)}
-                                                                className="opacity-0 group-hover/fee:opacity-100 p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-all"
-                                                            >
-                                                                <Trash2 size={12} />
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))
+                                                    </div>
+                                                )}
+                                            </>
                                         ) : (
                                             <span className="text-[10px] italic text-slate-400">No fees configured</span>
                                         )}
