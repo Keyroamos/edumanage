@@ -22,6 +22,7 @@ const FeeStructure = () => {
     const [editingGrade, setEditingGrade] = useState(null);
     const [editValues, setEditValues] = useState({});
     const [selectedYear, setSelectedYear] = useState('2024-2025');
+    const [orderedGrades, setOrderedGrades] = useState([]); // Track grade order from API
     const [addData, setAddData] = useState({
         grade_id: '',
         term: '1',
@@ -51,11 +52,25 @@ const FeeStructure = () => {
         setLoading(true);
         try {
             const [feesRes, catsRes, gradesRes] = await Promise.all([
-                axios.get('/api/finance/fee-structures/'),
+                axios.get(`/api/finance/fee-structures/?year=${selectedYear}`),
                 axios.get('/api/finance/fee-categories/'),
                 axios.get('/api/grades/')
             ]);
-            setFeeStructures(feesRes.data.fee_structures || []);
+
+            const fees = feesRes.data.fee_structures || [];
+            setFeeStructures(fees);
+
+            // Extract grades in the order provided by the backend
+            const seen = new Set();
+            const ordered = [];
+            fees.forEach(f => {
+                if (!seen.has(f.grade)) {
+                    seen.add(f.grade);
+                    ordered.push(f.grade);
+                }
+            });
+            setOrderedGrades(ordered);
+
             setCategories(catsRes.data.categories || []);
             setGrades(gradesRes.data.grades || []);
         } catch (error) {
@@ -148,7 +163,7 @@ const FeeStructure = () => {
         }
     };
 
-    const filteredGrades = Object.keys(groupedFees).filter(grade =>
+    const filteredGrades = orderedGrades.filter(grade =>
         grade.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
