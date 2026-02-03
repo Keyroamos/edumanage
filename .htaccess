@@ -9,6 +9,10 @@
     RewriteRule ^media/(.*)$ media/$1 [L]
     
     # 2. SERVE STATIC FILES DIRECTLY (CSS, JS, Assets)
+    # Rewrite Legacy Static Paths (Fix for /static/assets/ -> /assets/)
+    RewriteRule ^static/assets/(.*)$ assets/$1 [L,R=301]
+    
+    # Serve "real" static files if they exist (though we mostly use /assets now)
     RewriteRule ^static/(.*)$ static/$1 [L]
 
     # 3. OPTIMIZATION: BYPASS PYTHON FOR PHYSICAL FILES
