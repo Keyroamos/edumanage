@@ -58,6 +58,9 @@ yarn-error.log*
 frontend/dist/
 frontend/.vite/
 
+# public_html contains React build - DO NOT IGNORE
+# It's needed for cPanel deployment
+
 # Logs
 *.log
 logs/
