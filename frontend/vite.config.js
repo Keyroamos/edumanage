@@ -30,6 +30,8 @@ export default defineConfig(({ command }) => ({
     }
   },
   build: {
+    outDir: '../public_html', // Build directly to public_html for cPanel
+    emptyOutDir: true,
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
