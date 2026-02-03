@@ -1,22 +1,23 @@
-"""
-Passenger WSGI file for cPanel deployment
-This file is the entry point for the Django application on cPanel
-"""
 import sys
 import os
 
-# Set the path to your project
-cwd = os.getcwd()
-sys.path.insert(0, cwd)
+# Get the project root directory (where this file lives)
+project_root = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, project_root)
 
-# IMPORTANT: If you have a virtual environment, uncomment and update this section
-# INTERP = os.path.expanduser("~/virtualenv/public_html/edu/3.9/bin/python3")
-# if sys.executable != INTERP:
-#     os.execl(INTERP, INTERP, *sys.argv)
+# If you have a virtual environment, the python path should be handled by cPanel's 
+# "Setup Python App", but you can also explicitly set it here if needed.
+# venv_path = os.path.join(project_root, 'venv/bin/python')
 
 # Set the Django settings module
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school.settings')
 
 # Import the Django WSGI application
-from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+try:
+    from django.core.wsgi import get_wsgi_application
+    application = get_wsgi_application()
+except Exception as e:
+    # This helps diagnose 500 errors in the logs
+    import logging
+    logging.error(f"Failed to load Django application: {e}")
+    raise
