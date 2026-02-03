@@ -152,9 +152,15 @@ const FeeStructure = () => {
 
             // Create new tuition entries
             const gradeObj = grades.find(g => g.code === grade);
-            const newCreations = Object.entries(newTuitionValues)
-                .filter(([_, amount]) => amount && parseFloat(amount) > 0)
-                .map(([term, amount]) => ({
+            const tuitionEntries = Object.entries(newTuitionValues)
+                .filter(([_, amount]) => amount && parseFloat(amount) > 0);
+
+            if (tuitionEntries.length > 0) {
+                if (!tuitionId) {
+                    throw new Error('Tuition category not found. Please create a "Tuition" category in Settings first.');
+                }
+
+                const newCreations = tuitionEntries.map(([term, amount]) => ({
                     grade_id: gradeObj.id,
                     term,
                     category_id: tuitionId,
@@ -163,8 +169,9 @@ const FeeStructure = () => {
                     academic_year: selectedYear
                 }));
 
-            for (const item of newCreations) {
-                await axios.post('/api/finance/fee-structures/create/', item);
+                for (const item of newCreations) {
+                    await axios.post('/api/finance/fee-structures/create/', item);
+                }
             }
 
             showMessage('success', `Updated ${grade} fees successfully`);

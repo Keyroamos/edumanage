@@ -257,8 +257,18 @@ def api_create_fee_structure(request):
             academic_year = data.get('academic_year', '2024-2025')
             is_mandatory = data.get('is_mandatory', True)
             
-            grade = Grade.objects.get(id=grade_id, school=school)
-            category = FeeCategory.objects.get(id=category_id, school=school)
+            if not grade_id or not category_id:
+                return JsonResponse({'error': 'Grade ID and Category ID are required'}, status=400)
+                
+            try:
+                grade = Grade.objects.get(id=grade_id, school=school)
+            except Grade.DoesNotExist:
+                return JsonResponse({'error': 'Grade not found'}, status=404)
+                
+            try:
+                category = FeeCategory.objects.get(id=category_id, school=school)
+            except FeeCategory.DoesNotExist:
+                return JsonResponse({'error': 'Fee Category not found. Please ensure a "Tuition" category exists.'}, status=404)
             
             # Check if already exists
             existing = FeeStructure.objects.filter(
@@ -270,17 +280,23 @@ def api_create_fee_structure(request):
             ).first()
             
             if existing:
-                return JsonResponse({'error': 'Fee structure already exists for this combination'}, status=400)
-            
-            fee_structure = FeeStructure.objects.create(
-                school=school,
-                grade=grade,
-                term=term,
-                category=category,
-                amount=amount,
-                academic_year=academic_year,
-                is_mandatory=is_mandatory
-            )
+                # If it exists, we update it instead of erroring, or return error?
+                # The frontend might be trying to create something that theoretically shouldn't exist.
+                # Let's update it for better UX if this happens.
+                existing.amount = amount
+                existing.is_mandatory = is_mandatory
+                existing.save()
+                fee_structure = existing
+            else:
+                fee_structure = FeeStructure.objects.create(
+                    school=school,
+                    grade=grade,
+                    term=term,
+                    category=category,
+                    amount=amount,
+                    academic_year=academic_year,
+                    is_mandatory=is_mandatory
+                )
             
             return JsonResponse({
                 'success': True,
