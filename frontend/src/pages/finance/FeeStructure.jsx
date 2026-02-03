@@ -13,6 +13,7 @@ const FeeStructure = () => {
     const { config } = useSchool();
     const [feeStructures, setFeeStructures] = useState([]);
     const [categories, setCategories] = useState([]);
+    const [grades, setGrades] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -21,6 +22,13 @@ const FeeStructure = () => {
     const [editingGrade, setEditingGrade] = useState(null);
     const [editValues, setEditValues] = useState({});
     const [selectedYear, setSelectedYear] = useState('2024-2025');
+    const [addData, setAddData] = useState({
+        grade_id: '',
+        term: '1',
+        category_id: '',
+        amount: '',
+        is_mandatory: true
+    });
 
     // Group fees by grade
     const groupedFees = React.useMemo(() => {
@@ -42,17 +50,45 @@ const FeeStructure = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [feesRes, catsRes] = await Promise.all([
+            const [feesRes, catsRes, gradesRes] = await Promise.all([
                 axios.get('/api/finance/fee-structures/'),
-                axios.get('/api/finance/fee-categories/')
+                axios.get('/api/finance/fee-categories/'),
+                axios.get('/api/grades/')
             ]);
             setFeeStructures(feesRes.data.fee_structures || []);
             setCategories(catsRes.data.categories || []);
+            setGrades(gradesRes.data.grades || []);
         } catch (error) {
             console.error('Error fetching data:', error);
             showMessage('error', 'Failed to load fee structures');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddFee = async (e) => {
+        if (e) e.preventDefault();
+        setSaving(true);
+        try {
+            await axios.post('/api/finance/fee-structures/create/', {
+                ...addData,
+                academic_year: selectedYear
+            });
+            showMessage('success', 'Fee item added successfully');
+            setShowAddModal(false);
+            setAddData({
+                grade_id: '',
+                term: '1',
+                category_id: '',
+                amount: '',
+                is_mandatory: true
+            });
+            await fetchData();
+        } catch (error) {
+            console.error('Failed to add fee', error);
+            showMessage('error', error.response?.data?.error || 'Failed to add fee item');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -259,9 +295,17 @@ const FeeStructure = () => {
                                                             />
                                                         </div>
                                                     ) : (
-                                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                                                            {config.currency} {fee.amount.toLocaleString()}
-                                                        </span>
+                                                        <div className="flex items-center justify-between group/fee">
+                                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                                {config.currency} {fee.amount.toLocaleString()}
+                                                            </span>
+                                                            <button
+                                                                onClick={() => handleDeleteFee(fee.id)}
+                                                                className="opacity-0 group-hover/fee:opacity-100 p-1 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded transition-all"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             ))
@@ -291,6 +335,135 @@ const FeeStructure = () => {
                     </Button>
                 </div>
             )}
+
+            {/* Add Fee Modal */}
+            <AnimatePresence>
+                {showAddModal && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowAddModal(false)}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+                        >
+                            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Fee Item</h3>
+                                    <p className="text-xs font-medium text-slate-500 mt-1">Assign a fee category to a class and term</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowAddModal(false)}
+                                    className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all font-bold"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAddFee} className="p-6 space-y-5">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Class</label>
+                                        <select
+                                            required
+                                            value={addData.grade_id}
+                                            onChange={(e) => setAddData({ ...addData, grade_id: e.target.value })}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                        >
+                                            <option value="">Choose Grade...</option>
+                                            {grades.map(g => (
+                                                <option key={g.id} value={g.id}>{g.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Term</label>
+                                        <select
+                                            required
+                                            value={addData.term}
+                                            onChange={(e) => setAddData({ ...addData, term: e.target.value })}
+                                            className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                        >
+                                            <option value="1">Term 1</option>
+                                            <option value="2">Term 2</option>
+                                            <option value="3">Term 3</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fee Category</label>
+                                    <select
+                                        required
+                                        value={addData.category_id}
+                                        onChange={(e) => setAddData({ ...addData, category_id: e.target.value })}
+                                        className="w-full p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                    >
+                                        <option value="">Choose Category...</option>
+                                        {categories.map(c => (
+                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Amount ({config.currency})</label>
+                                    <div className="relative">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
+                                            {config.currency}
+                                        </div>
+                                        <input
+                                            required
+                                            type="number"
+                                            placeholder="0.00"
+                                            value={addData.amount}
+                                            onChange={(e) => setAddData({ ...addData, amount: e.target.value })}
+                                            className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                                    <input
+                                        type="checkbox"
+                                        id="is_mandatory"
+                                        checked={addData.is_mandatory}
+                                        onChange={(e) => setAddData({ ...addData, is_mandatory: e.target.checked })}
+                                        className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                    />
+                                    <label htmlFor="is_mandatory" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                        Mandatory fee (Automatically billed to students)
+                                    </label>
+                                </div>
+
+                                <div className="flex gap-3 pt-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setShowAddModal(false)}
+                                        className="flex-1 h-12 rounded-xl text-sm font-bold border-slate-200"
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="flex-1 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/20 border-none"
+                                    >
+                                        {saving ? <Loader2 size={18} className="animate-spin" /> : "Save Fee Item"}
+                                    </Button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
