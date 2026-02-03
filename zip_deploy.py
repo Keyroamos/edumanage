@@ -98,8 +98,12 @@ def zip_platform():
                     # The previous script preserved paths relative to project_root.
                     # e.g. 'schools/models.py' -> 'schools/models.py'.
                     
-                    # I will add public_html folder itself to the zip.
-                    zip_rel_path = os.path.join('public_html', rel_path)
+                    # I will NOT add public_html folder itself to the zip.
+                    # Instead, I will add the CONTENTS of public_html to the ROOT of the zip.
+                    # This ensures that when extracted to 'public_html/escal', 
+                    # index.html and assets/ are at the top level of 'escal', which is what we want.
+                    
+                    zip_rel_path = rel_path
                     print(f"  Adding {zip_rel_path}")
                     zipf.write(abs_path, zip_rel_path)
         else:
