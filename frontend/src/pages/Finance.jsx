@@ -194,9 +194,9 @@ const Finance = () => {
                                         </select>
                                     </div>
                                 </div>
-                                <div className="h-[350px] w-full">
+                                <div className="h-[350px] w-full relative">
                                     {chartData.length > 0 ? (
-                                        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                                        <ResponsiveContainer width="99%" height="100%" minWidth={0} minHeight={300}>
                                             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                                 <defs>
                                                     <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#4f46e5" stopOpacity={0.1} /><stop offset="95%" stopColor="#4f46e5" stopOpacity={0} /></linearGradient>

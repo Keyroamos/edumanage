@@ -231,6 +231,14 @@ def api_fee_categories(request):
         from config.models import SchoolConfig
         from .models import FeeCategory
         school = SchoolConfig.get_config(user=request.user, request=request)
+        
+        # Ensure Tuition exists as it's required for the management dashboard
+        FeeCategory.objects.get_or_create(
+            school=school, 
+            name='Tuition',
+            defaults={'description': 'Main tuition fees'}
+        )
+        
         categories = FeeCategory.objects.filter(school=school).all()
         data = [{'id': c.id, 'name': c.name, 'description': c.description} for c in categories]
         return JsonResponse({'categories': data})

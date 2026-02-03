@@ -114,8 +114,8 @@ const StudentFeeSummary = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1 bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
                     <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6">Payment Status</h3>
-                    <div className="h-[300px] w-full min-h-[300px]">
-                        <ResponsiveContainer width="100%" height={300} minHeight={300}>
+                    <div className="h-[300px] w-full min-h-[300px] relative">
+                        <ResponsiveContainer width="99%" height={300} minHeight={300}>
                             <PieChart>
                                 <Pie
                                     data={statusData}
@@ -156,8 +156,8 @@ const StudentFeeSummary = () => {
                             <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Paid</div>
                         </div>
                     </div>
-                    <div className="h-[400px] w-full min-h-[400px]">
-                        <ResponsiveContainer width="100%" height={400} minHeight={400}>
+                    <div className="h-[400px] w-full min-h-[400px] relative">
+                        <ResponsiveContainer width="99%" height={400} minHeight={400}>
                             <BarChart data={grade_breakdown} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
                                 <XAxis
