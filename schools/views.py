@@ -386,8 +386,9 @@ def api_school_signup(request):
         from datetime import timedelta
         
         trial_start = timezone.now()
-        # Ensure at least 7 days trial if system settings result in 0 or less
-        trial_days = sys_settings.trial_days if sys_settings.trial_days > 0 else 7
+        # Force 7 days trial period as per requirement (overriding potentially stale DB setting)
+        trial_days = 7
+        # trial_days = sys_settings.trial_days if sys_settings.trial_days > 0 else 7
         trial_end = trial_start + timedelta(days=trial_days)
 
         with transaction.atomic():
