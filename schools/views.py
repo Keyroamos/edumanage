@@ -8821,8 +8821,8 @@ def api_school_config(request):
         
         if request.user.is_authenticated and request.user.is_superuser:
             # Unlock the portal for superusers regardless of actual status
-            data['subscription']['status'] = 'Active'
-            data['subscription']['plan'] = 'Enterprise'
+            # data['subscription']['status'] = 'Active'
+            # data['subscription']['plan'] = 'Enterprise'
             
             data.update({
                 'teacher_portal_password': config.teacher_portal_password,
