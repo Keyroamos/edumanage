@@ -14,12 +14,12 @@ const SidebarLink = ({ icon: Icon, label, path, onClick }) => {
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 ${isActive
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 ${isActive
                 ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-medium shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
         >
-            <Icon size={18} className={isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'} />
+            <Icon size={16} className={isActive ? 'text-primary-600 dark:text-primary-400' : 'text-slate-400 dark:text-slate-500'} />
             <span className="text-sm">{label}</span>
             {isActive && <div className="ml-auto w-1 h-1 rounded-full bg-primary-600 dark:bg-primary-400" />}
         </button>
@@ -122,13 +122,14 @@ const Sidebar = ({ isOpen, onClose, user, onLogout }) => {
 
                 {/* Trial Indicator */}
                 {config.subscription?.status === 'Trial' && (
-                    <div className="mx-4 mb-4 p-4 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-lg shadow-blue-500/20">
-                        <div className="flex items-center justify-between mb-2">
+                    <div className="mx-3 mb-3 p-3 rounded-xl bg-slate-900 text-white shadow-lg shadow-blue-500/20 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-16 h-16 bg-blue-600/20 rounded-full blur-xl -mr-8 -mt-8" />
+                        <div className="flex items-center justify-between mb-1 relative z-10">
                             <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Free Trial</span>
-                            <Zap size={14} className="text-yellow-400 fill-yellow-400" />
+                            <Zap size={12} className="text-yellow-400 fill-yellow-400" />
                         </div>
-                        <p className="text-sm font-bold mb-1">{config.subscription?.plan} Edition</p>
-                        <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                        <p className="text-xs font-bold mb-2 relative z-10">{config.subscription?.plan} Edition</p>
+                        <div className="h-1 w-full bg-white/20 rounded-full overflow-hidden relative z-10">
                             <div
                                 className="h-full bg-white rounded-full transition-all duration-1000"
                                 style={{
@@ -136,7 +137,7 @@ const Sidebar = ({ isOpen, onClose, user, onLogout }) => {
                                 }}
                             ></div>
                         </div>
-                        <p className="text-[10px] mt-2 font-medium opacity-90">
+                        <p className="text-[10px] mt-1.5 font-medium opacity-90 relative z-10">
                             {config.subscription.trial_end ? Math.max(0, Math.ceil((new Date(config.subscription.trial_end) - new Date()) / (1000 * 60 * 60 * 24))) : 0} days remaining
                         </p>
                     </div>

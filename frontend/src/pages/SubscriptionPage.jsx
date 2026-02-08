@@ -145,7 +145,7 @@ const SubscriptionPage = () => {
     };
 
     return (
-        <div className="p-6 lg:p-10 max-w-6xl mx-auto space-y-8">
+        <div className="p-4 lg:p-6 max-w-5xl mx-auto space-y-5">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Subscription Plan</h1>
@@ -153,57 +153,57 @@ const SubscriptionPage = () => {
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 {/* Current Plan Card & Upgrade Selector */}
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                <div className="lg:col-span-2 space-y-5">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden">
                         <div className={`absolute top-0 right-0 w-64 h-64 bg-${currentPlan.color}-500/5 blur-[100px] -z-10`} />
 
-                        <div className="flex flex-col sm:flex-row items-start justify-between gap-6">
-                            <div className="flex items-center gap-5">
-                                <div className={`w-20 h-20 rounded-3xl flex items-center justify-center bg-${currentPlan.color}-50 dark:bg-${currentPlan.color}-900/20 text-${currentPlan.color}-600 dark:text-${currentPlan.color}-400 shadow-sm shadow-${currentPlan.color}-500/10`}>
-                                    <Icon size={40} />
+                        <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-14 h-14 rounded-xl flex items-center justify-center bg-${currentPlan.color}-50 dark:bg-${currentPlan.color}-900/20 text-${currentPlan.color}-600 dark:text-${currentPlan.color}-400 shadow-sm shadow-${currentPlan.color}-500/10`}>
+                                    <Icon size={28} />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <h2 className="text-2xl font-black text-slate-900 dark:text-white">{subscription?.plan} Edition</h2>
-                                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-${currentPlan.color}-100 dark:bg-${currentPlan.color}-900/30 text-${currentPlan.color}-700 dark:text-${currentPlan.color}-400`}>
+                                        <h2 className="text-xl font-black text-slate-900 dark:text-white">{subscription?.plan} Edition</h2>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-${currentPlan.color}-100 dark:bg-${currentPlan.color}-900/30 text-${currentPlan.color}-700 dark:text-${currentPlan.color}-400`}>
                                             {subscription?.status}
                                         </span>
                                     </div>
-                                    <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                                    <p className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed text-sm">
                                         Your institution is currently on the <b>{subscription?.plan}</b> plan.
                                     </p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Billing</p>
-                                <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Monthly Billing</p>
+                                <p className="text-2xl font-black text-slate-900 dark:text-white leading-none">
                                     KES {currentPlan.priceLabel}
-                                    <span className="text-sm font-medium text-slate-400">/mo</span>
+                                    <span className="text-xs font-medium text-slate-400">/mo</span>
                                 </p>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-12">
-                            <div className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-400 shadow-sm">
-                                    <Clock size={20} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-slate-400 shadow-sm">
+                                    <Clock size={16} />
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Next Billing Date</p>
-                                    <p className="font-bold text-slate-900 dark:text-white">
+                                    <p className="font-bold text-slate-900 dark:text-white text-sm">
                                         {subscription?.trial_end ? new Date(subscription.trial_end).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                                     </p>
                                 </div>
                             </div>
-                            <div className="p-5 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-slate-400 shadow-sm">
-                                    <ShieldCheck size={20} />
+                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-900 flex items-center justify-center text-slate-400 shadow-sm">
+                                    <ShieldCheck size={16} />
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Payment Status</p>
-                                    <p className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                    <p className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-sm">
                                         Active {subscription?.status === 'Trial' ? 'Trial' : 'Subscription'}
                                         <CheckCircle2 size={14} />
                                     </p>
@@ -214,7 +214,7 @@ const SubscriptionPage = () => {
 
                     {/* Upgrade Logic Section */}
                     {subscription?.status === 'Active' && selectedPlanName !== currentPlanName && (
-                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-6 rounded-[2.5rem] flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 p-5 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
                             <div className="w-12 h-12 rounded-2xl bg-white dark:bg-slate-900 flex items-center justify-center text-amber-500 shadow-sm shrink-0">
                                 <TrendingUp size={24} />
                             </div>
@@ -229,13 +229,13 @@ const SubscriptionPage = () => {
                     )}
 
                     {/* Plan Selector */}
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                         <div className="flex items-center gap-4">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white shrink-0">Available Plans</h3>
+                            <h3 className="text-lg font-bold text-slate-900 dark:text-white shrink-0">Available Plans</h3>
                             <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             {Object.entries(plans).map(([name, plan]) => {
                                 const isCurrent = name === currentPlanName;
                                 const isSelected = selectedPlanName === name;
@@ -244,28 +244,28 @@ const SubscriptionPage = () => {
                                     <button
                                         key={name}
                                         onClick={() => setSelectedPlanName(name)}
-                                        className={`p-6 rounded-[2.5rem] border-2 transition-all flex flex-col items-center text-center gap-4 relative overflow-hidden group
+                                        className={`p-4 rounded-2xl border transition-all flex flex-col items-center text-center gap-3 relative overflow-hidden group
                                             ${isSelected
                                                 ? `border-${plan.color}-500 bg-${plan.color}-50 dark:bg-${plan.color}-900/10`
                                                 : `border-slate-100 dark:border-slate-800 hover:border-${plan.color}-200 dark:hover:border-${plan.color}-800 bg-white dark:bg-slate-900`
                                             }`}
                                     >
-                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110
                                             ${isSelected
                                                 ? `bg-${plan.color}-500 text-white shadow-${plan.color}-500/20`
                                                 : `bg-${plan.color}-50 dark:bg-${plan.color}-900/20 text-${plan.color}-600 dark:text-${plan.color}-400`
                                             }`}>
-                                            <plan.icon size={28} />
+                                            <plan.icon size={20} />
                                         </div>
                                         <div>
-                                            <p className="text-lg font-black text-slate-900 dark:text-white tracking-tight">{name}</p>
+                                            <p className="text-base font-black text-slate-900 dark:text-white tracking-tight">{name}</p>
                                             <p className={`text-[10px] font-bold uppercase tracking-widest ${isSelected ? `text-${plan.color}-600` : 'text-slate-400'}`}>
                                                 KES {plan.priceLabel}/mo
                                             </p>
                                         </div>
 
                                         {isCurrent && (
-                                            <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-slate-900 text-[8px] font-black uppercase text-white">Current</div>
+                                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-slate-900 text-[8px] font-black uppercase text-white">Current</div>
                                         )}
                                     </button>
                                 );
@@ -275,29 +275,29 @@ const SubscriptionPage = () => {
                 </div>
 
                 {/* Trial Status & Help */}
-                <div className="space-y-6">
+                <div className="space-y-5">
                     {subscription?.status === 'Trial' && (
-                        <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl shadow-blue-500/20 border border-white/5">
+                        <div className="bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden shadow-xl shadow-blue-500/20 border border-white/5">
                             <div className="absolute -top-12 -right-12 w-32 h-32 bg-blue-600/20 rounded-full blur-2xl" />
                             <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-violet-600/20 rounded-full blur-2xl" />
 
                             <div className="relative z-10 flex flex-col">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest mb-6 border border-white/10">
+                                <div className="inline-flex items-center gap-2 px-2 py-1 rounded-full bg-white/10 text-white text-[10px] font-black uppercase tracking-widest mb-4 border border-white/10 w-fit">
                                     <Clock size={12} />
                                     Trial Countdown
                                 </div>
-                                <h3 className="text-4xl font-black mb-2 tracking-tighter">
-                                    {daysRemaining} <span className="text-lg font-bold text-slate-400 tracking-normal uppercase">days</span>
+                                <h3 className="text-3xl font-black mb-1 tracking-tighter">
+                                    {daysRemaining} <span className="text-base font-bold text-slate-400 tracking-normal uppercase">days</span>
                                 </h3>
-                                <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8">
+                                <p className="text-slate-400 text-xs font-medium leading-relaxed mb-6">
                                     Your trial expires on <b>{new Date(subscription.trial_end).toLocaleDateString()}</b>.
                                     Upgrade now to activate your full <b>{selectedPlanName}</b> subscription.
                                 </p>
 
-                                <div className="space-y-3">
+                                <div className="space-y-2">
                                     <Button
                                         onClick={() => setIsPaymentModalOpen(true)}
-                                        className="w-full py-4 text-base shadow-xl shadow-indigo-600/30 bg-indigo-600 hover:bg-indigo-500"
+                                        className="w-full py-2.5 text-sm shadow-lg shadow-indigo-600/20 bg-indigo-600 hover:bg-indigo-500 rounded-xl"
                                     >
                                         {selectedPlanName === currentPlanName ? 'Activate Plan' : `Upgrade to ${selectedPlanName}`}
                                     </Button>
@@ -310,29 +310,29 @@ const SubscriptionPage = () => {
                     )}
 
                     {subscription?.status === 'Active' && selectedPlanName !== currentPlanName && (
-                        <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-indigo-600/20">
-                            <h3 className="text-xl font-black mb-4">Confirm Upgrade</h3>
-                            <p className="text-indigo-100 text-sm mb-6 leading-relaxed">
+                        <div className="bg-indigo-600 rounded-2xl p-5 text-white shadow-xl shadow-indigo-600/20">
+                            <h3 className="text-lg font-black mb-3">Confirm Upgrade</h3>
+                            <p className="text-indigo-100 text-xs mb-4 leading-relaxed">
                                 Switch to the <b>{selectedPlanName}</b> plan immediately. Your features will update as soon as the payment is confirmed.
                             </p>
                             <Button
                                 onClick={() => setIsPaymentModalOpen(true)}
-                                className="w-full bg-white text-indigo-600 hover:bg-white/90 py-4 shadow-xl"
+                                className="w-full bg-white text-indigo-600 hover:bg-white/90 py-2.5 shadow-lg rounded-xl"
                             >
                                 Pay KES {dueAmount.toLocaleString()}
                             </Button>
                         </div>
                     )}
 
-                    <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 border border-slate-100 dark:border-slate-800 shadow-sm">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-6 shadow-sm">
-                            <AlertCircle size={24} />
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 mb-4 shadow-sm">
+                            <AlertCircle size={20} />
                         </div>
-                        <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Need help?</h4>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6">
+                        <h4 className="text-base font-bold text-slate-900 dark:text-white mb-1">Need help?</h4>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mb-4">
                             Questions about our plans? Our team is here to help you scale your institution.
                         </p>
-                        <Button variant="outline" className="w-full py-3 rounded-2xl">
+                        <Button variant="outline" className="w-full py-2.5 rounded-xl text-sm">
                             Contact Support
                         </Button>
                     </div>
