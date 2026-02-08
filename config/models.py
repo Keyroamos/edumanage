@@ -228,7 +228,7 @@ class SystemSettings(models.Model):
 
     # Pricing & Plans
     currency = models.CharField(max_length=10, default="KES")
-    trial_days = models.IntegerField(default=14)
+    trial_days = models.IntegerField(default=7)
     basic_price = models.DecimalField(max_digits=10, decimal_places=2, default=1499.00)
     standard_price = models.DecimalField(max_digits=10, decimal_places=2, default=2499.00)
     enterprise_price = models.DecimalField(max_digits=10, decimal_places=2, default=3499.00)
