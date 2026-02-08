@@ -386,7 +386,9 @@ def api_school_signup(request):
         from datetime import timedelta
         
         trial_start = timezone.now()
-        trial_end = trial_start + timedelta(days=sys_settings.trial_days)
+        # Ensure at least 7 days trial if system settings result in 0 or less
+        trial_days = sys_settings.trial_days if sys_settings.trial_days > 0 else 7
+        trial_end = trial_start + timedelta(days=trial_days)
 
         with transaction.atomic():
             # 1. Create User
@@ -410,7 +412,8 @@ def api_school_signup(request):
                 subscription_plan=plan,
                 subscription_status='Trial',
                 trial_start_date=trial_start,
-                trial_end_date=trial_end
+                trial_end_date=trial_end,
+                current_year=timezone.now().year
             )
             
             if 'school_logo' in files:

@@ -137,7 +137,7 @@ const Sidebar = ({ isOpen, onClose, user, onLogout }) => {
                             ></div>
                         </div>
                         <p className="text-[10px] mt-2 font-medium opacity-90">
-                            {Math.ceil((new Date(config.subscription.trial_end) - new Date()) / (1000 * 60 * 60 * 24))} days remaining
+                            {config.subscription.trial_end ? Math.max(0, Math.ceil((new Date(config.subscription.trial_end) - new Date()) / (1000 * 60 * 60 * 24))) : 0} days remaining
                         </p>
                     </div>
                 )}
